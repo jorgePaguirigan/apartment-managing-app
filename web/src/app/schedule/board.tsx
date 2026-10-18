@@ -23,7 +23,7 @@ function Hidden({ id }: { id: string }) {
 }
 
 // Columns are housemates (plus Unassigned), rows are the days of the week.
-// The admin drags cards between columns (or uses the menu on a card, which also works on touch screens).
+// The admin drags cards between columns. The menu on a card is for touch screens and keyboards, so it only shows there.
 // A card stays on its own weekday: only who does it changes.
 export function Board({ weekStart, phase, housemates, cards, meId, isAdmin, showUnassigned }: {
   weekStart: string; phase: string; housemates: Housemate[]; cards: Card[]; meId: string; isAdmin: boolean; showUnassigned: boolean;
@@ -78,7 +78,7 @@ export function Board({ weekStart, phase, housemates, cards, meId, isAdmin, show
                         {k.status && <p className="mt-1.5"><Chip tone={k.status === "accepted" ? "ok" : k.status === "pending" ? "warn" : "bad"}>{k.status === "accepted" ? "Done" : k.status === "pending" ? "Waiting for admin" : "Rejected"}</Chip></p>}
                         {movable(k) && (
                           <select aria-label={`Assign ${k.name}`} value={k.assignee ?? ""} onChange={(e) => assign(k.id, e.target.value || null)}
-                            className="mt-2 w-full rounded-lg border border-line bg-surface-2 px-2 py-1 text-xs">
+                            className="mt-2 w-full rounded-lg border border-line bg-surface-2 px-2 py-1 text-xs sr-only focus:not-sr-only [@media(hover:none)]:not-sr-only">
                             <option value="">Unassigned</option>
                             {housemates.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
                           </select>
