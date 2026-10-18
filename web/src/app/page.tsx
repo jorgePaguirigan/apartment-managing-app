@@ -18,7 +18,9 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           <form action={createHousehold} className="space-y-3">
             <input name="name" placeholder="Household name" required className={input} />
             <input name="display_name" placeholder="Your name" required className={input} />
-            <input name="timezone" defaultValue="Asia/Manila" aria-label="Time zone" className={input} />
+            <select name="timezone" defaultValue="Asia/Manila" aria-label="Time zone" className={input}>
+              {Intl.supportedValuesOf("timeZone").map((z) => <option key={z}>{z}</option>)}
+            </select>
             <button className={button}>Create household</button>
           </form>
         </Section>

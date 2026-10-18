@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { errorText } from "@/lib/errors";
 
 export const input = "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base text-zinc-900";
 export const button = "rounded-lg bg-zinc-900 px-4 py-2 text-base font-medium text-white active:bg-zinc-700";
@@ -23,10 +24,11 @@ export function Section({ title, children }: { title: string; children: ReactNod
 }
 
 export function Banner({ error, info }: { error?: string; info?: string }) {
-  if (!error && !info) return null;
+  const text = errorText(error) ?? info;
+  if (!text) return null;
   return (
     <p role={error ? "alert" : "status"} className={`rounded-lg p-3 text-sm ${error ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}>
-      {error ?? info}
+      {text}
     </p>
   );
 }
