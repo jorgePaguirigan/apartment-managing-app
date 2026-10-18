@@ -2,32 +2,26 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { signOut } from "../actions";
 import type { Me } from "@/lib/me";
-import { Avatar, Chip, ghost } from "./ui";
+import { LiveRefresh } from "./live-refresh";
+import { Avatar, Chip, Icon, type IconName } from "./ui";
 
-const TABS = [
-  { key: "home", href: "/", label: "Home", icon: <path d="M3 11.5 12 4l9 7.5M5.5 10v9.5h13V10" /> },
-  { key: "leaderboard", href: "/leaderboard", label: "Leaderboard", icon: <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4ZM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3" /> },
-] as const;
+const TABS: { key: "home" | "leaderboard"; href: string; label: string; icon: IconName }[] = [
+  { key: "home", href: "/", label: "Home", icon: "home" },
+  { key: "leaderboard", href: "/leaderboard", label: "Leaderboard", icon: "trophy" },
+];
 
-function Icon({ children }: { children: ReactNode }) {
-  return (
-    <svg aria-hidden viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      {children}
-    </svg>
-  );
-}
-
-// Top bar everywhere, tabs in the bar on wide screens and along the bottom on phones.
+// Top bar everywhere. Tabs sit in the bar on wide screens and float as a pill along the bottom on phones.
 export function AppShell({ me, active, children }: { me: Me; active: "home" | "leaderboard"; children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-20 border-b border-line bg-bg/80 backdrop-blur-md" style={{ paddingTop: "env(safe-area-inset-top)" }}>
-        <div className="mx-auto flex h-14 w-full max-w-4xl items-center gap-4 px-4 sm:px-6">
-          <p className="min-w-0 flex-1 truncate font-semibold tracking-tight">{me.household}</p>
-          <nav aria-label="Main" className="hidden gap-1 md:flex">
+      <LiveRefresh />
+      <header className="sticky top-0 z-20 border-b border-line bg-bg/85 backdrop-blur-md" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+        <div className="mx-auto flex h-16 w-full max-w-4xl items-center gap-4 px-4 sm:px-6">
+          <p className="display min-w-0 flex-1 truncate text-xl font-bold">{me.household}</p>
+          <nav aria-label="Main" className="hidden gap-1 rounded-full bg-surface-2 p-1 md:flex">
             {TABS.map((t) => (
               <Link key={t.key} href={t.href} aria-current={t.key === active ? "page" : undefined}
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${t.key === active ? "bg-surface-2 text-ink" : "text-muted hover:text-ink"}`}>
+                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors duration-150 ${t.key === active ? "bg-ink text-bg" : "text-muted hover:text-ink"}`}>
                 {t.label}
               </Link>
             ))}
@@ -36,22 +30,26 @@ export function AppShell({ me, active, children }: { me: Me; active: "home" | "l
             <span className="hidden items-center gap-2 sm:flex">
               <Avatar name={me.name} className="size-8" />
               <span className="text-sm font-medium">{me.name}</span>
-              <Chip tone={me.role === "admin" ? "warn" : "muted"}>{me.role}</Chip>
+              <Chip tone={me.role === "admin" ? "points" : "muted"}>{me.role}</Chip>
             </span>
-            <form action={signOut}><button className={ghost}>Sign out</button></form>
+            <form action={signOut}>
+              <button aria-label="Sign out" title="Sign out" className="grid size-10 place-items-center rounded-full border border-line text-muted transition-[transform,color] duration-150 ease-out hover:text-ink active:scale-[0.94]">
+                <Icon name="out" />
+              </button>
+            </form>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-4xl flex-1 space-y-5 px-4 py-5 pb-28 sm:px-6 sm:py-6 md:pb-8">{children}</main>
+      <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 px-4 py-6 pb-32 sm:px-6 sm:py-8 md:pb-10">{children}</main>
 
-      <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-bg/90 backdrop-blur-md md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
-        <ul className="mx-auto grid max-w-md grid-cols-2">
+      <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 md:hidden" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
+        <ul className="flex gap-1 rounded-full bg-ink p-1.5 shadow-lg shadow-black/20">
           {TABS.map((t) => (
             <li key={t.key}>
               <Link href={t.href} aria-current={t.key === active ? "page" : undefined}
-                className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-medium transition-[color,transform] duration-150 active:scale-95 ${t.key === active ? "text-accent" : "text-muted"}`}>
-                <Icon>{t.icon}</Icon>
+                className={`flex min-h-11 items-center gap-2 rounded-full px-5 text-sm font-semibold transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.96] ${t.key === active ? "bg-accent text-[#16171b]" : "text-bg/70"}`}>
+                <Icon name={t.icon} />
                 {t.label}
               </Link>
             </li>

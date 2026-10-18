@@ -7,9 +7,9 @@ import { AdminView } from "./_components/admin-view";
 import { HousemateView } from "./_components/housemate-view";
 
 export default async function Home({ searchParams }: PageProps<"/">) {
-  const { error, sent } = await searchParams;
+  const { error, sent, mode } = await searchParams;
   const { signedIn, me } = await getMe();
-  if (!signedIn) return <Landing error={error as string | undefined} sent={!!sent} />;
+  if (!signedIn) return <Landing error={error as string | undefined} sent={!!sent} mode={mode as string | undefined} />;
 
   if (!me) return <Onboarding error={error as string | undefined} />;
 
@@ -18,7 +18,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       <Banner error={error as string | undefined} />
       {me.role === "admin" ? (
         <>
-          <h1 className="rise text-3xl font-semibold tracking-tight">Hi, {me.name}</h1>
+          <h1 className="rise display text-4xl font-extrabold">Hi, {me.name}</h1>
           <AdminView />
         </>
       ) : (

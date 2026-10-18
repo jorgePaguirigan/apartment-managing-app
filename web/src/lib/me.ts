@@ -11,6 +11,7 @@ export const getMe = cache(async (): Promise<{ signedIn: boolean; me: Me | null 
   const { data: m } = await supabase
     .from("member")
     .select("role, display_name, household:household_id(name)")
+    .eq("user_id", user.id) // members can read each other, so without this a second member makes the query return 2 rows
     .maybeSingle();
   if (!m) return { signedIn: true, me: null };
   const household = m.household as unknown as { name: string } | null;
