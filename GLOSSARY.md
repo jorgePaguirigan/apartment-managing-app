@@ -14,4 +14,8 @@ Use these words exactly. They match the PRD and the database.
 - **Award**: an admin creating a score entry directly, without a claim.
 - **Leaderboard**: housemates ranked by points for a period. Ties share a rank.
 - **Period**: this week, previous week, this month, previous month, in the household time zone. Weeks start Monday.
+- **Chore**: a recurring task with a name, area, weekday, weight (1 to 3) and an optional deed claimed when it is done.
+- **Schedule**: the week's chore instances and who has each one. A new one is generated every week.
+- **Dibs**: a housemate taking an unclaimed chore for next week, Thursday to Saturday, up to a fair share of the weight.
+- **Queue**: the order of housemates for one chore, worked out from history: oldest completion first, then longest without it. Never stored.
 - **Medal**: a badge worked out from score entries when read (champion, MVP of the month, streak). Never stored.

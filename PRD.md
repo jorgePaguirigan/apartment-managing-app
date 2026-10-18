@@ -77,13 +77,18 @@ Nothing is ever reset. All views are queries over entries by date range (Q10).
 | Sunday 00:00 | Window closes. Unclaimed chores are allocated (5.3). Next week's schedule is published. |
 
 ### 5.3 Allocation of unclaimed chores
-Uses last week's points (Monday to Sunday) from Feature 1. Rule: **the housemate with the most points last week ends with the lightest load.**
-1. Take unclaimed chores, heaviest first.
-2. Give each chore to the housemate with the lowest current load (dibbed weight plus already allocated).
-3. Tie on load: the housemate with fewer points last week takes it.
-4. The top scorer from last week receives unclaimed chores only if every other housemate's load is strictly higher or equal after their allocation. In practice, they are last in line.
-- A week with no points for anyone: ties resolve by alphabetical name, then stable.
-- Dibs are respected even if they break the "lightest load" rule for the top scorer.
+Each chore has a **queue**, worked out from history each time it is read, never stored. Points are not used.
+- Queue order, front first: (1) the housemate whose last **completed** instance of that chore is oldest, never completed counting as oldest; (2) tie: the oldest last assignment, so whoever sat out longest goes first (the round robin); (3) tie: name, then id.
+- Completed means the chore's claim was accepted and its score entry still stands. Being assigned and missing it does not move anyone back. Only weeks before the one being built count.
+- An admin moving a card (drag and drop) changes that week's schedule only. It never counts as completing.
+
+Allocation, from Sunday 00:00 before the week:
+1. Dibs stay as taken.
+2. Take unclaimed chores, heaviest first.
+3. Give each chore to the housemate with the lowest current load (dibbed weight plus already allocated).
+4. Tie on load: the housemate nearest the front of that chore's queue.
+- No housemates: chores stay unassigned. Admins are never assigned a chore.
+- Dibs are respected even if the queue would have chosen someone else.
 
 ### 5.4 Completion and swaps
 - A housemate marks an assigned chore done. That goes through the same claim flow as 4.2, using the chore's catalog deed if it has one.
@@ -124,7 +129,7 @@ Postgres row-level security on `household_id` and role is required. Housemates c
 - Editing a deed's points does not change any past total.
 - The week and month boundaries follow the household time zone. An entry at 23:59 Sunday counts in that week.
 - The exported image shows the selected month's ranking and matches the on-screen leaderboard.
-- Allocation (v2): with last week's points A=10, B=4, C=4 and three unclaimed equal-weight chores, A gets the fewest and the B/C tie breaks by name. This must be a unit test.
+- Allocation (v2): Ana and Ben completed Sweep recently, Cy and Dee did not. Cy and Dee are ahead of them in the Sweep queue, and the one who has sat out longest goes first. A dib beats the queue. An admin drag never changes the queue. This must be a pgTAP test (`supabase/tests/scheduling.test.sql`).
 - Budget (v3): total left equals the sum of category lefts. Spending in one category never changes another.
 
 ## 11. Open items (your call)

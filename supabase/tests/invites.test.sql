@@ -13,7 +13,7 @@ set local role authenticated;
 select lives_ok($$select set_config('t.hh', public.create_household('Casa', 'Jorge')::text, true)$$,
   'create_household works');
 select is((select role from public.member), 'admin', 'creator is an admin');
-select is((select count(*) from public.deed), 5::bigint, 'default catalog is seeded');
+select is((select count(*) from public.deed), 8::bigint, 'default catalog is seeded (5 deeds and 3 for the preset chores)');
 select throws_ok($$select public.create_household('Again', 'Jorge')$$, '55000', 'already in a household',
   'cannot create a second household');
 select lives_ok($$select set_config('t.code', public.create_invite()::text, true)$$, 'admin creates an invite');

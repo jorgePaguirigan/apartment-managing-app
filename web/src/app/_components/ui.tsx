@@ -12,6 +12,7 @@ export const ghost =
 const ICONS = {
   home: "M3 11.5 12 4l9 7.5M5.5 10v9.5h13V10M10 19.5v-5h4v5",
   trophy: "M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4ZM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3",
+  calendar: "M5 5h14v15H5zM5 10h14M9 3v4M15 3v4",
   check: "m5 12.5 4.5 4.5L19 7.5",
   x: "M6 6l12 12M18 6 6 18",
   plus: "M12 5v14M5 12h14",
