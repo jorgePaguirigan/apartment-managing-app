@@ -13,7 +13,7 @@ export async function AdminView() {
       .eq("status", "pending").order("created_at"),
     supabase.from("deed").select("id, name, points, active").order("kind").order("name"),
     supabase.from("member").select("user_id, display_name").eq("role", "housemate").order("display_name"),
-    supabase.from("invite").select("code").is("revoked_at", null).order("created_at"),
+    supabase.from("invite").select("code, expires_at").is("revoked_at", null).order("created_at"),
   ]);
   const h = await headers();
   const origin = h.get("origin") ?? `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
@@ -73,6 +73,7 @@ export async function AdminView() {
           {invites?.map((i) => (
             <li key={i.code} className="space-y-1">
               <p>{origin}/join/{i.code}</p>
+              <p className="text-xs text-zinc-500">Expires {new Date(i.expires_at).toLocaleDateString("en-PH", { timeZone: "Asia/Manila" })}</p>
               <form action={revokeInvite}>
                 <input type="hidden" name="code" value={i.code} />
                 <button className={ghost}>Revoke</button>

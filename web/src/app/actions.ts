@@ -5,11 +5,12 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { safeNext } from "@/lib/safe-next";
+import { errorCode } from "@/lib/errors";
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 
 function fail(message: string, to = "/"): never {
-  redirect(`${to}?error=${encodeURIComponent(message)}`);
+  redirect(`${to}?error=${errorCode(message)}`);
 }
 
 // Runs a database call; on error shows the message, on success refreshes the page.
@@ -54,7 +55,7 @@ export async function joinHousehold(formData: FormData) {
     p_code: str(formData, "code"),
     p_display_name: str(formData, "display_name"),
   });
-  await done(error);
+  await done(error, `/join/${encodeURIComponent(str(formData, "code"))}`);
   redirect("/");
 }
 
@@ -90,10 +91,10 @@ export async function revokeInvite(formData: FormData) {
 
 export async function saveDeed(formData: FormData) {
   const points = Number(str(formData, "points"));
-  if (!Number.isInteger(points) || points === 0) fail("Points must be a whole number other than 0.");
+  if (!Number.isInteger(points) || points === 0) fail("invalid points");
   const supabase = await createClient();
   const { data: me } = await supabase.from("member").select("household_id").single();
-  if (!me) fail("You are not in a household.");
+  if (!me) fail("no household");
   const { error } = await supabase.from("deed").insert({
     household_id: me.household_id,
     name: str(formData, "name"),
