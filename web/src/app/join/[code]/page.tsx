@@ -1,20 +1,28 @@
 import { joinHousehold } from "../../actions";
-import { Banner, Page, button, input } from "../../_components/ui";
+import { CenterCard } from "../../_components/center-card";
+import { SubmitButton } from "../../_components/submit-button";
+import { Banner, button, input } from "../../_components/ui";
 
 export default async function Join({ params, searchParams }: PageProps<"/join/[code]">) {
   const { code } = await params;
   const { error } = await searchParams;
   return (
-    <Page title="Join your household">
-      <Banner error={error as string | undefined} />
-      <form action={joinHousehold} className="space-y-3">
-        <input type="hidden" name="code" value={code} />
-        <label className="block space-y-1 text-sm">
-          Your name
-          <input name="display_name" required className={input} />
-        </label>
-        <button className={button}>Join</button>
-      </form>
-    </Page>
+    <CenterCard>
+      <div className="space-y-5">
+        <div className="space-y-1.5">
+          <h1 className="text-2xl font-semibold tracking-tight">Join your household</h1>
+          <p className="text-muted">Pick the name your housemates will see.</p>
+        </div>
+        <Banner error={error as string | undefined} />
+        <form action={joinHousehold} className="space-y-4">
+          <input type="hidden" name="code" value={code} />
+          <label className="block space-y-1.5 text-sm font-medium">
+            Your name
+            <input name="display_name" required autoComplete="name" className={`${input} font-normal`} />
+          </label>
+          <SubmitButton className={`${button} w-full`} pendingText="Joining…">Join</SubmitButton>
+        </form>
+      </div>
+    </CenterCard>
   );
 }

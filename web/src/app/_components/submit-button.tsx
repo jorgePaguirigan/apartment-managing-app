@@ -2,12 +2,13 @@
 
 import { useFormStatus } from "react-dom";
 
-// Disables itself while its form is submitting, so a double-tap cannot send twice.
-export function SubmitButton({ children, className, pendingText = "Working…" }: { children: React.ReactNode; className?: string; pendingText?: string }) {
-  const { pending } = useFormStatus();
+// Disables its form while sending, so a double-tap cannot send twice. With name/value it labels only the button that was pressed.
+export function SubmitButton({ children, className, pendingText = "Working…", name, value }: { children: React.ReactNode; className?: string; pendingText?: string; name?: string; value?: string }) {
+  const { pending, data } = useFormStatus();
+  const mine = pending && (!name || data?.get(name) === value);
   return (
-    <button type="submit" disabled={pending} aria-busy={pending} className={className}>
-      {pending ? pendingText : children}
+    <button type="submit" name={name} value={value} disabled={pending} aria-busy={mine} className={className}>
+      {mine ? pendingText : children}
     </button>
   );
 }
