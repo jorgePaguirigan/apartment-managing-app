@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Me } from "@/lib/me";
 import { ClaimForm } from "./claim-form";
 import { HistoryList, type HistoryRow } from "./history-list";
+import { Shortcuts } from "./shortcuts";
 import { Section } from "./ui";
 
 type ClaimRow = { id: string; created_at: string; title: string | null; status: "pending" | "accepted" | "rejected"; note: string | null; deed: { name: string; points: number } | null };
@@ -32,6 +33,7 @@ export async function HousemateView({ me }: { me: Me }) {
 
   return (
     <>
+      <Shortcuts keys={{ "+": "custom-deed" }} />
       <section className="rise flex items-end justify-between gap-4 rounded-[2rem] bg-accent p-6 text-[#16171b] sm:p-8">
         <div className="min-w-0">
           <p className="text-[1.3125rem] font-semibold leading-tight opacity-70">Hi, {me.name}</p>

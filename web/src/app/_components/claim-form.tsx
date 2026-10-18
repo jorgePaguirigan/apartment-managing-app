@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { submitClaim, submitCustomClaim } from "../actions";
 import { SubmitButton } from "./submit-button";
-import { Icon, button, input } from "./ui";
+import { Icon, Kbd, button, input } from "./ui";
 
 type Deed = { id: string; name: string; points: number };
 
@@ -49,9 +49,9 @@ export function ClaimForm({ deeds }: { deeds: Deed[] }) {
     </form>
     <form ref={customRef} action={customAction} className="space-y-2 border-t border-line pt-3">
       <label className="block space-y-1.5 text-sm font-semibold">
-        Something else? Say what you did
+        <span>Something else? Say what you did<Kbd>⌘+</Kbd></span>
         <span className="flex gap-2">
-          <input name="title" required maxLength={80} placeholder="e.g. Fixed the shelf" className={`${input} font-normal`} />
+          <input name="title" data-shortcut="custom-deed" required maxLength={80} placeholder="e.g. Fixed the shelf" className={`${input} font-normal`} />
           <SubmitButton className={`${button} shrink-0`} pendingText="Sending…">Send</SubmitButton>
         </span>
       </label>
