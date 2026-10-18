@@ -80,3 +80,8 @@ export function Avatar({ name, className = "size-10" }: { name: string; classNam
     </span>
   );
 }
+
+// Shortcut hint. Hidden on touch screens, where there is no keyboard.
+export function Kbd({ children }: { children: ReactNode }) {
+  return <kbd aria-hidden className="ml-1 hidden rounded-md border border-current/30 px-1.5 text-xs font-medium opacity-60 [@media(hover:hover)]:inline">{children}</kbd>;
+}
