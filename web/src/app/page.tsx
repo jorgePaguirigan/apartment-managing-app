@@ -2,12 +2,15 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createHousehold, signOut } from "./actions";
 import { Banner, Page, Section, button, input, ghost } from "./_components/ui";
+import { Landing } from "./_components/landing";
 import { AdminView } from "./_components/admin-view";
 import { HousemateView } from "./_components/housemate-view";
 
 export default async function Home({ searchParams }: PageProps<"/">) {
-  const { error } = await searchParams;
+  const { error, sent } = await searchParams;
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return <Landing error={error as string | undefined} sent={!!sent} />;
   const { data: me } = await supabase.from("member").select("role, display_name, household:household_id(name)").maybeSingle();
 
   if (!me) {
