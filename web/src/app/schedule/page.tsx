@@ -52,6 +52,10 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
     return c ? [{ id: i.id, name: c.name, area: c.area, weight: c.weight, weekday: c.weekday, assignee: i.assignee, source: i.source,
       claimed: i.claim_id !== null, status: claimStatus.get(i.claim_id ?? "") ?? null }] : [];
   });
+  // A housemate sees only their own chores, plus unclaimed ones while dibs are open. Others' cards are never sent to the browser.
+  const isAdmin = me.role === "admin";
+  const visible = isAdmin ? cards : cards.filter((c) => c.assignee === me.userId || (phase === "dibs" && c.assignee === null));
+  const columns = isAdmin ? housemates : housemates.filter((h) => h.id === me.userId);
   const nameOf = new Map(housemates.map((h) => [h.id, h.name]));
 
   const highlights = [
@@ -79,7 +83,7 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
 
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="display text-4xl font-extrabold">Schedule</h1>
+          <h1 className="display text-4xl font-extrabold">{isAdmin ? "Schedule" : "My schedule"}</h1>
           <p className="text-muted">{PHASE_TEXT[phase as string] ?? ""}</p>
         </div>
         <nav aria-label="Week" className="grid grid-cols-2 gap-1 rounded-full bg-surface-2 p-1 text-center text-sm font-semibold">
@@ -92,13 +96,13 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
         </nav>
       </div>
 
-      {housemates.length === 0 || cards.length === 0 ? (
+      {housemates.length === 0 || visible.length === 0 ? (
         <p className="rounded-3xl border border-dashed border-line p-6 text-center text-muted">
-          {housemates.length === 0 ? "No housemates yet. Invite them from the Home tab." : "No chores yet."}
+          {housemates.length === 0 ? "No housemates yet. Invite them from the Home tab." : isAdmin ? "No chores yet." : "Nothing assigned to you this week."}
         </p>
       ) : (
-        <Board weekStart={weekStart} phase={phase as string} housemates={housemates} cards={cards} meId={me.userId}
-          isAdmin={me.role === "admin"} showUnassigned={me.role === "admin" || cards.some((c) => c.assignee === null)} />
+        <Board weekStart={weekStart} phase={phase as string} housemates={columns} cards={visible} meId={me.userId}
+          isAdmin={isAdmin} showUnassigned={isAdmin || visible.some((c) => c.assignee === null)} />
       )}
 
       {me.role === "admin" && (
