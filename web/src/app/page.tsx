@@ -1,24 +1,22 @@
-import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getMe } from "@/lib/me";
 import { createHousehold, signOut } from "./actions";
 import { Banner, Page, Section, button, input, ghost } from "./_components/ui";
 import { Landing } from "./_components/landing";
+import { AppShell } from "./_components/app-shell";
 import { AdminView } from "./_components/admin-view";
 import { HousemateView } from "./_components/housemate-view";
 
 export default async function Home({ searchParams }: PageProps<"/">) {
   const { error, sent } = await searchParams;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return <Landing error={error as string | undefined} sent={!!sent} />;
-  const { data: me } = await supabase.from("member").select("role, display_name, household:household_id(name)").maybeSingle();
+  const { signedIn, me } = await getMe();
+  if (!signedIn) return <Landing error={error as string | undefined} sent={!!sent} />;
 
   if (!me) {
     return (
       <Page title="Welcome">
         <Banner error={error as string | undefined} />
         <Section title="Start a household">
-          <p className="text-sm text-zinc-600">You become its admin. To join an existing one, open the invite link you were sent.</p>
+          <p className="text-sm text-muted">You become its admin. To join an existing one, open the invite link you were sent.</p>
           <form action={createHousehold} className="space-y-3">
             <input name="name" placeholder="Household name" required className={input} />
             <input name="display_name" placeholder="Your name" required className={input} />
@@ -33,14 +31,17 @@ export default async function Home({ searchParams }: PageProps<"/">) {
     );
   }
 
-  const household = me.household as unknown as { name: string } | null;
   return (
-    <Page title={household?.name ?? "Household"}>
+    <AppShell me={me} active="home">
       <Banner error={error as string | undefined} />
-      <p className="text-sm text-zinc-600">{me.display_name} · {me.role}</p>
-      <Link href="/leaderboard" className="inline-block rounded-lg border border-zinc-300 px-3 py-1.5 text-sm">Leaderboard</Link>
-      {me.role === "admin" ? <AdminView /> : <HousemateView />}
-      <form action={signOut}><button className={ghost}>Sign out</button></form>
-    </Page>
+      {me.role === "admin" ? (
+        <>
+          <h1 className="rise text-3xl font-semibold tracking-tight">Hi, {me.name}</h1>
+          <AdminView />
+        </>
+      ) : (
+        <HousemateView me={me} />
+      )}
+    </AppShell>
   );
 }
