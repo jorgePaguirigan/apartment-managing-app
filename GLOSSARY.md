@@ -9,7 +9,7 @@ Use these words exactly. They match the PRD and the database.
 - **Deed**: one entry in the catalog: a name, a point value, a kind.
 - **Catalog**: the household's list of deeds, edited by admins.
 - **Good deed / penalty**: `kind`. Good deeds are positive and claimable. Penalties are negative and entered by an admin only.
-- **Claim**: a housemate's "I did X" waiting for an admin. Status: pending, accepted, rejected.
+- **Claim**: a housemate's "I did X" waiting for an admin. Status: pending, accepted, rejected. A **custom claim** has a typed title instead of a catalog deed, and the admin sets its points on acceptance.
 - **Score entry**: one signed point change on a housemate's total. Points are copied from the deed when it is created. Never edited; only soft-deleted.
 - **Award**: an admin creating a score entry directly, without a claim.
 - **Leaderboard**: housemates ranked by points for a period. Ties share a rank.

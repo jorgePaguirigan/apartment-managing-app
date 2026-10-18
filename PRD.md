@@ -38,6 +38,7 @@ A shared app for housemates to track who contributes to the apartment. Housemate
 3. Admin accepts or rejects. Accept creates a score entry with the catalog's points at that moment. Reject creates nothing and notifies the housemate.
 4. Penalties: housemates cannot claim them. An admin enters a penalty from the catalog directly against a housemate, which scores at once.
 5. Admin may also add an award directly (no claim) and may delete any entry. Deleting is soft: the entry is hidden, kept for audit.
+- Custom claim: if a deed is not in the catalog, the housemate types a short description (1 to 80 characters) instead. The admin enters positive points when accepting; the entry stores that title and those points. Custom entries count for totals, MVP and streaks, never for Champion. A housemate cannot have two identical custom claims waiting.
 - Changing a catalog deed's points never changes past entries (the points are copied onto the entry).
 - Claims left pending are shown with age. **[Default]** No auto-expiry.
 
