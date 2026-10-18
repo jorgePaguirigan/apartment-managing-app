@@ -10,7 +10,7 @@ const FEATURES = [
   { icon: "💸", title: "House budget", text: "Allowance cards for rent, wifi and groceries.", live: false },
 ];
 
-function Logo() {
+export function Logo() {
   return (
     <p className="flex items-center gap-2.5 text-base font-semibold tracking-tight">
       <svg aria-hidden viewBox="0 0 24 24" className="size-7 text-accent" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
