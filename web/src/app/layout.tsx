@@ -13,7 +13,7 @@ const display = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "Apartment Manager",
+  title: "Kasangga",
   description: "Housemate scoring, chores and budget",
 };
 

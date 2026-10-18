@@ -16,7 +16,7 @@ export function Logo() {
       <span aria-hidden className="grid size-8 place-items-center rounded-xl bg-accent text-[#16171b]">
         <Icon name="home" className="size-5" />
       </span>
-      Apartment Manager
+      Kasangga
     </p>
   );
 }
