@@ -39,3 +39,24 @@ export function Banner({ error, info }: { error?: string; info?: string }) {
     </p>
   );
 }
+
+const TONES = {
+  ok: "bg-ok/15 text-ok",
+  bad: "bg-bad/15 text-bad",
+  warn: "bg-accent/15 text-accent",
+  muted: "bg-surface-2 text-muted",
+};
+
+export function Chip({ tone = "muted", children }: { tone?: keyof typeof TONES; children: ReactNode }) {
+  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${TONES[tone]}`}>{children}</span>;
+}
+
+// Initial in a circle; the colour comes from the name so it stays the same everywhere.
+export function Avatar({ name, className = "size-10" }: { name: string; className?: string }) {
+  const hue = [...name].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7);
+  return (
+    <span aria-hidden style={{ background: `hsl(${hue} 45% 38%)` }} className={`${className} grid shrink-0 place-items-center rounded-full text-sm font-semibold text-white`}>
+      {name.trim()[0]?.toUpperCase() ?? "?"}
+    </span>
+  );
+}
