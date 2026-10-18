@@ -14,9 +14,15 @@ const TEXT: Record<string, string> = {
   "target-must-be-a-housemate-in-this-household": "Pick a housemate in this household.",
   "entry-not-found": "That entry no longer exists.",
   "unknown-time-zone": "Pick a time zone from the list.",
+  "invalid-title": "Describe the deed in 1 to 80 characters.",
+  "points-must-be-positive": "Give a custom deed a whole number of points above 0.",
   "invalid-points": "Points must be a whole number other than 0.",
   "no-household": "You are not in a household.",
   "email-rate-limit-exceeded": "Too many sign-in emails. Wait a few minutes and try again.",
+  "invalid-login-credentials": "Wrong email or password.",
+  "user-already-registered": "That email already has an account. Sign in instead.",
+  "weak-password": "Use a password with at least 8 characters.",
+  "email-not-confirmed": "Confirm your email first, using the link we sent you.",
   "bad-link": "That sign-in link is invalid or expired.",
 };
 

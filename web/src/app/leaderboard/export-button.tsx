@@ -1,6 +1,6 @@
 "use client";
 
-import { ghost } from "../_components/ui";
+import { Icon, ghost } from "../_components/ui";
 
 export type Row = { rank: number; name: string; points: number; medals: string[] };
 
@@ -12,7 +12,7 @@ export function ExportButton({ title, household, rows }: { title: string; househ
     canvas.width = W;
     canvas.height = top + Math.max(rows.length, 1) * rowH + 80;
     const c = canvas.getContext("2d")!;
-    c.fillStyle = "#fff";
+    c.fillStyle = "#f2efe6";
     c.fillRect(0, 0, W, canvas.height);
     c.fillStyle = "#18181b";
     c.font = "bold 64px system-ui, sans-serif";
@@ -52,5 +52,5 @@ export function ExportButton({ title, household, rows }: { title: string; househ
     URL.revokeObjectURL(a.href);
   }
 
-  return <button type="button" onClick={share} className={ghost}>Share as image</button>;
+  return <button type="button" onClick={share} className={ghost}><Icon name="share" className="size-4" />Share as image</button>;
 }

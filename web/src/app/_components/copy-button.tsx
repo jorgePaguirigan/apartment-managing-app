@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ghost } from "./ui";
+import { Icon, ghost } from "./ui";
 
 export function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -14,5 +14,5 @@ export function CopyButton({ text }: { text: string }) {
       // Clipboard blocked: the link is on screen to copy by hand.
     }
   }
-  return <button type="button" onClick={copy} aria-live="polite" className={ghost}>{copied ? "Copied" : "Copy"}</button>;
+  return <button type="button" onClick={copy} aria-live="polite" className={ghost}><Icon name={copied ? "check" : "copy"} className="size-4" />{copied ? "Copied" : "Copy"}</button>;
 }
