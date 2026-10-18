@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.env*
+!.env.example
+.DS_Store
+xcuserdata/
+DerivedData/
+# original Notion export; PRD.md supersedes it
+apartment-managing-app-prd
