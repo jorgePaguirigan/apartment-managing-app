@@ -5,13 +5,15 @@ import type { Me } from "@/lib/me";
 import { LiveRefresh } from "./live-refresh";
 import { Avatar, Chip, Icon, type IconName } from "./ui";
 
-const TABS: { key: "home" | "leaderboard"; href: string; label: string; icon: IconName }[] = [
+type Tab = "home" | "schedule" | "leaderboard";
+const TABS: { key: Tab; href: string; label: string; icon: IconName }[] = [
   { key: "home", href: "/", label: "Home", icon: "home" },
+  { key: "schedule", href: "/schedule", label: "Schedule", icon: "calendar" },
   { key: "leaderboard", href: "/leaderboard", label: "Leaderboard", icon: "trophy" },
 ];
 
 // Top bar everywhere. Tabs sit in the bar on wide screens and float as a pill along the bottom on phones.
-export function AppShell({ me, active, children }: { me: Me; active: "home" | "leaderboard"; children: ReactNode }) {
+export function AppShell({ me, active, children }: { me: Me; active: Tab; children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col">
       <LiveRefresh />

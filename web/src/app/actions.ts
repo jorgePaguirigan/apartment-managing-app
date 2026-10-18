@@ -152,3 +152,48 @@ export async function setDeedActive(formData: FormData) {
   const { error } = await supabase.from("deed").update({ active: str(formData, "active") === "1" }).eq("id", str(formData, "deed"));
   await done(error);
 }
+
+// The schedule page has its own cache entry and error banner.
+function doneSchedule(error: { message: string } | null) {
+  if (error) fail(error.message, "/schedule");
+  revalidatePath("/schedule");
+}
+
+export async function dibChore(formData: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("dib_chore", { p_instance: str(formData, "instance") });
+  doneSchedule(error);
+}
+
+export async function undibChore(formData: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("undib_chore", { p_instance: str(formData, "instance") });
+  doneSchedule(error);
+}
+
+export async function completeChore(formData: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("complete_chore", { p_instance: str(formData, "instance") });
+  doneSchedule(error);
+}
+
+// Called by the board when the admin drops a card on a housemate. null means back to unassigned.
+export async function assignChore(instance: string, member: string | null) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("assign_chore", { p_instance: instance, p_member: member });
+  doneSchedule(error);
+}
+
+export async function saveChore(formData: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("upsert_chore", {
+    p_id: str(formData, "id") || null,
+    p_name: str(formData, "name"),
+    p_area: str(formData, "area") || null,
+    p_weekday: Number(str(formData, "weekday")),
+    p_weight: Number(str(formData, "weight")),
+    p_deed: str(formData, "deed") || null,
+    p_active: str(formData, "active") !== "0",
+  });
+  doneSchedule(error);
+}
