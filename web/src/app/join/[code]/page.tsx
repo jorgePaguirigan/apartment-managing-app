@@ -18,6 +18,3 @@ export default async function Join({ params, searchParams }: PageProps<"/join/[c
     </Page>
   );
 }
-
-// Per-user pages: render on request.
-export const instant = false;

@@ -17,6 +17,3 @@ export default async function Login({ searchParams }: PageProps<"/login">) {
     </Page>
   );
 }
-
-// Per-user pages: render on request.
-export const instant = false;

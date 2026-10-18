@@ -37,6 +37,3 @@ export default async function Home({ searchParams }: PageProps<"/">) {
     </Page>
   );
 }
-
-// Per-user pages: render on request.
-export const instant = false;
