@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createHousehold, signOut } from "./actions";
 import { Banner, Page, Section, button, input, ghost } from "./_components/ui";
@@ -34,6 +35,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
     <Page title={household?.name ?? "Household"}>
       <Banner error={error as string | undefined} />
       <p className="text-sm text-zinc-600">{me.display_name} · {me.role}</p>
+      <Link href="/leaderboard" className="inline-block rounded-lg border border-zinc-300 px-3 py-1.5 text-sm">Leaderboard</Link>
       {me.role === "admin" ? <AdminView /> : <HousemateView />}
       <form action={signOut}><button className={ghost}>Sign out</button></form>
     </Page>
