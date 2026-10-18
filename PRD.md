@@ -52,11 +52,10 @@ Nothing is ever reset. All views are queries over entries by date range (Q10).
 
 ### 4.5 Medals
 - Awarded automatically by rules over score entries and the schedule. Fixed set in v1; admins cannot create custom ones (Q13).
-- **[Default]** starter set:
-  - *Toilet Champion*: same housemate completes the toilet chore 2 weeks in a row.
-  - *MVP of the Month*: highest points in a calendar month.
-  - *Streak*: at least 1 accepted claim every week for 4 weeks.
-- A medal records `housemate`, `type`, `period`, `awarded_at`.
+- **[Default]** starter set, worked out from score entries each time they are read (the `medals()` function), not stored. Deleting an entry therefore removes any medal it supported.
+  - *Champion* (e.g. Toilet champion): the only housemate to do a deed in two weeks in a row. One medal per housemate and deed.
+  - *MVP of the Month*: highest total in a finished calendar month. Ties share it. The current month has none yet.
+  - *Streak*: at least 1 accepted claim in each of 4 or more weeks in a row. Admin-awarded entries do not count.
 
 ### 4.6 Monthly export image
 - Button on the leaderboard renders the selected month as a shareable PNG: title, month, ranked list with points and medals, household name.
@@ -102,7 +101,7 @@ Uses last week's points (Monday to Sunday) from Feature 1. Rule: **the housemate
 
 ## 7. Data model (sketch)
 
-`household` (name, timezone), `member` (user, household, role), `deed` (name, points, kind, active), `claim` (member, deed, note, status, decided_by, decided_at), `score_entry`, `medal`, `chore`, `chore_instance` (chore, week_start, assignee, dibbed, done), `washer_slot` (weekday, member), `budget_category`, `spend_entry`.
+`household` (name, timezone), `member` (user, household, role), `deed` (name, points, kind, active), `claim` (member, deed, note, status, decided_by, decided_at), `score_entry`, `chore`, `chore_instance` (chore, week_start, assignee, dibbed, done), `washer_slot` (weekday, member), `budget_category`, `spend_entry`.
 Postgres row-level security on `household_id` and role is required. Housemates cannot write `score_entry` directly.
 
 ## 8. Non-goals (v1 through v3)

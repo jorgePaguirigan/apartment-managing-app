@@ -14,4 +14,4 @@ Use these words exactly. They match the PRD and the database.
 - **Award**: an admin creating a score entry directly, without a claim.
 - **Leaderboard**: housemates ranked by points for a period. Ties share a rank.
 - **Period**: this week, previous week, this month, previous month, in the household time zone. Weeks start Monday.
-- **Medal**: an automatic badge from a rule over score entries (M3).
+- **Medal**: a badge worked out from score entries when read (champion, MVP of the month, streak). Never stored.
