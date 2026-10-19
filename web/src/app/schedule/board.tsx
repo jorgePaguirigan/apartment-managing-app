@@ -35,11 +35,11 @@ export function Board({ weekStart, phase, housemates, cards, meId, isAdmin, show
   const assign = (id: string, to: string | null) => startTransition(async () => { move({ id, to }); await assignChore(id, to); });
 
   return (
-    <div className="overflow-x-auto rounded-3xl border border-line bg-surface-2/40">
+    <div className="overflow-x-auto rounded-3xl border border-line bg-surface-2">
       <table className="w-full min-w-max border-collapse text-left">
         <thead>
           <tr>
-            <th className="sticky left-0 z-10 w-16 bg-bg/90 p-2" />
+            <th className="sticky left-0 z-10 w-16 bg-bg p-2" />
             {columns.map((c) => (
               <th key={c.id ?? "none"} scope="col" className="min-w-44 p-2 align-bottom">
                 <span className="flex items-center gap-2 text-sm font-semibold">
@@ -54,7 +54,7 @@ export function Board({ weekStart, phase, housemates, cards, meId, isAdmin, show
         <tbody>
           {DAYS.map((d, i) => (
             <tr key={d} className="border-t border-line">
-              <th scope="row" className="sticky left-0 z-10 bg-bg/90 p-2 text-left align-top">
+              <th scope="row" className="sticky left-0 z-10 bg-bg p-2 text-left align-top">
                 <span className="eyebrow block">{d}</span>
                 <span className="display text-lg font-bold tabular-nums">{dayLabel(weekStart, i)}</span>
               </th>
