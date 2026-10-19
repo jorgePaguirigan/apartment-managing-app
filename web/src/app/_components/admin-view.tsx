@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { acceptAll, award, createInvite, decideClaim, revokeInvite, saveDeed, setDeedActive } from "../actions";
+import { acceptAll, award, createInvite, revokeInvite, saveDeed, setDeedActive } from "../actions";
+import { InboxItem } from "./inbox-item";
 import { CopyButton } from "./copy-button";
 import { HistoryList, type HistoryRow } from "./history-list";
 import { SubmitButton } from "./submit-button";
@@ -55,24 +56,27 @@ export async function AdminView() {
           )}
           <ul className="space-y-3">
             {pending.map((c, i) => (
-              <li key={c.id} className="space-y-3 rounded-2xl border border-line bg-bg p-3.5">
-                <div className="flex items-start gap-3">
-                  <Avatar name={c.member?.display_name ?? "?"} className="size-9" />
-                  <div className="min-w-0 flex-1">
-                    <p className="break-words"><span className="font-semibold">{c.member?.display_name}</span> did <span className="font-semibold">{c.deed?.name ?? c.title}</span></p>
-                    {c.note && <p className="break-words text-sm text-muted">&ldquo;{c.note}&rdquo;</p>}
+              <InboxItem key={c.id}
+                head={(
+                  <div className="flex items-start gap-3">
+                    <Avatar name={c.member?.display_name ?? "?"} className="size-9" />
+                    <div className="min-w-0 flex-1">
+                      <p className="break-words"><span className="font-semibold">{c.member?.display_name}</span> did <span className="font-semibold">{c.deed?.name ?? c.title}</span></p>
+                      {c.note && <p className="break-words text-sm text-muted">&ldquo;{c.note}&rdquo;</p>}
+                    </div>
+                    {c.deed ? <Chip tone="points">{signed(c.deed.points)}</Chip> : <Chip tone="muted">Custom</Chip>}
                   </div>
-                  {c.deed ? <Chip tone="points">{signed(c.deed.points)}</Chip> : <Chip tone="muted">Custom</Chip>}
-                </div>
-                <form action={decideClaim} className="grid grid-cols-2 gap-2">
-                  <input type="hidden" name="claim" value={c.id} />
-                  {!c.deed && (
-                    <input name="points" type="number" inputMode="numeric" min={1} step={1} placeholder="Points to give" aria-label="Points to give" className={`${input} col-span-2`} />
-                  )}
-                  <SubmitButton name="accept" value="1" pendingText="Accepting…" className={button}><Icon name="check" />Accept</SubmitButton>
-                  <SubmitButton name="accept" value="0" shortcut={i === 0 ? "reject-first" : undefined} pendingText="Rejecting…" className={`${ghost} min-h-12 rounded-2xl`}><Icon name="x" />Reject{i === 0 && <Kbd>⌘R</Kbd>}</SubmitButton>
-                </form>
-              </li>
+                )}
+                fields={(
+                  <>
+                    <input type="hidden" name="claim" value={c.id} />
+                    {!c.deed && (
+                      <input name="points" type="number" inputMode="numeric" min={1} step={1} placeholder="Points to give" aria-label="Points to give" className={`${input} col-span-2`} />
+                    )}
+                    <SubmitButton name="accept" value="1" pendingText="Accepting…" className={button}><Icon name="check" />Accept</SubmitButton>
+                    <SubmitButton name="accept" value="0" shortcut={i === 0 ? "reject-first" : undefined} pendingText="Rejecting…" className={`${ghost} min-h-12 rounded-2xl`}><Icon name="x" />Reject{i === 0 && <Kbd>⌘R</Kbd>}</SubmitButton>
+                  </>
+                )} />
             ))}
             {!pending.length && <li className="rounded-2xl border border-dashed border-line p-5 text-center text-sm text-muted">All caught up. New claims show up here.</li>}
           </ul>

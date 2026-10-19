@@ -1,7 +1,7 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { signOut } from "../actions";
 import type { Me } from "@/lib/me";
+import { PillNav } from "./pill-nav";
 import { ThemeToggle } from "./theme-toggle";
 import { LiveRefresh } from "./live-refresh";
 import { Avatar, Chip, Icon, type IconName } from "./ui";
@@ -18,16 +18,12 @@ export function AppShell({ me, active, children }: { me: Me; active: Tab; childr
   return (
     <div className="flex min-h-dvh flex-col">
       <LiveRefresh />
-      <header className="glass sticky top-0 z-20 border-b border-line/70 bg-bg/70 backdrop-blur-xl backdrop-saturate-150" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+      <header className="glass sticky top-0 z-20 bg-bg/70 backdrop-blur-xl backdrop-saturate-150" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <div className="mx-auto flex h-16 w-full max-w-4xl items-center gap-4 px-4 sm:px-6">
           <p className="display min-w-0 flex-1 truncate text-xl font-bold">{me.household}</p>
-          <nav aria-label="Main" className="hidden gap-1 rounded-full bg-surface-2 p-1 md:flex">
-            {TABS.map((t) => (
-              <Link key={t.key} href={t.href} aria-current={t.key === active ? "page" : undefined}
-                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors duration-150 ${t.key === active ? "bg-ink text-bg" : "text-muted hover:text-ink"}`}>
-                {t.label}
-              </Link>
-            ))}
+          <nav aria-label="Main" className="hidden md:block">
+            <PillNav id="tabs" items={TABS} active={active} className="flex gap-1 rounded-full bg-surface-2 p-1" linkClass="rounded-full px-4 py-1.5 text-sm font-semibold transition-colors duration-150"
+              activeClass="text-bg" idleClass="text-muted hover:text-ink" thumbClass="rounded-full bg-ink" />
           </nav>
           <div className="flex items-center gap-2.5">
             <ThemeToggle />
@@ -48,17 +44,8 @@ export function AppShell({ me, active, children }: { me: Me; active: Tab; childr
       <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 px-4 py-6 pb-32 sm:px-6 sm:py-8 md:pb-10">{children}</main>
 
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 md:hidden" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
-        <ul className="flex gap-1 rounded-full bg-ink p-1.5 shadow-lg shadow-black/20">
-          {TABS.map((t) => (
-            <li key={t.key}>
-              <Link href={t.href} aria-current={t.key === active ? "page" : undefined}
-                className={`flex min-h-11 items-center gap-2 rounded-full px-5 text-sm font-semibold transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.96] ${t.key === active ? "bg-accent text-[#16171b]" : "text-bg/70"}`}>
-                <Icon name={t.icon} />
-                {t.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <PillNav id="dock" items={TABS} active={active} className="flex gap-1 rounded-full bg-ink p-1.5 shadow-lg shadow-black/20" linkClass="flex min-h-11 items-center gap-2 rounded-full px-5 text-sm font-semibold transition-[color,transform] duration-150 ease-out active:scale-[0.96]"
+          activeClass="text-[#16171b]" idleClass="text-bg/70" thumbClass="rounded-full bg-accent" />
       </nav>
     </div>
   );
