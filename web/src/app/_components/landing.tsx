@@ -78,7 +78,7 @@ export function Landing({ error, next }: { error?: string; next?: string }) {
                 <Banner error={error} />
                 <form action={signInWithGoogle}>
                   <input type="hidden" name="next" value={next ?? "/"} />
-                  <SubmitButton className={`${ghost} min-h-12 w-full bg-white text-[#1f1f1f]`} pendingText="Redirecting…">
+                  <SubmitButton className={`${ghost} min-h-12 w-full bg-white! text-[#1f1f1f]! hover:bg-neutral-100!`} pendingText="Redirecting…">
                     <GoogleMark /> Continue with Google
                   </SubmitButton>
                 </form>
