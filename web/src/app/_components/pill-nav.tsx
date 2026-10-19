@@ -9,8 +9,8 @@ type Item = { key: string; href: string; label: string; icon?: IconName };
 // Segmented links with a thumb that slides from the previous tab to the new one. The thumb is
 // animated with the Web Animations API (works in every current browser); the old position is
 // remembered in sessionStorage because each route renders its own copy of the nav.
-export function PillNav({ id, items, active, className, linkClass, activeClass, idleClass, thumbClass }: {
-  id: string; items: Item[]; active: string; className: string; linkClass: string; activeClass: string; idleClass: string; thumbClass: string;
+export function PillNav({ id, items, active, className, linkClass, activeClass, idleClass, thumbClass, idleLabelClass = "" }: {
+  id: string; items: Item[]; active: string; className: string; linkClass: string; activeClass: string; idleClass: string; thumbClass: string; idleLabelClass?: string;
 }) {
   const nav = useRef<HTMLDivElement>(null);
   const thumb = useRef<HTMLSpanElement>(null);
@@ -41,7 +41,7 @@ export function PillNav({ id, items, active, className, linkClass, activeClass, 
           className={`relative isolate ${linkClass} ${t.key === active ? activeClass : idleClass}`}>
           {t.key === active && <span ref={thumb} aria-hidden style={{ transformOrigin: "left" }} className={`absolute inset-0 -z-10 ${thumbClass}`} />}
           {t.icon && <Icon name={t.icon} />}
-          {t.label}
+          <span className={t.key === active ? "" : idleLabelClass}>{t.label}</span>
         </Link>
       ))}
     </div>

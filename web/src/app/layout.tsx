@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Geist } from "next/font/google";
 import "./globals.css";
+import { GridGlow } from "./_components/grid-glow";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,8 +14,8 @@ const display = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "Apartment Manager",
-  description: "Housemate scoring, chores and budget",
+  title: { default: "Kasangga", template: "%s · Kasangga" },
+  description: "Keep the house running, together. Housemate points, chores and budget.",
 };
 
 export const viewport: Viewport = {
@@ -36,7 +37,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {/* Apply a saved theme before first paint so there is no flash. */}
         <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}` }} />
       </head>
-      <body className="flex min-h-dvh flex-col">{children}</body>
+      <body className="flex min-h-dvh flex-col"><GridGlow />
+        {children}
+      </body>
     </html>
   );
 }
