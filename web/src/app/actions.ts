@@ -19,31 +19,18 @@ async function done(error: { message: string } | null, to = "/") {
   revalidatePath("/");
 }
 
-// Email and password: no email round trip, so no email rate limit. The session cookie keeps people signed in on that browser.
-async function authenticate(formData: FormData, signUp: boolean) {
-  const email = str(formData, "email");
-  const password = String(formData.get("password") ?? "");
+// Google is the only sign-in. Supabase sends the person to Google, then back to /auth/callback.
+export async function signInWithGoogle(formData: FormData) {
   const next = safeNext(str(formData, "next"));
-  const back = `/login?mode=${signUp ? "signup" : "signin"}&next=${encodeURIComponent(next)}`;
-  if (signUp && password.length < 8) fail("weak password", back);
   const h = await headers();
   const origin = h.get("origin") ?? `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
   const supabase = await createClient();
-  const { data, error } = signUp
-    ? await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}` } })
-    : await supabase.auth.signInWithPassword({ email, password });
-  if (error) fail(error.message, back);
-  // No session after sign-up means the project still requires email confirmation.
-  if (signUp && !data.session) redirect("/login?sent=1");
-  redirect(next);
-}
-
-export async function signIn(formData: FormData) {
-  await authenticate(formData, false);
-}
-
-export async function signUp(formData: FormData) {
-  await authenticate(formData, true);
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}` },
+  });
+  if (error || !data.url) fail(error?.message ?? "bad link", `/login?next=${encodeURIComponent(next)}`);
+  redirect(data.url);
 }
 
 export async function signOut() {
