@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getMe } from "@/lib/me";
+import { getHousemates, getMe } from "@/lib/me";
 import { PERIODS, isPeriod, periodTitle } from "@/lib/period";
 import { AppShell } from "../_components/app-shell";
 import { Avatar, Chip, Icon } from "../_components/ui";
@@ -14,14 +14,16 @@ type MedalRow = { member_id: string; label: string };
 export default async function Leaderboard({ searchParams }: PageProps<"/leaderboard">) {
   const { p } = await searchParams;
   const period = isPeriod(p) ? p : "this_week";
-  const { me } = await getMe();
-  if (!me) redirect("/");
   const supabase = await createClient();
-  const [{ data: board }, { data: medals }, { data: household }] = await Promise.all([
+  void getHousemates(); // the shell needs it; start it now
+  // One round trip: nothing here depends on who is signed in.
+  const [{ me }, { data: board }, { data: medals }, { data: household }] = await Promise.all([
+    getMe(),
     supabase.rpc("leaderboard", { p_period: period }),
     supabase.rpc("medals"),
     supabase.from("household").select("timezone").single(),
   ]);
+  if (!me) redirect("/");
 
   const labels = new Map<string, string[]>();
   for (const m of (medals ?? []) as MedalRow[]) labels.set(m.member_id, [...(labels.get(m.member_id) ?? []), m.label]);

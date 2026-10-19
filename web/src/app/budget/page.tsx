@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getMe } from "@/lib/me";
+import { getHousemates, getMe } from "@/lib/me";
 import { AppShell } from "../_components/app-shell";
 import { Banner, Chip, Icon, Section, button, ghost, input } from "../_components/ui";
 import { SubmitButton } from "../_components/submit-button";
@@ -17,13 +17,12 @@ const dayBefore = (iso: string) => new Date(Date.parse(`${iso}T00:00:00Z`) - 864
 
 export default async function Budget({ searchParams }: PageProps<"/budget">) {
   const { m, error } = await searchParams;
-  const { me } = await getMe();
-  if (!me) redirect("/");
   const supabase = await createClient();
+  void getHousemates(); // the shell needs it; start it now
 
   // The database decides which month it is in the household time zone.
-  const { data: current } = await supabase.rpc("budget_month");
-  if (typeof current !== "string") redirect("/");
+  const [{ me }, { data: current }] = await Promise.all([getMe(), supabase.rpc("budget_month")]);
+  if (!me || typeof current !== "string") redirect("/");
   const past = m === "prev";
   const monthStart = past ? `${dayBefore(current).slice(0, 7)}-01` : current;
   const nextStart = new Date(Date.UTC(+monthStart.slice(0, 4), +monthStart.slice(5, 7), 1)).toISOString().slice(0, 10);

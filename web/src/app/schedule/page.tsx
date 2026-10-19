@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getMe } from "@/lib/me";
+import { getHousemates, getMe } from "@/lib/me";
 import { AppShell } from "../_components/app-shell";
 import { Avatar, Banner, Icon, Section, button, ghost, input } from "../_components/ui";
 import { SubmitButton } from "../_components/submit-button";
@@ -24,19 +24,19 @@ const PHASE_TEXT: Record<string, string> = {
 export default async function Schedule({ searchParams }: PageProps<"/schedule">) {
   const { w, error } = await searchParams;
   const next = w === "next";
-  const { me } = await getMe();
-  if (!me) redirect("/");
   const supabase = await createClient();
+  const housemateRows = getHousemates(); // also feeds the shell
 
   // The database decides which Monday it is in the household time zone, and fills the week in if it is not yet.
-  const { data: weekStart } = await supabase.rpc("schedule_week", { p_weeks: next ? 1 : 0 });
-  if (typeof weekStart !== "string") redirect("/");
-  await supabase.rpc("generate_week", { p_week_start: weekStart });
+  const [{ me }, { data: weekStart }] = await Promise.all([getMe(), supabase.rpc("schedule_week", { p_weeks: next ? 1 : 0 })]);
+  if (!me || typeof weekStart !== "string") redirect("/");
 
-  const [{ data: chores }, { data: instances }, { data: members }, { data: medals }, { data: doers }, { data: phase }, { data: claims }, { data: deeds }] = await Promise.all([
+  // Only the instances read must wait for generate_week; everything else runs beside it.
+  const [{ data: chores }, { data: instances }, members, { data: medals }, { data: doers }, { data: phase }, { data: claims }, { data: deeds }] = await Promise.all([
     supabase.from("chore").select("id, name, area, weekday, weight, deed_id").eq("active", true).order("weekday").order("name"),
-    supabase.from("chore_instance").select("id, chore_id, assignee, source, claim_id").eq("week_start", weekStart),
-    supabase.from("member").select("user_id, display_name").eq("role", "housemate").order("display_name"),
+    supabase.rpc("generate_week", { p_week_start: weekStart }).then(() =>
+      supabase.from("chore_instance").select("id, chore_id, assignee, source, claim_id").eq("week_start", weekStart)),
+    housemateRows,
     supabase.rpc("medals"),
     supabase.rpc("top_doers"),
     supabase.rpc("week_phase", { p_week_start: weekStart }),
@@ -44,7 +44,7 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
     me.role === "admin" ? supabase.from("deed").select("id, name").eq("kind", "good").eq("active", true).order("name") : Promise.resolve({ data: [] }),
   ]);
 
-  const housemates: Housemate[] = (members ?? []).map((m) => ({ id: m.user_id, name: m.display_name }));
+  const housemates: Housemate[] = members.map((m) => ({ id: m.user_id, name: m.display_name }));
   const choreById = new Map(((chores ?? []) as ChoreRow[]).map((c) => [c.id, c]));
   const claimStatus = new Map((claims ?? []).map((c) => [c.id, c.status as string]));
   const cards: Card[] = ((instances ?? []) as InstanceRow[]).flatMap((i) => {
