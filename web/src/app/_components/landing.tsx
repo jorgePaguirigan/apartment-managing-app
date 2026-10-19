@@ -1,6 +1,7 @@
 import { signInWithGoogle } from "../actions";
 import type { LastAccount } from "@/lib/last-account";
 import { Banner, Icon, button, ghost, type IconName } from "./ui";
+import { ThemeToggle } from "./theme-toggle";
 import { SubmitButton } from "./submit-button";
 
 const FEATURES: { icon: IconName; title: string; text: string; live: boolean }[] = [
@@ -54,9 +55,8 @@ export function Landing({ error, next, last }: { error?: string; next?: string; 
   const invited = next?.startsWith("/join/");
   return (
     <main className="relative isolate min-h-svh">
-      <div aria-hidden className="grid-paper absolute inset-0 -z-10" />
       <div className="pad-safe mx-auto flex min-h-svh w-full max-w-6xl flex-col gap-10 sm:px-8">
-        <header><Logo /></header>
+        <header className="flex items-center justify-between"><Logo /><ThemeToggle /></header>
 
         <div className="landing-grid flex-1 items-center">
           <section style={{ gridArea: "hero" }} className="rise space-y-5">
@@ -70,7 +70,7 @@ export function Landing({ error, next, last }: { error?: string; next?: string; 
           </section>
 
           <section style={{ gridArea: "card" }} className="rise w-full max-w-lg [animation-delay:60ms] min-[900px]:max-w-md min-[900px]:justify-self-end">
-            <div className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8">
+            <div className="rounded-[2rem] border border-line bg-surface p-6 shadow-[var(--shadow)] sm:p-8">
               <div className="space-y-5">
                 <div className="space-y-1.5">
                   <h2 className="display text-3xl font-bold">{invited ? "You're invited" : "Sign in"}</h2>

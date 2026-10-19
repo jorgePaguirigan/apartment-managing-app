@@ -8,15 +8,19 @@
   --ink: #16171b;
   --muted: #5c5a52;
   --line: #d8d3c4;
-  --accent: #c9f23a;
+  --accent: #cbff41;
   --accent-ink: #3d5700;
   --warn: #8a5400;
   --ok: #1b7a3a;
   --bad: #be2a1f;
+  --grid: color-mix(in oklab, var(--ink) 9%, transparent);
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.7) inset, 0 8px 24px -12px rgb(40 35 20 / 0.18);
+  color-scheme: light;
 }
 
+/* Follows the OS unless the user picked a theme (data-theme, set by theme-toggle). The dark block is repeated so the toggle wins both ways. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #101113;
     --surface: #18191c;
     --surface-2: #232428;
@@ -28,7 +32,26 @@
     --warn: #f0b84a;
     --ok: #5fdc88;
     --bad: #ff8a80;
+    --grid: color-mix(in oklab, var(--ink) 6%, transparent);
+    --shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 10px 30px -14px rgb(0 0 0 / 0.7);
+    color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+  --bg: #101113;
+  --surface: #18191c;
+  --surface-2: #232428;
+  --ink: #f3f1ea;
+  --muted: #a3a198;
+  --line: #2d2e33;
+  --accent: #d4fb4c;
+  --accent-ink: #d4fb4c;
+  --warn: #f0b84a;
+  --ok: #5fdc88;
+  --bad: #ff8a80;
+  --grid: color-mix(in oklab, var(--ink) 6%, transparent);
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 10px 30px -14px rgb(0 0 0 / 0.7);
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -49,13 +72,17 @@
 }
 
 html {
-  color-scheme: light dark;
   -webkit-tap-highlight-color: transparent; /* we give our own press feedback */
   overscroll-behavior: none;
 }
 
 body {
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(to right, var(--grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+  background-size: 60px 60px;
+  background-position: -1px -1px;
   color: var(--ink);
   font-family: var(--font-sans);
   min-height: 100dvh;
@@ -72,15 +99,6 @@ input, select, textarea { font-size: 16px; }
 
 /* Small uppercase label above a group. */
 .eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-
-/* Faint grid behind the landing page, fading out downwards. */
-.grid-paper {
-  background-image:
-    linear-gradient(to right, color-mix(in oklab, var(--ink) 6%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in oklab, var(--ink) 6%, transparent) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: linear-gradient(to bottom, #000, transparent 85%);
-}
 
 /* Landing layout: hero, sign-in card, then preview on phones; hero and preview on the left, card on the right on large screens. */
 .landing-grid {
@@ -113,4 +131,13 @@ input, select, textarea { font-size: 16px; }
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: none; }
   }
+}
+
+/* Theme switches cross-fade instead of jumping. */
+@media (prefers-reduced-motion: no-preference) {
+  html.theming, html.theming * { transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease !important; }
+}
+/* Frosted bars turn solid for people who ask for less transparency. */
+@media (prefers-reduced-transparency: reduce) {
+  .glass { background: var(--bg) !important; backdrop-filter: none !important; }
 }

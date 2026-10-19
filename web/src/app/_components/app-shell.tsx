@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { signOut } from "../actions";
 import type { Me } from "@/lib/me";
+import { ThemeToggle } from "./theme-toggle";
 import { LiveRefresh } from "./live-refresh";
 import { Avatar, Chip, Icon, type IconName } from "./ui";
 
@@ -17,7 +18,7 @@ export function AppShell({ me, active, children }: { me: Me; active: Tab; childr
   return (
     <div className="flex min-h-dvh flex-col">
       <LiveRefresh />
-      <header className="sticky top-0 z-20 border-b border-line bg-bg/85 backdrop-blur-md" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+      <header className="glass sticky top-0 z-20 border-b border-line/70 bg-bg/70 backdrop-blur-xl backdrop-saturate-150" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <div className="mx-auto flex h-16 w-full max-w-4xl items-center gap-4 px-4 sm:px-6">
           <p className="display min-w-0 flex-1 truncate text-xl font-bold">{me.household}</p>
           <nav aria-label="Main" className="hidden gap-1 rounded-full bg-surface-2 p-1 md:flex">
@@ -29,6 +30,7 @@ export function AppShell({ me, active, children }: { me: Me; active: Tab; childr
             ))}
           </nav>
           <div className="flex items-center gap-2.5">
+            <ThemeToggle />
             <span className="hidden items-center gap-2 sm:flex">
               <Avatar name={me.name} className="size-8" />
               <span className="text-sm font-medium">{me.name}</span>

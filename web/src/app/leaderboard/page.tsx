@@ -59,7 +59,7 @@ export default async function Leaderboard({ searchParams }: PageProps<"/leaderbo
           const lead = r.rank === 1 && r.points > 0;
           return (
             <li key={r.id} style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
-              className={`rise flex items-center gap-3 rounded-3xl p-4 ${lead ? "bg-accent text-[#16171b] sm:p-5" : "border border-line bg-surface"}`}>
+              className={`rise flex items-center gap-3 rounded-3xl p-4 ${lead ? "bg-accent text-[#16171b] sm:p-5" : "border border-line bg-surface shadow-[var(--shadow)]"}`}>
               <span className={`display w-8 text-center font-extrabold ${lead ? "text-3xl" : "text-xl text-muted"}`}>{r.rank}</span>
               <Avatar name={r.name} className={lead ? "size-12" : "size-10"} />
               <div className="min-w-0 flex-1">

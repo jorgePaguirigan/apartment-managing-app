@@ -3,6 +3,7 @@ import type { Me } from "@/lib/me";
 import { ClaimForm } from "./claim-form";
 import { HistoryList, type HistoryRow } from "./history-list";
 import { Shortcuts } from "./shortcuts";
+import { CountUp } from "./count-up";
 import { Section } from "./ui";
 
 type ClaimRow = { id: string; created_at: string; title: string | null; status: "pending" | "accepted" | "rejected"; note: string | null; deed: { name: string; points: number } | null };
@@ -34,10 +35,10 @@ export async function HousemateView({ me }: { me: Me }) {
   return (
     <>
       <Shortcuts keys={{ "+": "custom-deed" }} />
-      <section className="rise flex items-end justify-between gap-4 rounded-[2rem] bg-accent p-6 text-[#16171b] sm:p-8">
+      <section className="rise flex items-end justify-between gap-4 rounded-[2rem] bg-accent p-6 text-[#16171b] shadow-[0_18px_40px_-18px_color-mix(in_oklab,var(--accent)_65%,transparent)] sm:p-8">
         <div className="min-w-0">
           <p className="text-[1.3125rem] font-semibold leading-tight opacity-70">Hi, {me.name}</p>
-          <p className="display mt-1 text-7xl font-extrabold leading-none sm:text-8xl">{mine ? Number(mine.points) : 0}</p>
+          <p className="display mt-1 text-7xl font-extrabold leading-none sm:text-8xl"><CountUp value={mine ? Number(mine.points) : 0} /></p>
           <p className="mt-2 font-semibold">points this week</p>
         </div>
         {mine && (
