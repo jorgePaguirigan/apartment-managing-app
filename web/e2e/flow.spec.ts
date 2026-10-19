@@ -71,4 +71,18 @@ test("claim, approve, leaderboard and budget across admin and housemate", async 
   await expect(mate.page.getByText("-₱300.00").first()).toBeVisible();
   await expect(mate.page.getByRole("heading", { name: "Categories" })).toHaveCount(0); // admin only
   await expect(admin.page.getByRole("heading", { name: "Log spending" })).toHaveCount(0); // housemates only
+
+  // An archived category keeps its history but is no longer offered for new spending.
+  await admin.page.getByPlaceholder("New category").fill("Snacks");
+  await admin.page.getByPlaceholder("PHP / month").fill("300");
+  await admin.page.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(admin.page.getByText("₱300.00").first()).toBeVisible();
+  await admin.page.getByText("Snacks").last().click();
+  await admin.page.getByRole("button", { name: "Archive" }).click();
+  await mate.page.goto("/budget");
+  await expect(mate.page.getByLabel("Category").locator("option")).toHaveText(["Wifi"]);
+
+  // Last month shows nothing: these categories did not exist yet.
+  await admin.page.goto("/budget?m=prev");
+  await expect(admin.page.getByText("No categories yet")).toBeVisible();
 });

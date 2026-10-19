@@ -28,7 +28,7 @@ set local request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 select throws_ok($$select public.upsert_category(null, 'Rent', 9000)$$, '42501', 'admin only', 'a housemate cannot create a category');
 select throws_ok($$insert into public.spend_entry (household_id, category_id, member_id, amount, spent_on)
   values ('aaaaaaaa-0000-0000-0000-000000000000', current_setting('t.wifi')::uuid, auth.uid(), 5, current_date)$$,
-  '42501', null, 'a housemate cannot insert spending directly');
+  '42501', 'permission denied for table spend_entry', 'a housemate cannot insert spending directly');
 select throws_ok($$select public.log_spend(current_setting('t.wifi')::uuid, -5)$$, '22023', 'invalid amount', 'spending must be positive');
 
 -- Spending in one category never changes another; overspending goes negative.
@@ -48,7 +48,7 @@ set local role authenticated;
 select is((select spent from public.budget_summary('2026-08-15') where name = 'Groceries'), 100::numeric, 'August only counts August');
 select is((select spent from public.budget_summary('2026-09-15') where name = 'Groceries'), 250::numeric, 'September only counts September');
 
-select is(public.budget_month('2026-09-30'), '2026-09-01'::date, 'budget_month gives the first of the month');
+select is((select month_start from public.budget_overview('2026-09-30')), '2026-09-01'::date, 'the overview gives the first of the month');
 
 -- Another household sees nothing.
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000b1","role":"authenticated"}';

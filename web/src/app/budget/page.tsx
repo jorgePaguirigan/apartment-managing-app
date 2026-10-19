@@ -7,50 +7,48 @@ import { Banner, Chip, Icon, Section, button, ghost, input } from "../_component
 import { SubmitButton } from "../_components/submit-button";
 import { logSpend, saveCategory } from "../actions";
 
-type Row = { category_id: string; name: string; monthly_amount: number; spent: number; left: number; month_start: string };
+type Row = { category_id: string; name: string; monthly_amount: number; spent: number; left: number; month_start: string; active: boolean };
+type Overview = { month_start: string; month_end: string; allowance: number; spent: number; left: number };
 type Spend = { id: string; amount: number; note: string | null; spent_on: string; category: { name: string } | null; member: { display_name: string } | null };
 
 const peso = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" });
 const monthName = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", month: "long", year: "numeric" });
-// A day before the 1st is in the previous month; plain UTC date maths, no time zone involved.
-const dayBefore = (iso: string) => new Date(Date.parse(`${iso}T00:00:00Z`) - 864e5).toISOString().slice(0, 10);
+const day = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" });
 
 export default async function Budget({ searchParams }: PageProps<"/budget">) {
   const { m, error } = await searchParams;
   const supabase = await createClient();
   void getHousemates(); // the shell needs it; start it now
 
-  // The database decides which month it is in the household time zone.
-  const [{ me }, { data: current }] = await Promise.all([getMe(), supabase.rpc("budget_month")]);
-  if (!me || typeof current !== "string") redirect("/");
+  // The database decides the month, its bounds and the totals, all in the household time zone.
   const past = m === "prev";
-  const monthStart = past ? `${dayBefore(current).slice(0, 7)}-01` : current;
-  const nextStart = new Date(Date.UTC(+monthStart.slice(0, 4), +monthStart.slice(5, 7), 1)).toISOString().slice(0, 10);
+  const [{ me }, { data: overview }] = await Promise.all([getMe(), supabase.rpc("budget_overview", { p_offset: past ? -1 : 0 })]);
+  const month = (overview as Overview[] | null)?.[0];
+  if (!me || !month) redirect("/");
   const [{ data: summary }, { data: spends }] = await Promise.all([
-    supabase.rpc("budget_summary", { p_month: monthStart }),
+    supabase.rpc("budget_summary", { p_month: month.month_start }),
     supabase.from("spend_entry")
       .select("id, amount, note, spent_on, category:category_id(name), member:member!spend_entry_member_id_fkey(display_name)")
-      .gte("spent_on", monthStart).lt("spent_on", nextStart)
+      .gte("spent_on", month.month_start).lt("spent_on", month.month_end)
       .order("spent_on", { ascending: false }).order("created_at", { ascending: false }).limit(15),
   ]);
   const rows = (summary ?? []) as Row[];
-
-  const allowance = rows.reduce((a, r) => a + Number(r.monthly_amount), 0);
-  const left = rows.reduce((a, r) => a + Number(r.left), 0);
+  const open = rows.filter((r) => r.active); // archived categories keep their history but take no new spending
+  const { allowance, spent, left } = month;
   const isAdmin = me.role === "admin";
 
   return (
     <AppShell me={me} active="budget">
       <Banner error={error as string | undefined} />
       <div className="flex items-center justify-between gap-3">
-        <h1 className="display text-2xl font-bold">{monthName(monthStart)}</h1>
+        <h1 className="display text-2xl font-bold">{monthName(month.month_start)}</h1>
         <Link href={past ? "/budget" : "/budget?m=prev"} className={ghost}>{past ? "This month" : "Last month"}</Link>
       </div>
 
       <section aria-label="Total left" className="rounded-[1.75rem] border border-line bg-surface p-5 shadow-[var(--shadow)]">
         <p className="eyebrow">Allowance left</p>
         <p className={`display text-4xl font-bold tabular-nums ${left < 0 ? "text-bad" : ""}`}>{peso.format(left)}</p>
-        <p className="text-sm text-muted">of {peso.format(allowance)} · {peso.format(allowance - left)} spent</p>
+        <p className="text-sm text-muted">of {peso.format(allowance)} · {peso.format(spent)} spent</p>
       </section>
 
       {rows.length === 0 ? (
@@ -67,10 +65,10 @@ export default async function Budget({ searchParams }: PageProps<"/budget">) {
         </ul>
       )}
 
-      {me.role === "housemate" && !past && rows.length > 0 && (
+      {me.role === "housemate" && !past && open.length > 0 && (
         <Section title="Log spending">
           <form action={logSpend} className="grid gap-2 sm:grid-cols-2">
-            <select name="category" required aria-label="Category" className={input}>{rows.map((r) => <option key={r.category_id} value={r.category_id}>{r.name}</option>)}</select>
+            <select name="category" required aria-label="Category" className={input}>{open.map((r) => <option key={r.category_id} value={r.category_id}>{r.name}</option>)}</select>
             <input name="amount" type="number" inputMode="decimal" min="0.01" step="0.01" required placeholder="Amount (PHP)" aria-label="Amount" className={input} />
             <input name="note" maxLength={120} placeholder="Note (optional)" aria-label="Note" className={`${input} sm:col-span-2`} />
             <SubmitButton className={`${button} sm:col-span-2`} pendingText="Saving…">Log it</SubmitButton>
@@ -84,7 +82,7 @@ export default async function Budget({ searchParams }: PageProps<"/budget">) {
             <li key={s.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-semibold">{s.category?.name} · {s.member?.display_name}</span>
-                <span className="block truncate text-xs text-muted">{s.spent_on}{s.note ? ` · ${s.note}` : ""}</span>
+                <span className="block truncate text-xs text-muted">{day(s.spent_on)}{s.note ? ` · ${s.note}` : ""}</span>
               </span>
               <Chip tone="muted">{peso.format(Number(s.amount))}</Chip>
             </li>
@@ -99,21 +97,21 @@ export default async function Budget({ searchParams }: PageProps<"/budget">) {
             {rows.map((r) => (
               <li key={r.category_id} className="py-2.5 first:pt-0">
                 <details>
-                  <summary className="flex cursor-pointer items-center gap-3"><span className="min-w-0 flex-1 truncate font-semibold">{r.name}</span><span className="text-sm text-muted tabular-nums">{peso.format(Number(r.monthly_amount))}</span></summary>
+                  <summary className="flex min-h-11 cursor-pointer items-center gap-3"><span className={`min-w-0 flex-1 truncate font-semibold ${r.active ? "" : "text-muted"}`}>{r.name}{!r.active && " (archived)"}</span><span className="text-sm text-muted tabular-nums">{peso.format(Number(r.monthly_amount))}</span></summary>
                   <form action={saveCategory} className="mt-2 flex flex-wrap gap-2">
                     <input type="hidden" name="id" value={r.category_id} />
                     <input name="name" defaultValue={r.name} required maxLength={40} aria-label="Category name" className={`${input} min-w-0 flex-1`} />
                     <input name="amount" type="number" inputMode="decimal" min="0" step="0.01" defaultValue={r.monthly_amount} required aria-label="Monthly amount" className={`${input} min-w-0 w-32! shrink-0`} />
                     <SubmitButton className={ghost} pendingText="…">Save</SubmitButton>
-                    <SubmitButton name="active" value="0" className={ghost} pendingText="…">Archive</SubmitButton>
+                    <SubmitButton name="active" value={r.active ? "0" : "1"} className={ghost} pendingText="…">{r.active ? "Archive" : "Restore"}</SubmitButton>
                   </form>
                 </details>
               </li>
             ))}
           </ul>
-          <form action={saveCategory} className="flex gap-2 border-t border-line pt-3">
-            <input name="name" required maxLength={40} placeholder="New category" aria-label="Category name" className={`${input} min-w-0 flex-1`} />
-            <input name="amount" type="number" inputMode="decimal" min="0" step="0.01" required placeholder="PHP / month" aria-label="Monthly amount" className={`${input} min-w-0 w-32! shrink-0`} />
+          <form action={saveCategory} className="flex flex-wrap gap-2 border-t border-line pt-3">
+            <input name="name" required maxLength={40} placeholder="New category" aria-label="Category name" className={`${input} min-w-0 basis-full sm:basis-0 sm:flex-1`} />
+            <input name="amount" type="number" inputMode="decimal" min="0" step="0.01" required placeholder="PHP / month" aria-label="Monthly amount" className={`${input} min-w-0 flex-1 sm:w-32! sm:flex-none`} />
             <SubmitButton className={ghost} pendingText="…">Add</SubmitButton>
           </form>
         </Section>

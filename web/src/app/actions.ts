@@ -235,7 +235,7 @@ export async function saveCategory(formData: FormData) {
     p_id: str(formData, "id") || null,
     p_name: str(formData, "name"),
     p_amount: Number(str(formData, "amount")),
-    p_active: str(formData, "active") !== "0",
+    p_active: formData.has("active") ? str(formData, "active") !== "0" : null, // absent: leave as is
   });
   doneBudget(error);
 }

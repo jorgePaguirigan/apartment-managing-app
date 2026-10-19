@@ -1,6 +1,6 @@
 -- Editing a catalog deed never changes points already scored; only admins may edit.
 begin;
-select plan(4);
+select plan(6);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-00000000000a'), ('00000000-0000-0000-0000-000000000001');
@@ -21,11 +21,22 @@ select lives_ok($$update public.deed set name = 'Wash dishes', points = 9 where 
 select is((select points from public.score_entry), 2, 'the past entry keeps the old points');
 select is((select name from public.deed), 'Wash dishes', 'the edit applied');
 
+-- A claim is waiting: the deed may change points but not become a penalty (a housemate cannot claim penalties).
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-000000000001","role":"authenticated"}';
+set local request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+select public.submit_claim('dddddddd-0000-0000-0000-000000000001');
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}';
+set local request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+select lives_ok($$update public.deed set points = 7 where id = 'dddddddd-0000-0000-0000-000000000001'$$,
+  'points can change while a claim waits');
+select throws_ok($$update public.deed set points = -3, kind = 'penalty' where id = 'dddddddd-0000-0000-0000-000000000001'$$,
+  '55000', 'deed has pending claims', 'a deed with a waiting claim cannot become a penalty');
+
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 update public.deed set points = 100;
 reset role;
-select is((select points from public.deed), 9, 'a housemate edit is filtered out by row-level security');
+select is((select points from public.deed), 7, 'a housemate edit is filtered out by row-level security');
 
 select * from finish();
 rollback;
