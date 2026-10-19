@@ -40,7 +40,7 @@ export function Icon({ name, className = "size-5" }: { name: IconName; className
 
 export function Section({ title, count, children }: { title: string; count?: number; children: ReactNode }) {
   return (
-    <section className="space-y-3">
+    <section className="rise space-y-3">
       <h2 className="eyebrow flex items-center gap-2 px-1">
         {title}
         {!!count && <span className="rounded-full bg-accent px-2 py-0.5 text-[0.7rem] tracking-normal text-[#16171b] tabular-nums">{count}</span>}

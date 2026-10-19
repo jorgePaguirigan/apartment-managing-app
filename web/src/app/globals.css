@@ -78,16 +78,36 @@ html {
 
 body {
   background-color: var(--bg);
-  background-image:
-    linear-gradient(to right, var(--grid) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
-  background-size: 60px 60px;
-  background-position: -1px -1px;
   color: var(--ink);
   font-family: var(--font-sans);
   min-height: 100dvh;
   text-rendering: optimizeLegibility;
 }
+
+/* Background grid. Two fixed layers behind all content (z-index -1, never over cards): a faint grid that fades out toward the
+   bottom, and a lime-tinted copy revealed only around the pointer (--mx/--my, set by GridGlow). Phones get a slow drift instead. */
+body::before, body::after {
+  content: "";
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-image:
+    linear-gradient(to right, var(--grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+body::before { mask-image: linear-gradient(#000 30%, transparent 95%); }
+body::after {
+  --glow: color-mix(in oklab, var(--accent-ink) 55%, transparent);
+  background-image:
+    linear-gradient(to right, var(--glow) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--glow) 1px, transparent 1px);
+  mask-image: radial-gradient(circle 260px at var(--mx, 50%) var(--my, 18%), #000, transparent 70%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  @media (hover: none) { body::after { animation: glow-drift 14s ease-in-out infinite alternate; } }
+  @keyframes glow-drift { from { --mx: 15%; } to { --mx: 85%; } }
+}
+@property --mx { syntax: "<length-percentage>"; inherits: true; initial-value: 50%; }
+@property --my { syntax: "<length-percentage>"; inherits: true; initial-value: 18%; }
 
 /* iOS zooms the page when an input is under 16px. */
 input, select, textarea { font-size: 16px; }
@@ -151,3 +171,31 @@ input, select, textarea { font-size: 16px; }
   mask-image: linear-gradient(#000, transparent);
 }
 @media (prefers-reduced-transparency: reduce) { .glass::after { display: none; } }
+
+/* More motion. All gated for reduced motion; hover lifts only where hover exists. */
+@media (prefers-reduced-motion: no-preference) {
+  .fade-in { animation: fade-in 220ms ease-out both; }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+  /* Sections on a page arrive one after another. */
+  main > .rise:nth-child(2) { animation-delay: 50ms; }
+  main > .rise:nth-child(3) { animation-delay: 100ms; }
+  main > .rise:nth-child(4) { animation-delay: 150ms; }
+  main > .rise:nth-child(n + 5) { animation-delay: 200ms; }
+
+  /* Landing: the preview board floats gently; the mark's partners bob out of phase. */
+  .float { animation: float 6s ease-in-out infinite alternate; }
+  @keyframes float { from { transform: translateY(0); } to { transform: translateY(-6px); } }
+  .mark-a, .mark-b { transform-box: fill-box; transform-origin: center; animation: bob 3.2s ease-in-out infinite alternate; }
+  .mark-b { animation-delay: -1.6s; }
+  @keyframes bob { from { transform: translateY(0); } to { transform: translateY(-3px); } }
+  .mark-a, .mark-b { animation-play-state: paused; }
+  .mark:hover .mark-a, .mark:hover .mark-b, p:hover > .mark .mark-a, p:hover > .mark .mark-b { animation-play-state: running; }
+
+  /* Rows and cards spring back on press. */
+  [data-lift] { transition: transform 180ms var(--ease-out-strong), box-shadow 180ms var(--ease-out-strong); }
+  [data-lift]:active { transform: scale(0.985); }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  [data-lift]:hover { transform: translateY(-2px); }
+}

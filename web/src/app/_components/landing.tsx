@@ -11,12 +11,22 @@ const FEATURES: { icon: IconName; title: string; text: string; live: boolean }[]
   { icon: "wallet", title: "House budget", text: "Allowance cards for rent, wifi and groceries.", live: false },
 ];
 
+// Two overlapping partners (kasangga = companion) on a lime tile. Same drawing as app/icon.svg.
+export function Mark({ className = "size-9" }: { className?: string }) {
+  return (
+    <svg aria-hidden viewBox="0 0 64 64" className={`${className} mark`}>
+      <rect width="64" height="64" rx="16" fill="#cbff41" />
+      <circle className="mark-a" cx="24" cy="34" r="13" fill="#16171b" />
+      <circle className="mark-b" cx="40" cy="34" r="13" fill="#16171b" fillOpacity=".72" />
+      <g fill="#cbff41"><circle cx="20" cy="31" r="2.4" /><circle cx="28" cy="31" r="2.4" /><circle cx="36" cy="31" r="2.4" /><circle cx="44" cy="31" r="2.4" /></g>
+    </svg>
+  );
+}
+
 export function Logo() {
   return (
-    <p className="display flex items-center gap-2.5 text-lg font-bold">
-      <span aria-hidden className="grid size-8 place-items-center rounded-xl bg-accent text-[#16171b]">
-        <Icon name="home" className="size-5" />
-      </span>
+    <p className="display flex items-center gap-2.5 text-xl font-extrabold">
+      <Mark />
       Kasangga
     </p>
   );
@@ -26,7 +36,7 @@ export function Logo() {
 function BoardPreview() {
   const rows = [["Sam", 42], ["Alex", 31], ["Jo", 18]] as const;
   return (
-    <div aria-hidden className="rise max-w-md space-y-2 rounded-3xl border border-line bg-surface p-3 [animation-delay:120ms]">
+    <div aria-hidden className="rise float max-w-md space-y-2 rounded-3xl border border-line bg-surface p-3 [animation-delay:120ms]">
       <p className="eyebrow px-2 pt-1">This week</p>
       {rows.map(([name, pts], i) => (
         <div key={name} className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 ${i === 0 ? "bg-accent text-[#16171b]" : ""}`}>
@@ -60,7 +70,8 @@ export function Landing({ error, next, last }: { error?: string; next?: string; 
 
         <div className="landing-grid flex-1 items-center">
           <section style={{ gridArea: "hero" }} className="rise space-y-5">
-            <p className="eyebrow">Household scoreboard</p>
+            <Mark className="size-20 sm:size-24" />
+            <p className="eyebrow">Kasangga · household scoreboard</p>
             <h1 className="display text-balance text-5xl font-extrabold leading-[1.08] sm:text-6xl lg:text-7xl">
               Keep the house running, <span className="rounded-2xl bg-accent px-2 text-[#16171b]">together.</span>
             </h1>
@@ -96,7 +107,7 @@ export function Landing({ error, next, last }: { error?: string; next?: string; 
             <BoardPreview />
             <ul aria-label="Features" className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
               {FEATURES.map((f, i) => (
-                <li key={f.title} style={{ animationDelay: `${160 + i * 40}ms` }} className="rise flex gap-3">
+                <li key={f.title} data-lift style={{ animationDelay: `${160 + i * 40}ms` }} className="rise flex gap-3">
                   <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-xl border border-line bg-surface"><Icon name={f.icon} /></span>
                   <div>
                     <h3 className="flex items-center gap-2 font-semibold">
