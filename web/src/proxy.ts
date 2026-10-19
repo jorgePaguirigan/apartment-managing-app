@@ -18,7 +18,9 @@ export async function proxy(request: NextRequest) {
       },
     },
   );
-  const { data: { user } } = await supabase.auth.getUser();
+  // getClaims checks the JWT locally; getUser would add a network round trip to every navigation.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims;
   const path = request.nextUrl.pathname;
   if (!user && path !== "/" && !path.startsWith("/login") && !path.startsWith("/auth")) {
     const url = request.nextUrl.clone();

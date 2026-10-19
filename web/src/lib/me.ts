@@ -6,7 +6,8 @@ export type Me = { userId: string; role: "admin" | "housemate"; name: string; ho
 // The signed-in person and their household, fetched once per request. `me` is null until they join or create one.
 export const getMe = cache(async (): Promise<{ signedIn: boolean; me: Me | null }> => {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims(); // proxy.ts already verified the session; no extra network call
+  const user = data?.claims && { id: data.claims.sub };
   if (!user) return { signedIn: false, me: null };
   const { data: m } = await supabase
     .from("member")
