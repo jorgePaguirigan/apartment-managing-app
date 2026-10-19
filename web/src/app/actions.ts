@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { safeNext } from "@/lib/safe-next";
 import { errorCode } from "@/lib/errors";
+import { lastAccount } from "@/lib/last-account";
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 
@@ -24,10 +25,14 @@ export async function signInWithGoogle(formData: FormData) {
   const next = safeNext(str(formData, "next"));
   const h = await headers();
   const origin = h.get("origin") ?? `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
+  const last = formData.get("remembered") ? await lastAccount() : null;
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}` },
+    options: {
+      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+      queryParams: last ? { login_hint: last.email } : { prompt: "select_account" },
+    },
   });
   if (error || !data.url) fail(error?.message ?? "bad link", `/login?next=${encodeURIComponent(next)}`);
   redirect(data.url);

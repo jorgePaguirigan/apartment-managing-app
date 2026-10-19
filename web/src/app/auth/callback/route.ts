@@ -7,8 +7,16 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(`${origin}${safeNext(searchParams.get("next"))}`);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      const res = NextResponse.redirect(`${origin}${safeNext(searchParams.get("next"))}`);
+      const u = data.user;
+      const full = String(u.user_metadata?.full_name ?? u.user_metadata?.name ?? "");
+      res.cookies.set("last_account", JSON.stringify({ name: full.split(" ")[0] || u.email, email: u.email }), {
+        httpOnly: true, sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 365, secure: process.env.NODE_ENV === "production",
+      });
+      return res;
+    }
   }
   return NextResponse.redirect(`${origin}/login?error=${"bad-link"}`);
 }
