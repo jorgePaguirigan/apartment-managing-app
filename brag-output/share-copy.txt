@@ -1,0 +1,2 @@
+Made Apartment Manager. Housemates tap "I did X", the admin approves it, and the leaderboard settles who actually cleaned the toilet.
+Admins are not scored.

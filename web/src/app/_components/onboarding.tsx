@@ -14,8 +14,8 @@ export function Onboarding({ error }: { error?: string }) {
         <Banner error={error} />
         <form action={openInvite} className="space-y-2 rounded-2xl border border-line bg-bg p-4">
           <label className="block space-y-1.5 text-sm font-semibold">
-            Were you invited? Paste the invite link
-            <input name="invite" required placeholder="https://…/join/…" autoCapitalize="none" spellCheck={false} className={`${input} font-normal`} />
+            Were you invited? Paste your invite code
+            <input name="invite" required placeholder="Invite code" autoCapitalize="none" spellCheck={false} className={`${input} font-normal`} />
           </label>
           <SubmitButton className={`${ghost} w-full`} pendingText="Opening…">Join with invite</SubmitButton>
         </form>

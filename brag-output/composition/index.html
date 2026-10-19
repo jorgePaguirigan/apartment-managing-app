@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Geist:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --bg: #f2efe6;
+        --surface: #fbfaf5;
+        --surface-2: #e8e4d8;
+        --ink: #16171b;
+        --muted: #5c5a52;
+        --line: #d8d3c4;
+        --accent: #c9f23a;
+        --accent-ink: #3d5700;
+        --warn: #8a5400;
+        --ok: #1b7a3a;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+      #root {
+        position: relative; width: 1920px; height: 1080px; overflow: hidden;
+        font-family: "Geist", ui-sans-serif, system-ui, sans-serif; color: var(--ink);
+        background-color: var(--bg);
+        background-image:
+          linear-gradient(var(--line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--line) 1px, transparent 1px);
+        background-size: 60px 60px;
+        background-position: -1px -1px;
+      }
+      .scene { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+      .display { font-family: "Bricolage Grotesque", "Geist", system-ui, sans-serif; font-weight: 800; letter-spacing: -0.03em; }
+      .abs { position: absolute; }
+      .eyebrow { font-size: 30px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+      .card { background: var(--surface); border: 2px solid var(--line); border-radius: 48px; }
+      .chip { display: inline-flex; align-items: center; height: 60px; padding: 0 28px; border-radius: 30px; font-weight: 700; font-size: 32px; }
+      .chip-points { background: var(--accent); color: #16171b; }
+      .chip-pending { background: #f3e2bb; color: var(--warn); }
+      .chip-medal { background: var(--ink); color: var(--bg); height: 52px; font-size: 26px; padding: 0 22px; }
+      .avatar { display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: var(--accent); font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; }
+      .cursor { position: absolute; left: 0; top: 0; width: 56px; height: 56px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.25)); z-index: 20; }
+
+      /* Scene 1 */
+      #hook { left: 0; width: 1920px; top: 150px; text-align: center; font-size: 190px; line-height: 0.98; }
+      #deed { left: 550px; top: 680px; width: 820px; height: 170px; display: flex; align-items: center; gap: 28px; padding: 0 40px; }
+      #deed .name { flex: 1; font-size: 52px; font-weight: 600; }
+      #deedChips { position: relative; width: 190px; height: 60px; }
+      #deedChips .chip { position: absolute; right: 0; top: 0; }
+
+      /* Scene 2 */
+      #inboxTitle { left: 410px; top: 220px; }
+      #row { left: 410px; top: 330px; width: 1100px; height: 190px; display: flex; align-items: center; gap: 28px; padding: 0 44px; }
+      #row .who { flex: 1; }
+      #row .who b { display: block; font-size: 48px; font-weight: 700; }
+      #row .who span { font-size: 32px; color: var(--muted); }
+      .btn { height: 88px; width: 200px; border-radius: 44px; display: grid; place-items: center; font-size: 34px; font-weight: 700; }
+      #reject { border: 2px solid var(--line); color: var(--muted); }
+      #accept { background: var(--ink); color: var(--bg); }
+      #accepted { color: var(--ok); font-size: 40px; font-weight: 700; }
+      #refCaption { left: 0; width: 1920px; top: 700px; text-align: center; font-size: 76px; }
+      #plus5 { left: 1330px; top: 250px; font-size: 120px; color: var(--accent-ink); }
+
+      /* Scene 3 */
+      #lbEyebrow { left: 410px; top: 110px; }
+      #lbTitle { left: 410px; top: 150px; font-size: 120px; }
+      .lb-row { position: absolute; left: 410px; width: 1100px; height: 170px; display: flex; align-items: center; gap: 28px; padding: 0 44px; border-radius: 48px; background: var(--surface); border: 2px solid var(--line); }
+      .lb-row.lead { background: var(--accent); border-color: var(--accent); color: #16171b; }
+      .lb-row .rank { width: 56px; font-size: 64px; text-align: center; }
+      .lb-row .nm { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+      .lb-row .nm b { font-size: 52px; font-weight: 700; }
+      .medals { display: flex; gap: 14px; height: 52px; }
+      .lb-row .pts { font-size: 84px; min-width: 150px; text-align: right; font-variant-numeric: tabular-nums; }
+      #lbCaption { left: 0; width: 1920px; top: 910px; text-align: center; font-size: 68px; }
+
+      /* Scene 5 */
+      #s5 { background-color: var(--bg); background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 60px 60px; background-position: -1px -1px; }
+      #punch { left: 0; width: 1920px; top: 400px; text-align: center; font-size: 170px; }
+      #logoWrap { left: 0; width: 1920px; top: 340px; display: flex; flex-direction: column; align-items: center; gap: 30px; }
+      #logoRow { display: flex; align-items: center; gap: 44px; }
+      #logoMark { width: 170px; height: 170px; border-radius: 48px; background: var(--accent); display: grid; place-items: center; }
+      #logoText { font-size: 150px; }
+      #tag { font-size: 62px; color: var(--muted); font-weight: 500; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="20" data-width="1920" data-height="1080">
+
+      <!-- Scene 1: Hook (0-3s) -->
+      <div id="s1" class="scene clip" data-start="0" data-duration="3.1" data-track-index="0">
+        <h1 id="hook" class="abs display">Who cleaned<br />the toilet?</h1>
+        <div id="deed" class="abs card">
+          <div class="avatar" style="width:90px;height:90px;font-size:44px">S</div>
+          <div class="name display" style="font-weight:700">Cleaned toilet</div>
+          <div id="deedChips">
+            <span id="deedPoints" class="chip chip-points">+5</span>
+            <span id="deedPending" class="chip chip-pending">Pending</span>
+          </div>
+        </div>
+        <svg id="cur1" class="cursor" viewBox="0 0 24 24"><path d="M3 2l17 8-7.5 2L9 20z" fill="#16171b" stroke="#fbfaf5" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </div>
+
+      <!-- Scene 2: The claim and the referee (3-8s) -->
+      <div id="s2" class="scene clip" data-start="3" data-duration="5.3" data-track-index="0">
+        <div id="inboxTitle" class="abs eyebrow">Admin inbox</div>
+        <div id="row" class="abs card">
+          <div class="avatar" style="width:110px;height:110px;font-size:54px">S</div>
+          <div class="who"><b>Sam</b><span>Cleaned toilet · +5 · 2m ago</span></div>
+          <div id="reject" class="btn">Reject</div>
+          <div id="accept" class="btn">Accept</div>
+          <div id="accepted" class="abs" style="right:60px;top:70px;opacity:0">Accepted ✓</div>
+        </div>
+        <div id="plus5" class="abs display" style="opacity:0">+5</div>
+        <div id="refCaption" class="abs display">Housemates never award points.</div>
+        <svg id="cur2" class="cursor" viewBox="0 0 24 24"><path d="M3 2l17 8-7.5 2L9 20z" fill="#16171b" stroke="#fbfaf5" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </div>
+
+      <!-- Scene 3+4: Leaderboard and medals (8-17s) -->
+      <div id="s3" class="scene clip" data-start="8" data-duration="9.2" data-track-index="0">
+        <div id="lbEyebrow" class="abs eyebrow">This week</div>
+        <div id="lbTitle" class="abs display">Leaderboard</div>
+        <div id="r1" class="lb-row lead" style="top:330px">
+          <span class="rank display">1</span>
+          <div class="avatar" style="width:96px;height:96px;font-size:48px;background:#16171b">S</div>
+          <div class="nm"><b>Sam</b><div class="medals"><span id="m1" class="chip chip-medal" style="opacity:0">Toilet champion</span><span id="m2" class="chip chip-medal" style="opacity:0">4-week streak</span></div></div>
+          <span id="samPts" class="pts display">37</span>
+        </div>
+        <div id="r2" class="lb-row" style="top:524px">
+          <span class="rank display" style="color:var(--muted)">2</span>
+          <div class="avatar" style="width:96px;height:96px;font-size:48px">A</div>
+          <div class="nm"><b>Alex</b></div>
+          <span class="pts display">31</span>
+        </div>
+        <div id="r3" class="lb-row" style="top:718px">
+          <span class="rank display" style="color:var(--muted)">3</span>
+          <div class="avatar" style="width:96px;height:96px;font-size:48px">J</div>
+          <div class="nm"><b>Jo</b></div>
+          <span class="pts display">18</span>
+        </div>
+        <div id="lbCaption" class="abs display">Medals are awarded for you.</div>
+      </div>
+
+      <!-- Scene 5: Punchline and outro (17-20s) -->
+      <div id="s5" class="scene clip" data-start="17" data-duration="3" data-track-index="0" style="z-index:5">
+        <div id="punch" class="abs display">Admins are not scored.</div>
+        <div id="logoWrap" class="abs">
+          <div id="logoRow">
+            <div id="logoMark"><svg viewBox="0 0 24 24" width="100" height="100" fill="none" stroke="#16171b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></div>
+            <div id="logoText" class="display">Apartment Manager</div>
+          </div>
+          <div id="tag">Settle it with points.</div>
+        </div>
+      </div>
+
+      <!-- Audio -->
+      <audio id="music" data-start="0" data-duration="20" data-track-index="1" data-volume="0.4" data-fade-in="0.5" data-fade-out="1.5" src="assets/music/happy-beats-business-moves-vol-1-by-ende-dot-app.mp3"></audio>
+      <audio id="sfx-card1" data-start="1.0" data-duration="0.6" data-track-index="2" data-volume="0.5" src="assets/sfx/card-slide-1.ogg"></audio>
+      <audio id="sfx-tap" data-start="2.0" data-duration="0.01" data-track-index="3" data-volume="0.7" src="assets/sfx/click_003.ogg"></audio>
+      <audio id="sfx-row" data-start="3.5" data-duration="0.6" data-track-index="2" data-volume="0.5" src="assets/sfx/card-slide-1.ogg"></audio>
+      <audio id="sfx-accept" data-start="5.52" data-duration="0.01" data-track-index="3" data-volume="0.7" src="assets/sfx/click_002.ogg"></audio>
+      <audio id="sfx-ok" data-start="5.7" data-duration="0.12" data-track-index="4" data-volume="0.6" src="assets/sfx/bong_001.ogg"></audio>
+      <audio id="sfx-lb1" data-start="8.52" data-duration="0.6" data-track-index="2" data-volume="0.5" src="assets/sfx/card-slide-1.ogg"></audio>
+      <audio id="sfx-lb2" data-start="9.52" data-duration="0.6" data-track-index="3" data-volume="0.5" src="assets/sfx/card-slide-1.ogg"></audio>
+      <audio id="sfx-lb3" data-start="10.52" data-duration="0.6" data-track-index="4" data-volume="0.5" src="assets/sfx/card-slide-1.ogg"></audio>
+      <audio id="sfx-t1" data-start="11.02" data-duration="0.06" data-track-index="5" data-volume="0.45" src="assets/sfx/rollover2.ogg"></audio>
+      <audio id="sfx-t2" data-start="11.22" data-duration="0.06" data-track-index="6" data-volume="0.45" src="assets/sfx/rollover2.ogg"></audio>
+      <audio id="sfx-t3" data-start="11.42" data-duration="0.06" data-track-index="5" data-volume="0.45" src="assets/sfx/rollover2.ogg"></audio>
+      <audio id="sfx-t4" data-start="11.62" data-duration="0.06" data-track-index="6" data-volume="0.45" src="assets/sfx/rollover2.ogg"></audio>
+      <audio id="sfx-t5" data-start="11.82" data-duration="0.06" data-track-index="5" data-volume="0.45" src="assets/sfx/rollover2.ogg"></audio>
+      <audio id="sfx-m1" data-start="13.52" data-duration="0.12" data-track-index="2" data-volume="0.6" src="assets/sfx/bong_001.ogg"></audio>
+      <audio id="sfx-m2" data-start="14.52" data-duration="0.12" data-track-index="3" data-volume="0.6" src="assets/sfx/bong_001.ogg"></audio>
+      <audio id="sfx-punch" data-start="17.02" data-duration="0.18" data-track-index="2" data-volume="0.6" src="assets/sfx/impactSoft_medium_001.ogg"></audio>
+      <audio id="sfx-logo" data-start="18.52" data-duration="1.48" data-track-index="3" data-volume="0.6" src="assets/sfx/impactBell_heavy_000.ogg"></audio>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      const out = "power2.out";
+
+      // Scene 1: hook (beat-grid: card at 3.02 is next scene)
+      tl.from("#hook", { y: 50, opacity: 0, duration: 0.5, ease: "power3.out" }, 0.15);
+      tl.from("#deed", { y: 140, opacity: 0, duration: 0.5, ease: "power3.out" }, 1.0);
+      tl.set("#deedPending", { opacity: 0 }, 0);
+      tl.fromTo("#cur1", { x: 1500, y: 980, opacity: 0 }, { x: 1010, y: 690, opacity: 1, duration: 0.8, ease: "power2.inOut" }, 1.15);
+      tl.to("#cur1", { scale: 0.82, duration: 0.08, transformOrigin: "0 0" }, 2.0);
+      tl.to("#cur1", { scale: 1, duration: 0.12, transformOrigin: "0 0" }, 2.08);
+      tl.to("#deed", { scale: 0.97, duration: 0.08 }, 2.0);
+      tl.to("#deed", { scale: 1, duration: 0.2 }, 2.08);
+      tl.to("#deedPoints", { opacity: 0, duration: 0.12 }, 2.05);
+      tl.to("#deedPending", { opacity: 1, duration: 0.12 }, 2.05);
+      tl.to("#s1", { opacity: 0, duration: 0.25 }, 2.85);
+
+      // Scene 2: claim lands in admin inbox, admin accepts (beat-locked: accept 5.52s)
+      tl.from("#inboxTitle", { opacity: 0, y: 20, duration: 0.4, ease: out }, 3.02);
+      tl.from("#row", { y: 60, opacity: 0, duration: 0.45, ease: "power3.out" }, 3.5);
+      tl.from("#refCaption", { y: 30, opacity: 0, duration: 0.4, ease: out }, 6.0);
+      tl.fromTo("#cur2", { x: 1700, y: 900, opacity: 0 }, { x: 1350, y: 380, opacity: 1, duration: 1.0, ease: "power2.inOut" }, 4.3);
+      tl.to("#cur2", { scale: 0.82, duration: 0.08, transformOrigin: "0 0" }, 5.52);
+      tl.to("#cur2", { scale: 1, duration: 0.12, transformOrigin: "0 0" }, 5.6);
+      tl.to("#row", { backgroundColor: "#dcf2c9", borderColor: "#1b7a3a", duration: 0.25 }, 5.55);
+      tl.to(["#reject", "#accept"], { opacity: 0, duration: 0.15 }, 5.55);
+      tl.to("#accepted", { opacity: 1, duration: 0.2 }, 5.7);
+      tl.fromTo("#plus5", { opacity: 0, y: 0, scale: 0.8 }, { opacity: 1, y: -40, scale: 1, duration: 0.35, ease: "back.out(2)" }, 5.7);
+      tl.to("#plus5", { y: -110, opacity: 0, duration: 0.5, ease: "power1.in" }, 6.4);
+      tl.to("#cur2", { opacity: 0, duration: 0.2 }, 6.1);
+      tl.to("#s2", { opacity: 0, duration: 0.3 }, 8.0);
+
+      // Scene 3: leaderboard (beat-grid: rows at 8.52, 9.52, 10.52)
+      tl.from(["#lbEyebrow", "#lbTitle"], { y: 24, opacity: 0, duration: 0.45, ease: out, stagger: 0.08 }, 8.02);
+      tl.from("#r1", { y: 70, opacity: 0, duration: 0.45, ease: "power3.out" }, 8.52);
+      tl.from("#r2", { y: 70, opacity: 0, duration: 0.45, ease: "power3.out" }, 9.52);
+      tl.from("#r3", { y: 70, opacity: 0, duration: 0.45, ease: "power3.out" }, 10.52);
+      // Sam's +5 counts up 37 -> 42 on the beat
+      const pts = { v: 37 };
+      tl.to(pts, { v: 42, duration: 0.8, ease: "none", onUpdate: () => { document.getElementById("samPts").textContent = Math.round(pts.v); } }, 11.02);
+      tl.fromTo("#samPts", { scale: 1 }, { scale: 1.18, duration: 0.12, transformOrigin: "100% 50%", yoyo: true, repeat: 1, ease: out }, 11.82);
+      // Scene 4: medals (beat-grid: 13.52, 14.52), caption held to 17
+      tl.fromTo("#m1", { opacity: 0, scale: 0.6, y: 10 }, { opacity: 1, scale: 1, y: 0, duration: 0.35, ease: "back.out(2)", transformOrigin: "0 50%" }, 13.52);
+      tl.fromTo("#m2", { opacity: 0, scale: 0.6, y: 10 }, { opacity: 1, scale: 1, y: 0, duration: 0.35, ease: "back.out(2)", transformOrigin: "0 50%" }, 14.52);
+      tl.from("#lbCaption", { y: 30, opacity: 0, duration: 0.4, ease: out }, 15.0);
+      tl.to("#s3", { opacity: 0, duration: 0.2 }, 16.98);
+
+      // Scene 5: punchline and logo (beat-locked: 17.02s punch, 18.52s logo)
+      tl.set("#logoWrap", { opacity: 0 }, 0);
+      tl.fromTo("#s5", { opacity: 0 }, { opacity: 1, duration: 0.15 }, 17.0);
+      tl.from("#punch", { scale: 0.9, y: 30, opacity: 0, duration: 0.45, ease: "back.out(1.6)" }, 17.02);
+      tl.to("#punch", { opacity: 0, y: -30, duration: 0.25, ease: "power2.in" }, 18.27);
+      tl.fromTo("#logoWrap", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" }, 18.52);
+      tl.from("#tag", { opacity: 0, y: 20, duration: 0.4, ease: out }, 19.0);
+
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
