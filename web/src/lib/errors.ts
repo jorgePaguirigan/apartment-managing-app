@@ -28,6 +28,8 @@ const TEXT: Record<string, string> = {
   "invalid-chore": "Give the chore a name, a weekday and a weight from 1 to 3.",
   "invalid-email": "Enter a valid email address.",
   "invalid-category": "Give the category a name (up to 40 characters) and an amount of 0 or more.",
+  "category-name-taken": "A category with that name already exists.",
+  "deed-has-pending-claims": "That deed has claims waiting. Decide them before turning it into a penalty.",
   "invalid-amount": "Enter an amount above 0.",
   "category-not-found": "That category no longer exists.",
   "no-household": "You are not in a household.",
