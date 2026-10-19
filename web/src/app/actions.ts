@@ -38,6 +38,23 @@ export async function signInWithGoogle(formData: FormData) {
   redirect(data.url);
 }
 
+// Magic link: Supabase emails a one-time link that lands on /auth/callback like Google does.
+export async function signInWithEmail(formData: FormData) {
+  const next = safeNext(str(formData, "next"));
+  const email = str(formData, "email").toLowerCase();
+  const back = `/login?next=${encodeURIComponent(next)}`;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail("invalid email", back);
+  const h = await headers();
+  const origin = h.get("origin") ?? `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}` },
+  });
+  if (error) fail(error.message, back);
+  redirect(`${back}&sent=1`);
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();

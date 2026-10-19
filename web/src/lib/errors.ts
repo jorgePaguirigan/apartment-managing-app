@@ -26,6 +26,7 @@ const TEXT: Record<string, string> = {
   "week-has-not-started": "That week has not started yet.",
   "already-submitted": "You already submitted that chore.",
   "invalid-chore": "Give the chore a name, a weekday and a weight from 1 to 3.",
+  "invalid-email": "Enter a valid email address.",
   "no-household": "You are not in a household.",
   "email-rate-limit-exceeded": "Too many sign-in emails. Wait a few minutes and try again.",
   "invalid-login-credentials": "Wrong email or password.",
