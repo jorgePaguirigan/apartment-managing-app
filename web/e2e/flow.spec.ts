@@ -26,7 +26,7 @@ async function newUser(browser: Browser) {
   return { ctx, page: await ctx.newPage() };
 }
 
-test("claim, approve and leaderboard across admin and housemate", async ({ browser }) => {
+test("claim, approve, leaderboard and budget across admin and housemate", async ({ browser }) => {
   const admin = await newUser(browser);
   const mate = await newUser(browser);
   const adminEmail = `admin${stamp}@example.com`;
@@ -58,4 +58,17 @@ test("claim, approve and leaderboard across admin and housemate", async ({ brows
   await expect(mate.page.getByRole("listitem").filter({ hasText: mateName })).toContainText("4");
   // The admin is not a housemate: never ranked.
   await expect(mate.page.getByText("Boss")).toHaveCount(0);
+
+  // Budget: admin sets an envelope, the housemate spends from it, overspending turns negative.
+  await admin.page.goto("/budget");
+  await admin.page.getByPlaceholder("New category").fill("Wifi");
+  await admin.page.getByPlaceholder("PHP / month").fill("1500");
+  await admin.page.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(admin.page.getByText("₱1,500.00").first()).toBeVisible();
+  await mate.page.goto("/budget");
+  await mate.page.getByLabel("Amount").fill("1800");
+  await mate.page.getByRole("button", { name: "Log it" }).click();
+  await expect(mate.page.getByText("-₱300.00").first()).toBeVisible();
+  await expect(mate.page.getByRole("heading", { name: "Categories" })).toHaveCount(0); // admin only
+  await expect(admin.page.getByRole("heading", { name: "Log spending" })).toHaveCount(0); // housemates only
 });
