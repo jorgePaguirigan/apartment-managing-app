@@ -1,5 +1,6 @@
 import { signInWithGoogle } from "../actions";
-import { Banner, Icon, ghost, type IconName } from "./ui";
+import type { LastAccount } from "@/lib/last-account";
+import { Banner, Icon, button, ghost, type IconName } from "./ui";
 import { SubmitButton } from "./submit-button";
 
 const FEATURES: { icon: IconName; title: string; text: string; live: boolean }[] = [
@@ -49,7 +50,7 @@ function GoogleMark() {
 }
 
 // Public landing page with the sign-in card on the right (below the hero on small screens).
-export function Landing({ error, next }: { error?: string; next?: string }) {
+export function Landing({ error, next, last }: { error?: string; next?: string; last?: LastAccount | null }) {
   const invited = next?.startsWith("/join/");
   return (
     <main className="relative isolate min-h-svh">
@@ -76,10 +77,15 @@ export function Landing({ error, next }: { error?: string; next?: string }) {
                   <p className="text-muted">{invited ? "Continue with Google to join your household." : "Welcome back."}</p>
                 </div>
                 <Banner error={error} />
-                <form action={signInWithGoogle}>
+                <form action={signInWithGoogle} className="space-y-3">
                   <input type="hidden" name="next" value={next ?? "/"} />
-                  <SubmitButton className={`${ghost} min-h-12 w-full bg-white! text-[#1f1f1f]! hover:bg-neutral-100!`} pendingText="Redirecting…">
-                    <GoogleMark /> Continue with Google
+                  {last && (
+                    <SubmitButton name="remembered" value="1" className={`${button} w-full`} pendingText="Redirecting…">
+                      Continue as {last.name}
+                    </SubmitButton>
+                  )}
+                  <SubmitButton name="remembered" value="" className={`${ghost} min-h-12 w-full bg-white! text-[#1f1f1f]! hover:bg-neutral-100!`} pendingText="Redirecting…">
+                    <GoogleMark /> {last ? "Use another Google account" : "Continue with Google"}
                   </SubmitButton>
                 </form>
               </div>
