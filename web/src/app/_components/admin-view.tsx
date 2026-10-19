@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { acceptAll, award, createInvite, revokeInvite, saveDeed, setDeedActive } from "../actions";
+import { acceptAll, award, createInvite, deleteEntry, editDeed, revokeInvite, saveDeed, setDeedActive } from "../actions";
 import { InboxItem } from "./inbox-item";
 import { CopyButton } from "./copy-button";
 import { HistoryList, type HistoryRow } from "./history-list";
@@ -14,7 +14,7 @@ const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
 
 export async function AdminView() {
   const supabase = await createClient();
-  const [{ data: claims }, { data: deeds }, { data: housemates }, { data: invites }, { data: decided }, { data: entries }, { data: household }] = await Promise.all([
+  const [{ data: claims }, { data: deeds }, { data: housemates }, { data: invites }, { data: decided }, { data: entries }, { data: household }, { data: recent }] = await Promise.all([
     supabase.from("claim")
       .select("id, note, title, member:member!claim_member_id_fkey(display_name), deed:deed_id(name, points)")
       .eq("status", "pending").order("created_at"),
@@ -27,6 +27,9 @@ export async function AdminView() {
     // Points actually scored, copied onto the entry when accepted.
     supabase.from("score_entry").select("claim_id, points").eq("source", "claim").is("deleted_at", null),
     supabase.from("household").select("timezone").single(),
+    supabase.from("score_entry")
+      .select("id, points, title, created_at, member:member!score_entry_member_id_fkey(display_name), deed:deed_id(name)")
+      .is("deleted_at", null).order("created_at", { ascending: false }).limit(10),
   ]);
   const scored = new Map((entries ?? []).map((e) => [e.claim_id, e.points]));
   const history: HistoryRow[] = ((decided ?? []) as unknown as (Omit<ClaimRow, "deed"> & { status: "accepted" | "rejected"; decided_at: string; deed: { name: string } | null })[]).map((c) => ({
@@ -86,6 +89,28 @@ export async function AdminView() {
           <HistoryList timeZone={household?.timezone ?? "Asia/Manila"} empty="Decided claims show up here." rows={history} />
         </Section>
 
+        <Section title="Recent scores">
+          <ul className="divide-y divide-line">
+            {(recent as unknown as { id: string; points: number; title: string | null; created_at: string; member: { display_name: string } | null; deed: { name: string } | null }[] ?? []).map((e) => (
+              <li key={e.id} className="py-2.5 first:pt-0 last:pb-0">
+                <div className="flex items-center gap-3">
+                  <span className="min-w-0 flex-1 truncate"><span className="font-semibold">{e.member?.display_name}</span> · {e.deed?.name ?? e.title}</span>
+                  <Chip tone={e.points > 0 ? "points" : "bad"}>{signed(e.points)}</Chip>
+                </div>
+                <details className="mt-1">
+                  <summary className="cursor-pointer text-xs text-muted">Delete…</summary>
+                  <form action={deleteEntry} className="mt-2 flex items-center gap-2">
+                    <input type="hidden" name="entry" value={e.id} />
+                    <p className="flex-1 text-xs text-muted">Hides it from totals. Kept for audit.</p>
+                    <SubmitButton className={ghost} pendingText="…">Confirm delete</SubmitButton>
+                  </form>
+                </details>
+              </li>
+            ))}
+            {!recent?.length && <li className="text-sm text-muted">Scored points show up here.</li>}
+          </ul>
+        </Section>
+
         <Section title="Award or penalty">
           {housemates?.length ? (
             <form action={award} className="space-y-3">
@@ -107,13 +132,22 @@ export async function AdminView() {
         <Section title="Catalog">
           <ul className="divide-y divide-line">
             {deeds?.map((d) => (
-              <li key={d.id} className="flex items-center gap-3 py-2.5 first:pt-0">
+              <li key={d.id} className="flex flex-wrap items-center gap-3 py-2.5 first:pt-0">
                 <span className={`min-w-0 flex-1 break-words ${d.active ? "" : "text-muted line-through"}`}>{d.name}</span>
                 <Chip tone={d.points > 0 ? "points" : "bad"}>{signed(d.points)}</Chip>
                 <form action={setDeedActive}>
                   <input type="hidden" name="deed" value={d.id} />
                   <SubmitButton name="active" value={d.active ? "0" : "1"} pendingText="…" className={ghost}>{d.active ? "Hide" : "Show"}</SubmitButton>
                 </form>
+                <details className="basis-full">
+                  <summary className="cursor-pointer text-xs text-muted">Edit</summary>
+                  <form action={editDeed} className="mt-2 flex gap-2">
+                    <input type="hidden" name="deed" value={d.id} />
+                    <input name="name" defaultValue={d.name} required aria-label="Deed name" className={`${input} min-w-0 flex-1`} />
+                    <input name="points" type="number" inputMode="numeric" defaultValue={d.points} required aria-label="Points" className={`${input} min-w-0 w-24! shrink-0`} />
+                    <SubmitButton className={ghost} pendingText="…">Save</SubmitButton>
+                  </form>
+                </details>
               </li>
             ))}
           </ul>
