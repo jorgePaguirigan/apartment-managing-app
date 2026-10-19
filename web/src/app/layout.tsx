@@ -29,8 +29,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${display.variable} h-full antialiased`}
     >
+      <head>
+        {/* Apply a saved theme before first paint so there is no flash. */}
+        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}` }} />
+      </head>
       <body className="flex min-h-dvh flex-col">{children}</body>
     </html>
   );

@@ -1,10 +1,11 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getMe } from "@/lib/me";
 import { PERIODS, isPeriod, periodTitle } from "@/lib/period";
 import { AppShell } from "../_components/app-shell";
 import { Avatar, Chip, Icon } from "../_components/ui";
+import { FlipList } from "../_components/flip-list";
+import { PillNav } from "../_components/pill-nav";
 import { ExportButton, type Row } from "./export-button";
 
 type BoardRow = { member_id: string; display_name: string; points: number; rank: number };
@@ -45,21 +46,18 @@ export default async function Leaderboard({ searchParams }: PageProps<"/leaderbo
         <ExportButton title={title} household={me.household} rows={exportRows} />
       </div>
 
-      <nav aria-label="Period" className="grid grid-cols-4 gap-1 rounded-full bg-surface-2 p-1 text-center text-sm font-semibold">
-        {Object.entries(PERIODS).map(([key, label]) => (
-          <Link key={key} href={`/leaderboard?p=${key}`} aria-current={key === period ? "page" : undefined}
-            className={`rounded-full px-1 py-2.5 transition-[background-color,color] duration-150 ${key === period ? "bg-ink text-bg" : "text-muted hover:text-ink"}`}>
-            {label}
-          </Link>
-        ))}
+      <nav aria-label="Period">
+        <PillNav id="period" items={Object.entries(PERIODS).map(([key, label]) => ({ key, label, href: `/leaderboard?p=${key}` }))} active={period}
+          className="grid grid-cols-4 gap-1 rounded-full bg-surface-2 p-1 text-center text-sm font-semibold" linkClass="rounded-full px-1 py-2.5 transition-colors duration-150"
+          activeClass="text-bg" idleClass="text-muted hover:text-ink" thumbClass="rounded-full bg-ink" />
       </nav>
 
-      <ol className="space-y-2.5">
+      <FlipList id="leaderboard" className="space-y-2.5">
         {rows.map((r, i) => {
           const lead = r.rank === 1 && r.points > 0;
           return (
-            <li key={r.id} style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
-              className={`rise flex items-center gap-3 rounded-3xl p-4 ${lead ? "bg-accent text-[#16171b] sm:p-5" : "border border-line bg-surface"}`}>
+            <li key={r.id} data-flip-id={r.id} style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
+              className={`rise flex items-center gap-3 rounded-3xl p-4 ${lead ? "bg-accent text-[#16171b] sm:p-5" : "border border-line bg-surface shadow-[var(--shadow)]"}`}>
               <span className={`display w-8 text-center font-extrabold ${lead ? "text-3xl" : "text-xl text-muted"}`}>{r.rank}</span>
               <Avatar name={r.name} className={lead ? "size-12" : "size-10"} />
               <div className="min-w-0 flex-1">
@@ -78,7 +76,7 @@ export default async function Leaderboard({ searchParams }: PageProps<"/leaderbo
             </li>
           );
         })}
-      </ol>
+      </FlipList>
       {!rows.length && <p className="rounded-3xl border border-dashed border-line p-6 text-center text-muted">No housemates yet. Invite them from the Home tab.</p>}
       {empty && <p className="text-center text-sm text-muted">Nobody has points for this period yet.</p>}
     </AppShell>
