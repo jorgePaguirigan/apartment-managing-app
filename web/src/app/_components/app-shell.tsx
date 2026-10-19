@@ -8,10 +8,11 @@ import { ThemeToggle } from "./theme-toggle";
 import { LiveRefresh } from "./live-refresh";
 import { Avatar, Chip, Icon, type IconName } from "./ui";
 
-type Tab = "home" | "schedule" | "leaderboard";
+type Tab = "home" | "schedule" | "budget" | "leaderboard";
 const TABS: { key: Tab; href: string; label: string; icon: IconName }[] = [
   { key: "home", href: "/", label: "Home", icon: "home" },
   { key: "schedule", href: "/schedule", label: "Schedule", icon: "calendar" },
+  { key: "budget", href: "/budget", label: "Budget", icon: "wallet" },
   { key: "leaderboard", href: "/leaderboard", label: "Leaderboard", icon: "trophy" },
 ];
 

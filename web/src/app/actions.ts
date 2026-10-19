@@ -223,3 +223,29 @@ export async function saveChore(formData: FormData) {
   });
   doneSchedule(error);
 }
+
+function doneBudget(error: { message: string } | null) {
+  if (error) fail(error.message, "/budget");
+  revalidatePath("/budget");
+}
+
+export async function saveCategory(formData: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("upsert_category", {
+    p_id: str(formData, "id") || null,
+    p_name: str(formData, "name"),
+    p_amount: Number(str(formData, "amount")),
+    p_active: str(formData, "active") !== "0",
+  });
+  doneBudget(error);
+}
+
+export async function logSpend(formData: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("log_spend", {
+    p_category: str(formData, "category"),
+    p_amount: Number(str(formData, "amount")),
+    p_note: str(formData, "note") || null,
+  });
+  doneBudget(error);
+}
