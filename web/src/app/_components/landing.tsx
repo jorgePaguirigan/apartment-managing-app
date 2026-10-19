@@ -1,6 +1,6 @@
-import { signInWithGoogle } from "../actions";
+import { signInWithEmail, signInWithGoogle } from "../actions";
 import type { LastAccount } from "@/lib/last-account";
-import { Banner, Icon, button, ghost, type IconName } from "./ui";
+import { Banner, Icon, button, ghost, input, type IconName } from "./ui";
 import { ThemeToggle } from "./theme-toggle";
 import { SubmitButton } from "./submit-button";
 import { Roamers } from "./roamers";
@@ -62,7 +62,7 @@ function GoogleMark() {
 }
 
 // Public landing page with the sign-in card on the right (below the hero on small screens).
-export function Landing({ error, next, last }: { error?: string; next?: string; last?: LastAccount | null }) {
+export function Landing({ error, next, last, sent }: { error?: string; next?: string; last?: LastAccount | null; sent?: boolean }) {
   const invited = next?.startsWith("/join/");
   return (
     <main className="relative isolate min-h-svh">
@@ -101,6 +101,16 @@ export function Landing({ error, next, last }: { error?: string; next?: string; 
                     <GoogleMark /> {last ? "Use another Google account" : "Continue with Google"}
                   </SubmitButton>
                 </form>
+                <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted">or</p>
+                {sent ? (
+                  <p role="status" className="rounded-2xl border border-line bg-surface-2 p-4 text-sm">Check your email for a sign-in link. It works once.</p>
+                ) : (
+                  <form action={signInWithEmail} className="space-y-3">
+                    <input type="hidden" name="next" value={next ?? "/"} />
+                    <input name="email" type="email" required autoComplete="email" placeholder="you@example.com" aria-label="Email" className={input} />
+                    <SubmitButton className={`${ghost} min-h-12 w-full`} pendingText="Sending…">Email me a sign-in link</SubmitButton>
+                  </form>
+                )}
               </div>
             </div>
           </section>
