@@ -139,6 +139,23 @@ export async function saveDeed(formData: FormData) {
   await done(error);
 }
 
+// Past score entries keep the points they were created with, so editing is always safe.
+export async function editDeed(formData: FormData) {
+  const points = Number(str(formData, "points"));
+  if (!Number.isInteger(points) || points === 0) fail("invalid points");
+  const supabase = await createClient();
+  const { error } = await supabase.from("deed")
+    .update({ name: str(formData, "name"), points, kind: points > 0 ? "good" : "penalty" })
+    .eq("id", str(formData, "deed"));
+  await done(error);
+}
+
+export async function deleteEntry(formData: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_entry", { p_entry: str(formData, "entry") });
+  await done(error);
+}
+
 export async function setDeedActive(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.from("deed").update({ active: str(formData, "active") === "1" }).eq("id", str(formData, "deed"));
