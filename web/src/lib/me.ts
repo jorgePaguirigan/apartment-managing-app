@@ -18,3 +18,10 @@ export const getMe = cache(async (): Promise<{ signedIn: boolean; me: Me | null 
   const household = m.household as unknown as { name: string } | null;
   return { signedIn: true, me: { userId: user.id, role: m.role, name: m.display_name, household: household?.name ?? "Household" } };
 });
+
+// Housemates for the shell's figures and the schedule columns. Pages start it early so it runs beside their other calls; cache() makes the shell reuse it.
+export const getHousemates = cache(async () => {
+  const supabase = await createClient();
+  const { data } = await supabase.from("member").select("user_id, display_name").eq("role", "housemate").order("display_name"); // admins never get a figure
+  return data ?? [];
+});
