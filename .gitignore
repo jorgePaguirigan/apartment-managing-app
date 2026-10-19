@@ -7,3 +7,6 @@ xcuserdata/
 DerivedData/
 # original Notion export; PRD.md supersedes it
 apartment-managing-app-prd
+.next-e2e/
+test-results/
+playwright-report/
