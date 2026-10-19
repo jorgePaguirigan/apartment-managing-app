@@ -3,6 +3,7 @@ import type { LastAccount } from "@/lib/last-account";
 import { Banner, Icon, button, ghost, type IconName } from "./ui";
 import { ThemeToggle } from "./theme-toggle";
 import { SubmitButton } from "./submit-button";
+import { Roamers } from "./roamers";
 
 const FEATURES: { icon: IconName; title: string; text: string; live: boolean }[] = [
   { icon: "check", title: "Points that mean something", text: "Tap what you did. Your admin approves it and the board updates.", live: true },
@@ -65,6 +66,7 @@ export function Landing({ error, next, last }: { error?: string; next?: string; 
   const invited = next?.startsWith("/join/");
   return (
     <main className="relative isolate min-h-svh">
+      <Roamers names={["Sam", "Alex", "Jo"]} />
       <div className="pad-safe mx-auto flex min-h-svh w-full max-w-6xl flex-col gap-10 sm:px-8">
         <header className="flex items-center justify-between"><Logo /><ThemeToggle /></header>
 
