@@ -192,6 +192,15 @@ input, select, textarea { font-size: 16px; }
   .mark-a, .mark-b { animation-play-state: paused; }
   .mark:hover .mark-a, .mark:hover .mark-b, p:hover > .mark .mark-a, p:hover > .mark .mark-b { animation-play-state: running; }
 
+  /* Marshmallow housemates: breathe when idle, bob when walking, blink now and then. */
+  .mm-breathe, .mm-walk { transform-origin: 50% 100%; animation-delay: var(--d, 0s); }
+  .mm-breathe { animation: mm-breathe 3.2s ease-in-out infinite; }
+  .mm-walk { animation: mm-walk 0.45s ease-in-out infinite; }
+  .mm-eyes { transform-box: fill-box; transform-origin: center; animation: mm-blink 5s infinite; animation-delay: var(--d, 0s); }
+  @keyframes mm-breathe { 50% { transform: scale(1.03, 0.97); } }
+  @keyframes mm-walk { 0%, 100% { transform: rotate(-3deg); } 50% { transform: translateY(-6px) rotate(3deg); } }
+  @keyframes mm-blink { 0%, 94%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
+
   /* Rows and cards spring back on press. */
   [data-lift] { transition: transform 180ms var(--ease-out-strong), box-shadow 180ms var(--ease-out-strong); }
   [data-lift]:active { transform: scale(0.985); }
