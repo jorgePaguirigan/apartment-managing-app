@@ -19,11 +19,11 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 | Change | Status |
 |---|---|
 | Catalog rows: bigger points, Edit under the name, tall six-dot grip | 🔵 in PR |
-| Drag whole groups to reorder (header is the handle; up/down buttons on phones and keyboard); `deed_group.position` | 🔵 in PR, confirmed by you |
+| Reorder groups with up/down arrows on each header (replaced group dragging); `deed_group.position` | 🔵 in PR |
 | Housemate "I did…" cards grouped by catalog group, in the admin's order; ungrouped under Other | 🔵 in PR |
 | Ungrouped no longer gray (it was drawn as "being dragged"); stays fixed last by design | ✅ fixed |
-| Group drag makes room live; nothing moves after the drop | 🔵 in PR, confirmed by you |
-| Housemates drag their own "I did…" group order, saved to their account (`member_group_order`), never changing the admin's catalog | 🔵 in PR |
+| Deed drops keep a local order while saving, so nothing replays | 🔵 in PR |
+| Housemates set their own "I did…" group order with the same arrows, saved to their account (`member_group_order`), never changing the admin's catalog | 🔵 in PR |
 
 ## Decisions made
 - Housemates can claim (dib) chores any time before the chore's week ends, not only Thursday to Saturday. The fair-share cap stays.
