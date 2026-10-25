@@ -123,23 +123,28 @@ export async function AdminView() {
             <p className="text-sm text-muted">No housemates yet. Create an invite link first.</p>
           )}
         </Section>
+        <Section title="Housemates" count={housemates?.length}>
+          <ul className="divide-y divide-line">
+            {housemates?.map((m) => (
+              <li key={m.user_id} className="removable -mx-2 flex flex-wrap items-center gap-3 rounded-xl px-2 py-2.5 first:pt-0 last:pb-0 [@media(hover:hover)]:hover:bg-surface-2/60">
+                <Avatar name={m.display_name} className="size-9" />
+                <span className="min-w-0 flex-1 truncate font-semibold">{m.display_name}</span>
+                <ConfirmButton label="Remove" pendingText="Removing…" action={removeHousemate} name="member" value={m.user_id}
+                  prompt={`Remove ${m.display_name}? Their past points stay in History; their open chores go back to unassigned.`} />
+              </li>
+            ))}
+            {!housemates?.length && <li className="text-sm text-muted">No housemates yet. Share an invite link above.</li>}
+          </ul>
+        </Section>
         <Section title="History">
           <HistoryList timeZone={household?.timezone ?? "Asia/Manila"} empty="Decided claims, awards and penalties show up here." rows={history} />
         </Section>
-
-      </div>
-
-      <div className="space-y-6">
-        <Section title="Catalog">
-          <Catalog groups={groups ?? []} deeds={(deeds ?? []) as Deed[]} />
-        </Section>
-
         <Section title="Invite links">
           <ul className="space-y-3">
             {invites?.map((i) => {
               const link = `${origin}/join/${i.code}`;
               return (
-                <li key={i.code} className="space-y-2 rounded-2xl border border-line bg-bg p-3.5">
+                <li key={i.code} className="space-y-2 rounded-2xl border border-line bg-bg p-3.5 transition-[border-color] duration-150 [@media(hover:hover)]:hover:border-ink/40">
                   <p className="truncate rounded-xl bg-surface-2 px-3 py-2 text-sm font-mono" title={link}>{link}</p>
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-xs text-muted">Expires {new Date(i.expires_at).toLocaleDateString("en-PH", { timeZone: "Asia/Manila", month: "short", day: "numeric" })}</p>
@@ -158,19 +163,11 @@ export async function AdminView() {
           </ul>
           <form action={createInvite}><SubmitButton className={`${button} w-full`} pendingText="Creating…">New invite link</SubmitButton></form>
         </Section>
+      </div>
 
-        <Section title="Housemates" count={housemates?.length}>
-          <ul className="divide-y divide-line">
-            {housemates?.map((m) => (
-              <li key={m.user_id} className="removable flex flex-wrap items-center gap-3 py-2.5 first:pt-0 last:pb-0">
-                <Avatar name={m.display_name} className="size-9" />
-                <span className="min-w-0 flex-1 truncate font-semibold">{m.display_name}</span>
-                <ConfirmButton label="Remove" pendingText="Removing…" action={removeHousemate} name="member" value={m.user_id}
-                  prompt={`Remove ${m.display_name}? Their past points stay in History; their open chores go back to unassigned.`} />
-              </li>
-            ))}
-            {!housemates?.length && <li className="text-sm text-muted">No housemates yet. Share an invite link above.</li>}
-          </ul>
+      <div className="space-y-6">
+        <Section title="Catalog">
+          <Catalog groups={groups ?? []} deeds={(deeds ?? []) as Deed[]} />
         </Section>
       </div>
     </div>
