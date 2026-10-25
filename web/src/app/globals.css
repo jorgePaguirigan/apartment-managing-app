@@ -187,6 +187,11 @@ input, select, textarea { font-size: 16px; }
 @media (prefers-reduced-motion: reduce) { .modal, .modal[open] { transform: none; } }
 html:has(.modal[open]) { overflow: hidden; }
 
+/* Figures toggle: the marshmallows fade out and drop a little, then stop taking clicks. */
+[data-roamers] { transition: opacity 220ms var(--ease-out-strong), translate 220ms var(--ease-out-strong), visibility 220ms allow-discrete; }
+html[data-figures="off"] [data-roamers] { opacity: 0; translate: 0 12px; visibility: hidden; transition-duration: 160ms; }
+@media (prefers-reduced-motion: reduce) { html[data-figures="off"] [data-roamers] { translate: none; } }
+
 /* Inline confirm slides in under its row; a row being removed dims until the server drops it. */
 .reveal { transition: opacity 180ms var(--ease-out-strong), transform 180ms var(--ease-out-strong); }
 @starting-style { .reveal { opacity: 0; transform: translateY(-4px); } }
