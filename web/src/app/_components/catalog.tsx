@@ -1,47 +1,33 @@
 "use client";
 
-import { useRef, useState, type DragEvent } from "react";
+import { useRef, useState, type DragEvent, type ReactNode } from "react";
 import { useFlip, useLocal } from "./reorder";
 import { addGroup, deleteDeed, editDeed, moveDeed, reorderGroups, saveDeed, setDeedActive } from "../actions";
 import { ConfirmButton } from "./confirm-button";
 import { SeeMore } from "./see-more";
 import { SubmitButton } from "./submit-button";
-import { Chip, Icon, button, ghost, input } from "./ui";
+import { Chip, Icon, arrow, button, ghost, input } from "./ui";
 
 export type Deed = { id: string; name: string; points: number; active: boolean; group_id: string | null };
 export type Group = { id: string; name: string };
 type Section = { id: string | null; name: string; deeds: Deed[] };
-type Slot = { id: string | null; after: boolean }; // where a dragged group would land: before or after this section
 
 const CAP = 20; // deed rows shown before See more
 
-// The order with `lift` moved before or after `to` (to.id null means the end). Used for the live preview and the drop.
-function arrange(ids: string[], lift: string, to: Slot) {
-  const rest = ids.filter((id) => id !== lift);
-  const at = to.id === null ? rest.length : rest.indexOf(to.id);
-  rest.splice(at < 0 ? rest.length : at + (to.id !== null && to.after ? 1 : 0), 0, lift);
-  return rest;
-}
-
 const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
 
-// Catalog grouped by deed_group. The admin drags a deed by its handle onto another group, or a whole group by its
-// header to reorder groups; moves show at once and the server catches up. Touch screens and keyboards get a
-// "Move to" select for deeds and up/down buttons for groups, since HTML drag needs a mouse.
+// Catalog grouped by deed_group. The admin drags a deed by its handle onto another group (a "Move to" select on touch
+// screens and keyboards, since HTML drag needs a mouse) and orders groups with the up/down arrows on each header.
+// Moves show at once and the server catches up.
 export function Catalog({ groups, deeds }: { groups: Group[]; deeds: Deed[] }) {
   const [view, setView] = useLocal(deeds, (ds) => ds.map((d) => `${d.id}:${d.group_id}`).join());
   const [order, setOrder] = useLocal(groups, (gs) => gs.map((g) => g.id).join());
   const [dropped, setDropped] = useState<string | null>(null); // FLIP key of what the user just carried; it lands where dropped
   const [drag, setDrag] = useState<Deed | null>(null);
   const [over, setOver] = useState<string | null | undefined>(undefined);
-  const [lift, setLift] = useState<string | null>(null);
-  const [slot, setSlot] = useState<Slot | null>(null);
   const known = new Set(order.map((g) => g.id));
-  // While a group is dragged the others make room live, so the drop itself moves nothing.
-  const ids = order.map((g) => g.id);
-  const shown = (lift && slot ? arrange(ids, lift, slot) : ids).flatMap((id) => order.filter((g) => g.id === id));
   const sections: Section[] = [
-    ...shown.map((g) => ({ id: g.id, name: g.name, deeds: view.filter((d) => d.group_id === g.id) })),
+    ...order.map((g) => ({ id: g.id, name: g.name, deeds: view.filter((d) => d.group_id === g.id) })),
     { id: null, name: "Ungrouped", deeds: view.filter((d) => d.group_id === null || !known.has(d.group_id)) },
   ];
   const assign = (id: string, to: string | null, carried = false) => {
@@ -49,25 +35,19 @@ export function Catalog({ groups, deeds }: { groups: Group[]; deeds: Deed[] }) {
     setView(view.map((d) => (d.id === id ? { ...d, group_id: to } : d)));
     void moveDeed(id, to);
   };
-  const place = (ids: string[], carried: string | null) => {
-    if (ids.join() === order.map((g) => g.id).join()) return;
-    setDropped(carried && `g${carried}`);
-    setOrder(ids.flatMap((id) => order.filter((g) => g.id === id)));
-    void reorderGroups(ids);
-  };
-  // Drop the lifted group before or after another one; Ungrouped is always last, so dropping there means "to the end".
-  const land = (to: Slot) => { if (lift) place(arrange(ids, lift, to), lift); };
+  // Swap a group with its neighbour; Ungrouped stays last. Both groups slide to their new places.
   const nudge = (id: string, by: -1 | 1) => {
     const ids = order.map((g) => g.id);
     const i = ids.indexOf(id);
     if (i + by < 0 || i + by >= ids.length) return;
     [ids[i], ids[i + by]] = [ids[i + by], ids[i]];
-    place(ids, null);
+    setDropped(null);
+    setOrder(ids.flatMap((g) => order.filter((x) => x.id === g)));
+    void reorderGroups(ids);
   };
   const dnd: Dnd = {
-    groups: order, drag, over, lift, slot, dropped, assign, land, nudge,
+    groups: order, drag, over, dropped, assign, nudge,
     start: setDrag, hover: setOver, end: () => { setDrag(null); setOver(undefined); },
-    lifting: (g) => { setDropped(null); setLift(g); }, aim: setSlot, drop: () => { setLift(null); setSlot(null); },
   };
 
   // Fill groups in order until CAP rows; groups past the cap wait for See more. Empty groups stay visible as drop targets.
@@ -102,10 +82,9 @@ export function Catalog({ groups, deeds }: { groups: Group[]; deeds: Deed[] }) {
 }
 
 type Dnd = {
-  groups: Group[]; drag: Deed | null; over: string | null | undefined; lift: string | null; slot: Slot | null; dropped: string | null;
-  assign: (id: string, to: string | null, carried?: boolean) => void; land: (to: Slot) => void; nudge: (id: string, by: -1 | 1) => void;
+  groups: Group[]; drag: Deed | null; over: string | null | undefined; dropped: string | null;
+  assign: (id: string, to: string | null, carried?: boolean) => void; nudge: (id: string, by: -1 | 1) => void;
   start: (d: Deed) => void; hover: (g: string | null) => void; end: () => void;
-  lifting: (g: string) => void; aim: (s: Slot) => void; drop: () => void;
 };
 
 function Sections({ sections, dnd }: { sections: Section[]; dnd: Dnd }) {
@@ -120,54 +99,37 @@ function Sections({ sections, dnd }: { sections: Section[]; dnd: Dnd }) {
 }
 
 function GroupSection({ section: s, dnd, first, last }: { section: Section; dnd: Dnd; first: boolean; last: boolean }) {
-  const [armed, setArmed] = useState(false); // only the header starts a group drag
-  const deedTarget = dnd.drag !== null && (dnd.drag.group_id ?? null) !== s.id;
-  const groupTarget = dnd.lift !== null; // the lifted group's own spot accepts the drop too, so it never snaps back
-  const over = (e: DragEvent<HTMLElement>) => {
-    if (deedTarget) { e.preventDefault(); if (dnd.over !== s.id) dnd.hover(s.id); }
-    if (groupTarget) {
-      e.preventDefault();
-      if (dnd.lift === s.id) return;
-      const r = e.currentTarget.getBoundingClientRect();
-      const after = s.id !== null && e.clientY > r.top + r.height / 2;
-      if (dnd.slot?.id !== s.id || dnd.slot.after !== after) dnd.aim({ id: s.id, after });
-    }
-  };
+  const target = dnd.drag !== null && (dnd.drag.group_id ?? null) !== s.id;
   return (
-    <section aria-label={s.name} data-group={s.id ?? undefined} draggable={armed}
-      onDragStart={(e) => { if (e.target !== e.currentTarget || !s.id) return; e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", s.name); dnd.lifting(s.id); }}
-      onDragEnd={() => { setArmed(false); dnd.drop(); }}
-      onDragOver={deedTarget || groupTarget ? over : undefined}
-      onDrop={deedTarget || groupTarget ? (e) => {
-        e.preventDefault();
-        if (deedTarget) { dnd.assign(dnd.drag!.id, s.id, true); dnd.end(); }
-        if (groupTarget) { if (dnd.slot) dnd.land(dnd.slot); dnd.drop(); }
-      } : undefined}
-      className={`-mx-2 rounded-2xl px-2 pb-1 transition-[background-color,outline-color,box-shadow,opacity] duration-150
-        ${s.id !== null && dnd.lift === s.id ? "opacity-40" : ""}
-        ${!deedTarget ? "" : dnd.over === s.id ? "bg-accent/20 outline-2 -outline-offset-2 outline-dashed outline-ink/60!" : "outline-2 -outline-offset-2 outline-dashed outline-ink/20!"}`}>
-      <h3 onPointerDown={s.id ? () => { setArmed(true); addEventListener("pointerup", () => setArmed(false), { once: true }); } : undefined}
-        className={`flex items-center gap-2 border-b border-line pb-1.5 pt-1 font-semibold ${s.id ? "cursor-grab select-none active:cursor-grabbing" : ""}`}>
-        {s.id && <Icon name="grip" className="size-4 text-muted [@media(hover:none)]:hidden" />}
-        <span className="min-w-0 [overflow-wrap:anywhere]">{s.name}</span><span className="text-xs font-medium text-muted tabular-nums">{s.deeds.length}</span>
-        {s.id && (
-          <span className="ml-auto flex gap-1 [@media(hover:hover)]:sr-only [@media(hover:hover)]:focus-within:not-sr-only" onPointerDown={(e) => e.stopPropagation()}>
-            <button type="button" aria-label={`Move ${s.name} up`} disabled={first} onClick={() => dnd.nudge(s.id!, -1)}
-              className="grid size-8 place-items-center rounded-full text-muted transition-[transform,color,background-color] duration-150 ease-out hover:bg-surface-2 hover:text-ink active:scale-90 disabled:opacity-30">
-              <Icon name="chevron" className="size-4 -rotate-90" />
-            </button>
-            <button type="button" aria-label={`Move ${s.name} down`} disabled={last} onClick={() => dnd.nudge(s.id!, 1)}
-              className="grid size-8 place-items-center rounded-full text-muted transition-[transform,color,background-color] duration-150 ease-out hover:bg-surface-2 hover:text-ink active:scale-90 disabled:opacity-30">
-              <Icon name="chevron" className="size-4 rotate-90" />
-            </button>
-          </span>
-        )}
-      </h3>
+    <section aria-label={s.name} data-group={s.id ?? undefined}
+      onDragOver={target ? (e: DragEvent<HTMLElement>) => { e.preventDefault(); if (dnd.over !== s.id) dnd.hover(s.id); } : undefined}
+      onDrop={target ? (e) => { e.preventDefault(); dnd.assign(dnd.drag!.id, s.id, true); dnd.end(); } : undefined}
+      className={`-mx-2 rounded-2xl px-2 pb-1 transition-[background-color,outline-color] duration-150 ${!target ? "" : dnd.over === s.id ? "bg-accent/20 outline-2 -outline-offset-2 outline-dashed outline-ink/60!" : "outline-2 -outline-offset-2 outline-dashed outline-ink/20!"}`}>
+      <GroupHeading name={s.name} count={s.deeds.length} movable={s.id !== null} first={first} last={last} nudge={(by) => dnd.nudge(s.id!, by)}
+        className="border-b border-line pb-1.5 pt-1 font-semibold" />
       <ul className="divide-y divide-line">
         {s.deeds.map((d) => <Row key={d.id} deed={d} dnd={dnd} />)}
         {!s.deeds.length && <li className="py-3 text-sm text-muted">{dnd.drag ? "Drop here" : "Drag deeds here"}</li>}
       </ul>
     </section>
+  );
+}
+
+// A group's name with up/down arrows to move it. Shared with the housemate's "I did" cards.
+export function GroupHeading({ name, count, movable, first, last, nudge, className }: {
+  name: string; count?: number; movable: boolean; first: boolean; last: boolean; nudge: (by: -1 | 1) => void; className: string;
+}): ReactNode {
+  return (
+    <h3 className={`flex items-center gap-2 ${className}`}>
+      <span className="min-w-0 [overflow-wrap:anywhere]">{name}</span>
+      {count !== undefined && <span className="text-xs font-medium text-muted tabular-nums">{count}</span>}
+      {movable && (
+        <span className="ml-auto flex shrink-0 gap-1 normal-case tracking-normal">
+          <button type="button" aria-label={`Move ${name} up`} title="Move up" disabled={first} onClick={() => nudge(-1)} className={arrow}><Icon name="chevron" className="size-4 -rotate-90" /></button>
+          <button type="button" aria-label={`Move ${name} down`} title="Move down" disabled={last} onClick={() => nudge(1)} className={arrow}><Icon name="chevron" className="size-4 rotate-90" /></button>
+        </span>
+      )}
+    </h3>
   );
 }
 
