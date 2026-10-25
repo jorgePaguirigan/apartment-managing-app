@@ -5,9 +5,9 @@ import { errorText } from "@/lib/errors";
 export const input =
   "w-full rounded-2xl border border-line bg-surface px-4 py-3 text-base text-ink outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-muted/70 focus:border-ink focus:ring-4 focus:ring-accent";
 export const button =
-  "inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-ink px-5 py-2.5 text-base font-semibold text-bg transition-[transform,opacity] duration-150 ease-out hover:opacity-85 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-ink px-5 py-2.5 text-base font-semibold text-bg transition-[transform,opacity] duration-150 ease-out hover:opacity-85 [@media(hover:hover)]:hover:-translate-y-px active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50";
 export const ghost =
-  "inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full border border-line bg-transparent px-3.5 py-2 text-sm font-medium text-ink transition-[transform,background-color] duration-150 ease-out hover:bg-surface-2 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full border border-line bg-transparent px-3.5 py-2 text-sm font-medium text-ink transition-[transform,background-color] duration-150 ease-out hover:bg-surface-2 [@media(hover:hover)]:hover:-translate-y-px active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50";
 // Round icon button for moving a group up or down.
 export const arrow =
   "grid size-8 place-items-center rounded-full border border-line text-muted transition-[transform,color,background-color,opacity] duration-150 ease-out hover:bg-surface-2 hover:text-ink active:scale-90 disabled:pointer-events-none disabled:opacity-30";
