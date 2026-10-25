@@ -1,12 +1,12 @@
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { acceptAll, award, createInvite, editDeed, revokeInvite, saveDeed, setDeedActive } from "../actions";
+import { acceptAll, award, createInvite, editDeed, removeHousemate, revokeInvite, saveDeed, setDeedActive } from "../actions";
 import { InboxItem } from "./inbox-item";
 import { CopyButton } from "./copy-button";
 import { HistoryList, type HistoryRow } from "./history-list";
 import { SubmitButton } from "./submit-button";
 import { Shortcuts } from "./shortcuts";
-import { Avatar, Chip, Icon, Kbd, Section, button, ghost, input } from "./ui";
+import { Avatar, Chip, Icon, Kbd, Section, button, danger, ghost, input } from "./ui";
 
 type ClaimRow = { id: string; note: string | null; title: string | null; member: { display_name: string } | null; deed: { name: string; points: number } | null };
 
@@ -180,6 +180,29 @@ export async function AdminView() {
             {!invites?.length && <li className="text-sm text-muted">No active links.</li>}
           </ul>
           <form action={createInvite}><SubmitButton className={`${button} w-full`} pendingText="Creating…">New invite link</SubmitButton></form>
+        </Section>
+
+        <Section title="Housemates" count={housemates?.length}>
+          <ul className="divide-y divide-line">
+            {housemates?.map((m) => (
+              <li key={m.user_id} className="removable py-2.5 first:pt-0 last:pb-0">
+                <details className="group">
+                  <summary className="flex cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden">
+                    <Avatar name={m.display_name} className="size-9" />
+                    <span className="min-w-0 flex-1 truncate font-semibold">{m.display_name}</span>
+                    <span className={`${danger} group-open:hidden`}>Remove housemate</span>
+                    <span className="hidden group-open:block"><span className={ghost}>Cancel</span></span>
+                  </summary>
+                  <form action={removeHousemate} className="reveal mt-2.5 flex items-center gap-3 rounded-2xl bg-bad/10 p-3">
+                    <input type="hidden" name="member" value={m.user_id} />
+                    <p className="flex-1 text-sm text-bad">Remove {m.display_name}? Their past points stay in History; their open chores go back to unassigned.</p>
+                    <SubmitButton className={danger} pendingText="Removing…">Remove</SubmitButton>
+                  </form>
+                </details>
+              </li>
+            ))}
+            {!housemates?.length && <li className="text-sm text-muted">No housemates yet. Share an invite link above.</li>}
+          </ul>
         </Section>
       </div>
     </div>

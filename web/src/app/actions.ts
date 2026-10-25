@@ -129,6 +129,12 @@ export async function award(formData: FormData) {
   await done(error);
 }
 
+export async function removeHousemate(formData: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("remove_housemate", { p_member: str(formData, "member") });
+  await done(error);
+}
+
 export async function createInvite() {
   const supabase = await createClient();
   const { error } = await supabase.rpc("create_invite", { p_role: "housemate" });
