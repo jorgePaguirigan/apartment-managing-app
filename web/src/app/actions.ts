@@ -158,6 +158,7 @@ export async function saveDeed(formData: FormData) {
     name: str(formData, "name"),
     points,
     kind: points > 0 ? "good" : "penalty",
+    group_id: str(formData, "group") || null,
   });
   await done(error);
 }
@@ -176,6 +177,21 @@ export async function editDeed(formData: FormData) {
 export async function deleteEntry(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("delete_entry", { p_entry: str(formData, "entry") });
+  await done(error);
+}
+
+export async function addGroup(formData: FormData) {
+  const supabase = await createClient();
+  const { data: me } = await supabase.from("member").select("household_id").limit(1).single();
+  if (!me) fail("no household");
+  const { error } = await supabase.from("deed_group").insert({ household_id: me.household_id, name: str(formData, "name") });
+  await done(error);
+}
+
+// Called by the catalog when the admin drops a deed on a group. null means Ungrouped.
+export async function moveDeed(deed: string, group: string | null) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("deed").update({ group_id: group }).eq("id", deed);
   await done(error);
 }
 

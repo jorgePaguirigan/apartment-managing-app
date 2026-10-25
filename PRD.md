@@ -31,6 +31,7 @@ A shared app for housemates to track who contributes to the apartment. Housemate
 
 ### 4.1 Deed catalog
 - Admin-managed list: `name`, `points` (positive or negative integer), `kind` (`good` or `penalty`).
+- Deeds can be sorted into admin-made groups (Kitchen, Laundry, ...). The admin drags a deed between groups; a deed with no group is Ungrouped.
 - Seeded with examples: Cleaned toilet +5, Cooked dinner +4, Washed own dishes +1, Forgot to wash cup -1, Messy room -2. **[Default]** values; admin edits them.
 
 ### 4.2 Claims flow
