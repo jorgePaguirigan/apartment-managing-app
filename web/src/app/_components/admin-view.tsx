@@ -38,7 +38,7 @@ export async function AdminView() {
     supabase.from("score_entry")
       .select("id, points, title, created_at, member:member!score_entry_member_id_fkey(display_name), deed:deed_id(name)")
       .eq("source", "admin").is("deleted_at", null).order("created_at", { ascending: false }).limit(HISTORY),
-    supabase.from("deed_group").select("id, name").order("created_at"),
+    supabase.from("deed_group").select("id, name").order("position").order("created_at"),
   ]);
   const scored = new Map((entries ?? []).map((e) => [e.claim_id, e]));
   const fromClaims: HistoryRow[] = ((decided ?? []) as unknown as (Omit<ClaimRow, "deed"> & { status: "accepted" | "rejected"; decided_at: string; deed: { name: string } | null })[]).map((c) => ({

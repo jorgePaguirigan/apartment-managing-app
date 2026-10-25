@@ -188,7 +188,8 @@ export async function deleteEntry(formData: FormData) {
 
 export async function addGroup(formData: FormData) {
   const supabase = await createClient();
-  const { error } = await supabase.from("deed_group").insert({ household_id: await householdId(supabase), name: str(formData, "name") });
+  const { count } = await supabase.from("deed_group").select("id", { count: "exact", head: true });
+  const { error } = await supabase.from("deed_group").insert({ household_id: await householdId(supabase), name: str(formData, "name"), position: count ?? 0 });
   await done(error);
 }
 
@@ -196,6 +197,20 @@ export async function addGroup(formData: FormData) {
 export async function moveDeed(deed: string, group: string | null) {
   const supabase = await createClient();
   const { error } = await supabase.from("deed").update({ group_id: group }).eq("id", deed);
+  await done(error);
+}
+
+// Called by the catalog after the admin drags a group: ids in their new order.
+export async function reorderGroups(ids: string[]) {
+  const supabase = await createClient();
+  const results = await Promise.all(ids.map((id, position) => supabase.from("deed_group").update({ position }).eq("id", id)));
+  await done(results.find((r) => r.error)?.error ?? null);
+}
+
+// A member's own order of catalog groups for their "I did…" cards. Never changes the admin's catalog.
+export async function setMyGroupOrder(ids: string[]) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_my_group_order", { p_ids: ids });
   await done(error);
 }
 

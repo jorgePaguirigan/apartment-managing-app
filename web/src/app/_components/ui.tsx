@@ -18,6 +18,7 @@ const ICONS = {
   check: "m5 12.5 4.5 4.5L19 7.5",
   x: "M6 6l12 12M18 6 6 18",
   plus: "M12 5v14M5 12h14",
+  chevron: "m9 6 6 6-6 6",
   grip: "M8 6a1 1 0 1 0 2 0a1 1 0 1 0-2 0M14 6a1 1 0 1 0 2 0a1 1 0 1 0-2 0M8 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0M14 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0M8 18a1 1 0 1 0 2 0a1 1 0 1 0-2 0M14 18a1 1 0 1 0 2 0a1 1 0 1 0-2 0",
   copy: "M9 9h10v10H9zM5 15V5h10",
   share: "M12 4v11M8 8l4-4 4 4M5 14v5h14v-5",
@@ -74,8 +75,8 @@ const TONES = {
   muted: "bg-surface-2 text-muted",
 };
 
-export function Chip({ tone = "muted", children }: { tone?: keyof typeof TONES; children: ReactNode }) {
-  return <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums ${TONES[tone]}`}>{children}</span>;
+export function Chip({ tone = "muted", className = "text-xs px-2.5 py-0.5", children }: { tone?: keyof typeof TONES; className?: string; children: ReactNode }) {
+  return <span className={`inline-flex items-center gap-1 rounded-full font-semibold tabular-nums ${className} ${TONES[tone]}`}>{children}</span>;
 }
 
 // Initial in a pastel circle; the hue comes from the name so it stays the same everywhere.

@@ -17,15 +17,20 @@ const dayText = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "sho
 
 export async function HousemateView({ me }: { me: Me }) {
   const supabase = await createClient();
-  const [{ data: deeds }, { data: claims }, { data: board }, { data: entries }, { data: household }, { data: open }] = await Promise.all([
-    supabase.from("deed").select("id, name, points").eq("kind", "good").eq("active", true).order("name"),
+  const [{ data: deeds }, { data: claims }, { data: board }, { data: entries }, { data: household }, { data: open }, { data: groups }, { data: myOrder }] = await Promise.all([
+    supabase.from("deed").select("id, name, points, group_id").eq("kind", "good").eq("active", true).order("name"),
     supabase.from("claim").select("id, status, note, title, created_at, deed:deed_id(name, points)").order("created_at", { ascending: false }).limit(100), // the first 10 show; the rest open under See more
     supabase.rpc("leaderboard", { p_period: "this_week" }),
     // Points actually scored: copied onto the entry when approved, so catalog edits never change history.
     supabase.from("score_entry").select("claim_id, points").eq("member_id", me.userId).eq("source", "claim").is("deleted_at", null),
     supabase.from("household").select("timezone").single(),
     supabase.rpc("available_chores"),
+    supabase.from("deed_group").select("id, name").order("position").order("created_at"),
+    supabase.from("member_group_order").select("group_id, position"), // only this housemate's own rows
   ]);
+  // Their own order first; groups they have not placed yet keep the admin's order after those.
+  const myPos = new Map((myOrder ?? []).map((o) => [o.group_id, o.position]));
+  const ordered = [...(groups ?? [])].sort((a, b) => (myPos.get(a.id) ?? Infinity) - (myPos.get(b.id) ?? Infinity));
   const scored = new Map((entries ?? []).map((e) => [e.claim_id, e.points]));
   // Accepted: the points copied onto the entry (0 if an admin deleted it). Pending: catalog points, unknown for custom claims.
   const history: HistoryRow[] = ((claims ?? []) as unknown as ClaimRow[]).map((c) => ({
@@ -57,7 +62,7 @@ export async function HousemateView({ me }: { me: Me }) {
       </section>
 
       <Section title="I did…">
-        {deeds?.length ? <ClaimForm deeds={deeds} /> : <p className="text-sm text-muted">Your admin hasn&apos;t added any deeds yet.</p>}
+        {deeds?.length ? <ClaimForm deeds={deeds} groups={ordered} /> : <p className="text-sm text-muted">Your admin hasn&apos;t added any deeds yet.</p>}
       </Section>
 
       <Section title="Available chores" count={(open as OpenChore[] | null)?.length}>
