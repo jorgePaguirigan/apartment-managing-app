@@ -23,6 +23,7 @@ export function LiveRefresh() {
       .on("postgres_changes", { event: "*", schema: "public", table: "spend_entry" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "budget_category" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "member" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "report" }, refresh)
       .subscribe();
     const onVisible = () => document.visibilityState === "visible" && router.refresh();
     document.addEventListener("visibilitychange", onVisible);

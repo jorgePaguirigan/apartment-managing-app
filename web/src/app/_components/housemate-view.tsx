@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Me } from "@/lib/me";
 import { ClaimForm } from "./claim-form";
+import { ReportForm } from "./report-form";
+import { getHousemates } from "@/lib/me";
 import { HistoryList, type HistoryRow } from "./history-list";
 import { Shortcuts } from "./shortcuts";
 import { CountUp } from "./count-up";
@@ -17,7 +19,7 @@ const dayText = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "sho
 
 export async function HousemateView({ me }: { me: Me }) {
   const supabase = await createClient();
-  const [{ data: deeds }, { data: claims }, { data: board }, { data: entries }, { data: household }, { data: open }, { data: groups }, { data: myOrder }] = await Promise.all([
+  const [{ data: deeds }, { data: claims }, { data: board }, { data: entries }, { data: household }, { data: open }, { data: groups }, { data: myOrder }, { data: penalties }, { data: given }, housemates, { data: myReports }, { data: reportEntries }] = await Promise.all([
     supabase.from("deed").select("id, name, points, group_id").eq("kind", "good").eq("active", true).order("name"),
     supabase.from("claim").select("id, status, note, title, created_at, deed:deed_id(name, points)").eq("member_id", me.userId).order("created_at", { ascending: false }).limit(100), // the first 10 show; the rest open under See more
     supabase.rpc("leaderboard", { p_period: "this_week" }),
@@ -27,6 +29,13 @@ export async function HousemateView({ me }: { me: Me }) {
     supabase.rpc("available_chores"),
     supabase.from("deed_group").select("id, name").order("position").order("created_at"),
     supabase.from("member_group_order").select("group_id, position"), // only this housemate's own rows
+    supabase.from("deed").select("id, name, points").eq("kind", "penalty").eq("active", true).is("deleted_at", null).order("name"),
+    // Entries an admin made for them: awards, and penalties from reports (those carry who reported, unless anonymous).
+    supabase.from("score_entry").select("id, points, title, created_at, deleted_at, report_note, deed:deed_id(name)").eq("member_id", me.userId).eq("source", "admin").order("created_at", { ascending: false }).limit(100),
+    getHousemates(),
+    // Reports they filed, and the entries those became (to show the points that were applied).
+    supabase.from("report").select("id, title, status, created_at, subject:member!report_subject_id_fkey(display_name), deed:deed_id(name, points)").eq("reporter_id", me.userId).order("created_at", { ascending: false }).limit(100),
+    supabase.from("score_entry").select("report_id, points, deleted_at").not("report_id", "is", null),
   ]);
   // Their own order first; groups they have not placed yet keep the admin's order after those.
   const myPos = new Map((myOrder ?? []).map((o) => [o.group_id, o.position]));
@@ -42,6 +51,18 @@ export async function HousemateView({ me }: { me: Me }) {
     deleted: !!scored.get(c.id)?.deleted_at,
     points: c.status === "accepted" ? scored.get(c.id)?.points ?? 0 : c.status === "pending" ? c.deed?.points ?? null : 0,
   }));
+  const awarded: HistoryRow[] = ((given ?? []) as unknown as { id: string; points: number; title: string | null; created_at: string; deleted_at: string | null; report_note: string | null; deed: { name: string } | null }[])
+    .map((e) => ({ id: e.id, title: e.deed?.name ?? e.title ?? "", at: e.created_at, note: e.report_note, status: "awarded", points: e.points, deleted: !!e.deleted_at }));
+  const applied = new Map((reportEntries ?? []).map((e) => [e.report_id, e]));
+  const reported: HistoryRow[] = ((myReports ?? []) as unknown as { id: string; title: string | null; status: "pending" | "accepted" | "rejected"; created_at: string; subject: { display_name: string } | null; deed: { name: string; points: number } | null }[])
+    .map((r) => ({
+      id: `report-${r.id}`,
+      title: `You reported ${r.subject?.display_name ?? "a housemate"} · ${r.deed?.name ?? r.title ?? ""}`,
+      at: r.created_at, note: null, status: r.status,
+      points: r.status === "accepted" ? applied.get(r.id)?.points ?? 0 : r.status === "pending" ? r.deed?.points ?? null : 0,
+      deleted: !!applied.get(r.id)?.deleted_at,
+    }));
+  const all = [...history, ...awarded, ...reported].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 100);
   const rows = (board ?? []) as BoardRow[];
   const mine = rows.find((r) => r.member_id === me.userId);
 
@@ -64,6 +85,10 @@ export async function HousemateView({ me }: { me: Me }) {
 
       <Section title="I did…">
         {deeds?.length ? <ClaimForm deeds={deeds} groups={ordered} /> : <p className="text-sm text-muted">Your admin hasn&apos;t added any deeds yet.</p>}
+      </Section>
+
+      <Section title="Report a housemate">
+        {housemates.length ? <ReportForm housemates={housemates} penalties={penalties ?? []} meId={me.userId} /> : <p className="text-sm text-muted">No housemates to report yet.</p>}
       </Section>
 
       <Section title="Available chores" count={(open as OpenChore[] | null)?.length}>
@@ -91,7 +116,7 @@ export async function HousemateView({ me }: { me: Me }) {
       </Section>
 
       <Section title="History">
-        <HistoryList timeZone={household?.timezone ?? "Asia/Manila"} empty="Nothing yet. Tap a deed above when you do one." rows={history} />
+        <HistoryList timeZone={household?.timezone ?? "Asia/Manila"} empty="Nothing yet. Tap a deed above when you do one." rows={all} />
       </Section>
     </>
   );

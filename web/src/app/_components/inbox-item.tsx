@@ -1,16 +1,16 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { decideClaim } from "../actions";
+import { decideClaim, decideReport } from "../actions";
 
-// One waiting claim. Once Accept/Reject is sent the row fades and collapses while the server works,
+// One waiting claim (or report). Once Accept/Reject is sent the row fades and collapses while the server works,
 // so the list closes up smoothly when the claim leaves it. If the action fails the row comes back.
-export function InboxItem({ head, fields }: { head: ReactNode; fields: ReactNode }) {
+export function InboxItem({ head, fields, report }: { head: ReactNode; fields: ReactNode; report?: boolean }) {
   const [leaving, setLeaving] = useState(false);
   async function action(fd: FormData) {
     setLeaving(true);
     try {
-      await decideClaim(fd);
+      await (report ? decideReport : decideClaim)(fd);
     } finally {
       setLeaving(false);
     }
