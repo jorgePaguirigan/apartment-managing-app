@@ -1,6 +1,6 @@
 -- pgTAP tests for reporting a housemate. Run with `supabase test db`.
 begin;
-select plan(19);
+select plan(20);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-00000000000a'), ('00000000-0000-0000-0000-000000000001'),
@@ -57,6 +57,9 @@ select throws_ok($$select public.decide_report(current_setting('t.r2')::uuid, tr
 select lives_ok($$select public.decide_report(current_setting('t.r2')::uuid, true, -3)$$, 'admin accepts a typed demerit with points');
 select is((select title || ' ' || points::text || ' ' || report_note from public.score_entry where member_id = '00000000-0000-0000-0000-000000000001'),
   'Left the door open -3 Reported anonymously', 'an anonymous report hides the reporter');
+
+select is((select count(*) from public.score_entry where report_id = current_setting('t.r1')::uuid), 1::bigint,
+  'the scored entry points back at its report');
 
 -- Only an admin of the same household decides.
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}';

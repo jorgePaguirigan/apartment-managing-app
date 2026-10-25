@@ -23,7 +23,7 @@ const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
 
 export async function AdminView() {
   const supabase = await createClient();
-  const [{ data: claims }, { data: deeds }, { data: housemates }, { data: invites }, { data: decided }, { data: entries }, { data: household }, { data: awards }, { data: groups }, { data: reports }] = await Promise.all([
+  const [{ data: claims }, { data: deeds }, { data: housemates }, { data: invites }, { data: decided }, { data: entries }, { data: household }, { data: awards }, { data: groups }, { data: reports }, { data: dismissed }] = await Promise.all([
     supabase.from("claim")
       .select("id, note, title, member:member!claim_member_id_fkey(display_name), deed:deed_id(name, points)")
       .eq("status", "pending").order("created_at"),
@@ -44,6 +44,10 @@ export async function AdminView() {
     supabase.from("report")
       .select("id, title, anonymous, reporter:member!report_reporter_id_fkey(display_name), subject:member!report_subject_id_fkey(display_name), deed:deed_id(name, points)")
       .eq("status", "pending").order("created_at"),
+    // Accepted reports already show as the penalty they scored; dismissed ones would leave no trace without this.
+    supabase.from("report")
+      .select("id, title, anonymous, decided_at, reporter:member!report_reporter_id_fkey(display_name), subject:member!report_subject_id_fkey(display_name), deed:deed_id(name, points)")
+      .eq("status", "rejected").order("decided_at", { ascending: false }).limit(HISTORY),
   ]);
   const scored = new Map((entries ?? []).map((e) => [e.claim_id, e]));
   const fromClaims: HistoryRow[] = ((decided ?? []) as unknown as (Omit<ClaimRow, "deed"> & { status: "accepted" | "rejected"; decided_at: string; deed: { name: string } | null })[]).map((c) => ({
@@ -68,7 +72,15 @@ export async function AdminView() {
     entryId: e.id,
     deleted: !!e.deleted_at,
   }));
-  const history = [...fromClaims, ...fromAwards].sort((a, b) => b.at.localeCompare(a.at)).slice(0, HISTORY);
+  const fromDismissed: HistoryRow[] = ((dismissed ?? []) as unknown as (ReportRow & { decided_at: string })[]).map((r) => ({
+    id: `report-${r.id}`,
+    title: `${r.reporter?.display_name} reported ${r.subject?.display_name} · ${r.deed?.name ?? r.title ?? ""}`,
+    at: r.decided_at,
+    note: null,
+    status: "rejected",
+    points: 0,
+  }));
+  const history = [...fromClaims, ...fromAwards, ...fromDismissed].sort((a, b) => b.at.localeCompare(a.at)).slice(0, HISTORY);
   const h = await headers();
   const origin = h.get("origin") ?? `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
   const active = deeds?.filter((d) => d.active) ?? [];
