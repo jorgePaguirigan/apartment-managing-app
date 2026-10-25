@@ -14,6 +14,13 @@ function fail(message: string, to = "/"): never {
   redirect(`${to}${to.includes("?") ? "&" : "?"}error=${errorCode(message)}`);
 }
 
+// The caller's household, for inserts into tables admins write directly. Every member row returned is in the same household.
+async function householdId(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const { data } = await supabase.from("member").select("household_id").limit(1).single();
+  if (!data) fail("no household");
+  return data.household_id as string;
+}
+
 // Runs a database call; on error shows the message, on success refreshes the page.
 async function done(error: { message: string } | null, to = "/") {
   if (error) fail(error.message, to);
@@ -151,10 +158,9 @@ export async function saveDeed(formData: FormData) {
   const points = Number(str(formData, "points"));
   if (!Number.isInteger(points) || points === 0) fail("invalid points");
   const supabase = await createClient();
-  const { data: me } = await supabase.from("member").select("household_id").limit(1).single(); // everyone returned is in the same household
-  if (!me) fail("no household");
+  const household = await householdId(supabase);
   const { error } = await supabase.from("deed").insert({
-    household_id: me.household_id,
+    household_id: household,
     name: str(formData, "name"),
     points,
     kind: points > 0 ? "good" : "penalty",
@@ -182,9 +188,7 @@ export async function deleteEntry(formData: FormData) {
 
 export async function addGroup(formData: FormData) {
   const supabase = await createClient();
-  const { data: me } = await supabase.from("member").select("household_id").limit(1).single();
-  if (!me) fail("no household");
-  const { error } = await supabase.from("deed_group").insert({ household_id: me.household_id, name: str(formData, "name") });
+  const { error } = await supabase.from("deed_group").insert({ household_id: await householdId(supabase), name: str(formData, "name") });
   await done(error);
 }
 

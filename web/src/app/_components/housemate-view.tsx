@@ -63,7 +63,7 @@ export async function HousemateView({ me }: { me: Me }) {
       <Section title="Available chores" count={(open as OpenChore[] | null)?.length}>
         <ul className="divide-y divide-line">
           {((open ?? []) as OpenChore[]).map((c) => (
-            <li key={c.instance_id} className="removable flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
+            <li key={c.instance_id} className="removable -mx-2 flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors duration-150 first:pt-0 last:pb-0 [@media(hover:hover)]:hover:bg-surface-2/60">
               <span className="display w-12 shrink-0 text-center leading-tight">
                 <span className="eyebrow block">{dayText.format(new Date(`${c.day}T00:00:00Z`)).split(",")[0]}</span>
                 <span className="text-xl font-bold tabular-nums">{c.day.slice(8)}</span>

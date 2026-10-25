@@ -26,7 +26,7 @@ function Roamer({ name }: { name: string }) {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return; // stand still
     let t = 0;
     const go = () => {
-      if (document.hidden) { t = window.setTimeout(go, 1000); return; }
+      if (document.hidden || document.documentElement.dataset.figures === "off") { t = window.setTimeout(go, 1000); return; } // idle while unseen
       const to = Math.random() * Math.max(0, innerWidth - W);
       const secs = Math.abs(to - x) / SPEED;
       setDir(to < x ? -1 : 1);
