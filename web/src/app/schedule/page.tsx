@@ -14,8 +14,8 @@ type MedalRow = { member_id: string; label: string };
 type DoerRow = { deed_name: string; member_id: string; display_name: string; times: number };
 
 const PHASE_TEXT: Record<string, string> = {
-  early: "Dibs open Thursday 00:00. Unclaimed chores are handed out Sunday 00:00.",
-  dibs: "Dibs are open until Saturday 23:59. Unclaimed chores are handed out Sunday 00:00.",
+  early: "Claim any open chore now. Unclaimed chores are handed out Sunday 00:00.",
+  dibs: "Claim any open chore now. Unclaimed chores are handed out Sunday 00:00.",
   published: "This schedule is set.",
   current: "This week's schedule.",
   past: "A finished week.",
@@ -52,9 +52,9 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
     return c ? [{ id: i.id, name: c.name, area: c.area, weight: c.weight, weekday: c.weekday, assignee: i.assignee, source: i.source,
       claimed: i.claim_id !== null, status: claimStatus.get(i.claim_id ?? "") ?? null }] : [];
   });
-  // A housemate sees only their own chores, plus unclaimed ones while dibs are open. Others' cards are never sent to the browser.
+  // A housemate sees only their own chores, plus unclaimed ones they can still claim. Others' cards are never sent to the browser.
   const isAdmin = me.role === "admin";
-  const visible = isAdmin ? cards : cards.filter((c) => c.assignee === me.userId || (phase === "dibs" && c.assignee === null));
+  const visible = isAdmin ? cards : cards.filter((c) => c.assignee === me.userId || (phase !== "past" && c.assignee === null));
   const columns = isAdmin ? housemates : housemates.filter((h) => h.id === me.userId);
   const nameOf = new Map(housemates.map((h) => [h.id, h.name]));
 

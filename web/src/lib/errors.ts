@@ -17,7 +17,7 @@ const TEXT: Record<string, string> = {
   "invalid-title": "Describe the deed in 1 to 80 characters.",
   "points-must-be-positive": "Give a custom deed a whole number of points above 0.",
   "invalid-points": "Points must be a whole number other than 0.",
-  "dibs-are-closed": "Dibs are closed. They are open Thursday to Saturday before the week.",
+  "dibs-are-closed": "That week is over, so its chores can no longer be claimed.",
   "already-taken": "Someone else already took that chore.",
   "over-your-fair-share": "You already have your fair share of chores.",
   "chore-not-found": "That chore no longer exists.",

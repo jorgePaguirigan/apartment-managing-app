@@ -83,10 +83,10 @@ export function Board({ weekStart, phase, housemates, cards, meId, isAdmin, show
                             {housemates.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
                           </select>
                         )}
-                        {!isAdmin && phase === "dibs" && k.assignee === null && (
+                        {!isAdmin && phase !== "past" && k.assignee === null && (
                           <form action={dibChore} className="mt-2"><Hidden id={k.id} /><SubmitButton className={small}>Dibs</SubmitButton></form>
                         )}
-                        {!isAdmin && phase === "dibs" && k.assignee === meId && k.source === "dibs" && (
+                        {!isAdmin && phase !== "past" && k.assignee === meId && k.source === "dibs" && !k.claimed && (
                           <form action={undibChore} className="mt-2"><Hidden id={k.id} /><SubmitButton className={small}>Release</SubmitButton></form>
                         )}
                         {k.assignee === meId && (phase === "current" || phase === "past") && (!k.claimed || k.status === "rejected") && (
