@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { safeNext } from "@/lib/safe-next";
 import { errorCode } from "@/lib/errors";
@@ -66,6 +66,19 @@ export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/login");
+}
+
+// Admins who opted in as housemates flip between the two views; the choice lives in a cookie.
+export async function switchView() {
+  const jar = await cookies();
+  jar.set("view", jar.get("view")?.value === "housemate" ? "admin" : "housemate", { path: "/", maxAge: 60 * 60 * 24 * 365 });
+  revalidatePath("/", "layout");
+}
+
+export async function setAlsoHousemate(formData: FormData) {
+  const supabase = await createClient();
+  await done((await supabase.rpc("set_also_housemate", { p_on: formData.get("on") === "1" })).error);
+  revalidatePath("/", "layout");
 }
 
 // Accepts a pasted invite link or just its code.

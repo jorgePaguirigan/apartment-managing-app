@@ -19,7 +19,7 @@ export async function HousemateView({ me }: { me: Me }) {
   const supabase = await createClient();
   const [{ data: deeds }, { data: claims }, { data: board }, { data: entries }, { data: household }, { data: open }, { data: groups }, { data: myOrder }] = await Promise.all([
     supabase.from("deed").select("id, name, points, group_id").eq("kind", "good").eq("active", true).order("name"),
-    supabase.from("claim").select("id, status, note, title, created_at, deed:deed_id(name, points)").order("created_at", { ascending: false }).limit(100), // the first 10 show; the rest open under See more
+    supabase.from("claim").select("id, status, note, title, created_at, deed:deed_id(name, points)").eq("member_id", me.userId).order("created_at", { ascending: false }).limit(100), // the first 10 show; the rest open under See more
     supabase.rpc("leaderboard", { p_period: "this_week" }),
     // Points actually scored: copied onto the entry when approved, so catalog edits never change history.
     supabase.from("score_entry").select("claim_id, points").eq("member_id", me.userId).eq("source", "claim").is("deleted_at", null),

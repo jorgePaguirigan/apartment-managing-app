@@ -26,7 +26,7 @@ export async function AdminView() {
       .select("id, note, title, member:member!claim_member_id_fkey(display_name), deed:deed_id(name, points)")
       .eq("status", "pending").order("created_at"),
     supabase.from("deed").select("id, name, points, active, group_id").is("deleted_at", null).order("kind").order("name"),
-    supabase.from("member").select("user_id, display_name").eq("role", "housemate").order("display_name"),
+    supabase.from("member").select("user_id, display_name").eq("scored", true).order("display_name"),
     supabase.from("invite").select("code, expires_at").is("revoked_at", null).order("created_at"),
     supabase.from("claim")
       .select("id, note, title, status, decided_at, member:member!claim_member_id_fkey(display_name), deed:deed_id(name)")
