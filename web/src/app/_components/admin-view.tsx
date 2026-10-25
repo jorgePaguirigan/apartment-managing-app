@@ -12,7 +12,9 @@ import { Avatar, Chip, Icon, Kbd, Section, button, ghost, input } from "./ui";
 
 type ClaimRow = { id: string; note: string | null; title: string | null; member: { display_name: string } | null; deed: { name: string; points: number } | null };
 
-type AwardRow = { id: string; points: number; deleted_at: string | null; title: string | null; created_at: string; member: { display_name: string } | null; deed: { name: string } | null };
+type ReportRow = { id: string; title: string | null; anonymous: boolean; reporter: { display_name: string } | null; subject: { display_name: string } | null; deed: { name: string; points: number } | null };
+
+type AwardRow = { id: string; points: number; report_note: string | null; deleted_at: string | null; title: string | null; created_at: string; member: { display_name: string } | null; deed: { name: string } | null };
 
 // shortcut: History (and its modal) holds the latest 100 rows; page through older ones if a household outgrows that.
 const HISTORY = 100;
@@ -21,7 +23,7 @@ const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
 
 export async function AdminView() {
   const supabase = await createClient();
-  const [{ data: claims }, { data: deeds }, { data: housemates }, { data: invites }, { data: decided }, { data: entries }, { data: household }, { data: awards }, { data: groups }] = await Promise.all([
+  const [{ data: claims }, { data: deeds }, { data: housemates }, { data: invites }, { data: decided }, { data: entries }, { data: household }, { data: awards }, { data: groups }, { data: reports }] = await Promise.all([
     supabase.from("claim")
       .select("id, note, title, member:member!claim_member_id_fkey(display_name), deed:deed_id(name, points)")
       .eq("status", "pending").order("created_at"),
@@ -36,9 +38,12 @@ export async function AdminView() {
     supabase.from("household").select("timezone").single(),
     // Awards and penalties entered directly, with no claim behind them.
     supabase.from("score_entry")
-      .select("id, points, title, created_at, deleted_at, member:member!score_entry_member_id_fkey(display_name), deed:deed_id(name)")
+      .select("id, points, title, created_at, deleted_at, report_note, member:member!score_entry_member_id_fkey(display_name), deed:deed_id(name)")
       .eq("source", "admin").order("created_at", { ascending: false }).limit(HISTORY),
     supabase.from("deed_group").select("id, name").order("position").order("created_at"),
+    supabase.from("report")
+      .select("id, title, anonymous, reporter:member!report_reporter_id_fkey(display_name), subject:member!report_subject_id_fkey(display_name), deed:deed_id(name, points)")
+      .eq("status", "pending").order("created_at"),
   ]);
   const scored = new Map((entries ?? []).map((e) => [e.claim_id, e]));
   const fromClaims: HistoryRow[] = ((decided ?? []) as unknown as (Omit<ClaimRow, "deed"> & { status: "accepted" | "rejected"; decided_at: string; deed: { name: string } | null })[]).map((c) => ({
@@ -56,7 +61,7 @@ export async function AdminView() {
     id: e.id,
     title: e.deed?.name ?? e.title ?? "",
     at: e.created_at,
-    note: null,
+    note: e.report_note,
     status: "awarded",
     points: e.points,
     who: e.member?.display_name,
@@ -107,6 +112,36 @@ export async function AdminView() {
             {!pending.length && <li className="rounded-2xl border border-dashed border-line p-5 text-center text-sm text-muted">All caught up. New claims show up here.</li>}
           </ul>
         </Section>
+
+        {!!reports?.length && (
+          <Section title="Reports" count={reports.length}>
+            <ul className="space-y-3">
+              {(reports as unknown as ReportRow[]).map((r) => (
+                <InboxItem key={r.id} report
+                  head={(
+                    <div className="flex items-start gap-3">
+                      <Avatar name={r.subject?.display_name ?? "?"} className="size-9" />
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words"><span className="font-semibold">{r.subject?.display_name}</span> was reported for <span className="font-semibold">{r.deed?.name ?? r.title}</span></p>
+                        <p className="text-sm text-muted">By {r.reporter?.display_name}{r.anonymous ? " · hidden from them" : ""}</p>
+                      </div>
+                      {r.deed ? <Chip tone="bad">{signed(r.deed.points)}</Chip> : <Chip tone="muted">Typed</Chip>}
+                    </div>
+                  )}
+                  fields={(
+                    <>
+                      <input type="hidden" name="report" value={r.id} />
+                      {!r.deed && (
+                        <input name="points" type="number" inputMode="numeric" min={1} step={1} placeholder="Points to take off" aria-label="Points to take off" className={`${input} col-span-2`} />
+                      )}
+                      <SubmitButton name="accept" value="1" pendingText="Scoring…" className={button}><Icon name="check" />Score it</SubmitButton>
+                      <SubmitButton name="accept" value="0" pendingText="Dismissing…" className={`${ghost} min-h-12 rounded-2xl`}><Icon name="x" />Dismiss</SubmitButton>
+                    </>
+                  )} />
+              ))}
+            </ul>
+          </Section>
+        )}
 
         <Section title="Award or penalty">
           {housemates?.length ? (

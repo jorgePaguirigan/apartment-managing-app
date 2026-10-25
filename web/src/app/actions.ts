@@ -150,6 +150,31 @@ export async function award(formData: FormData) {
   await done(error);
 }
 
+// `deed` is a penalty id, or "other" with a typed `title`.
+export async function submitReport(formData: FormData) {
+  const supabase = await createClient();
+  const deed = str(formData, "deed");
+  const { error } = await supabase.rpc("submit_report", {
+    p_subject: str(formData, "subject"),
+    p_deed: deed === "other" ? null : deed,
+    p_title: deed === "other" ? str(formData, "title") : null,
+    p_anonymous: formData.get("anonymous") === "on",
+  });
+  await done(error);
+}
+
+// `points` is a positive number of points to take off, only sent for typed demerits.
+export async function decideReport(formData: FormData) {
+  const supabase = await createClient();
+  const points = str(formData, "points");
+  const { error } = await supabase.rpc("decide_report", {
+    p_report: str(formData, "report"),
+    p_accept: str(formData, "accept") === "1",
+    p_points: points ? -Math.abs(Number(points)) : null,
+  });
+  await done(error);
+}
+
 export async function removeHousemate(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("remove_housemate", { p_member: str(formData, "member") });
@@ -320,8 +345,8 @@ export async function logSpend(formData: FormData) {
 export async function memberHistory(memberId: string): Promise<HistoryRow[]> {
   const supabase = await createClient();
   const { data } = await supabase.from("score_entry")
-    .select("id, points, title, source, created_at, deleted_at, deed:deed_id(name)")
+    .select("id, points, title, source, created_at, deleted_at, report_note, deed:deed_id(name)")
     .eq("member_id", memberId).order("created_at", { ascending: false }).limit(100);
-  return ((data ?? []) as unknown as { id: string; points: number; title: string | null; source: "claim" | "admin"; created_at: string; deleted_at: string | null; deed: { name: string } | null }[])
-    .map((e) => ({ id: e.id, title: e.deed?.name ?? e.title ?? "", at: e.created_at, note: null, status: e.source === "claim" ? "accepted" : "awarded", points: e.points, deleted: !!e.deleted_at }));
+  return ((data ?? []) as unknown as { id: string; points: number; title: string | null; source: "claim" | "admin"; created_at: string; deleted_at: string | null; report_note: string | null; deed: { name: string } | null }[])
+    .map((e) => ({ id: e.id, title: e.deed?.name ?? e.title ?? "", at: e.created_at, note: e.report_note, status: e.source === "claim" ? "accepted" : "awarded", points: e.points, deleted: !!e.deleted_at }));
 }
