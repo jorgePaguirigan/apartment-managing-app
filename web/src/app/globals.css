@@ -187,6 +187,13 @@ input, select, textarea { font-size: 16px; }
 @media (prefers-reduced-motion: reduce) { .modal, .modal[open] { transform: none; } }
 html:has(.modal[open]) { overflow: hidden; }
 
+/* Inline confirm slides in under its row; a row being removed dims until the server drops it. */
+.reveal { transition: opacity 180ms var(--ease-out-strong), transform 180ms var(--ease-out-strong); }
+@starting-style { .reveal { opacity: 0; transform: translateY(-4px); } }
+.removable { transition: opacity 200ms var(--ease-out-strong), transform 200ms var(--ease-out-strong); }
+.removable:has([aria-busy="true"]) { opacity: 0.45; transform: scale(0.98); }
+@media (prefers-reduced-motion: reduce) { .reveal, .removable:has([aria-busy="true"]) { transform: none; } }
+
 /* More motion. All gated for reduced motion; hover lifts only where hover exists. */
 @media (prefers-reduced-motion: no-preference) {
   .fade-in { animation: fade-in 220ms ease-out both; }

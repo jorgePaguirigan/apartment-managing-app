@@ -6,6 +6,7 @@ Use these words exactly. They match the PRD and the database.
 - **Admin**: runs the household. Approves claims, enters penalties, edits the catalog. Not scored, not on the leaderboard.
 - **Housemate**: a scored resident. Submits claims, never awards points.
 - **Member**: the database row for either an admin or a housemate (`member.role`). Use "admin" or "housemate" in prose.
+- **Removed housemate**: a housemate an admin removed (`member.role = 'removed'`). Their history stays; they are off the leaderboard and schedule and can read nothing of the household.
 - **Deed**: one entry in the catalog: a name, a point value, a kind.
 - **Catalog**: the household's list of deeds, edited by admins.
 - **Good deed / penalty**: `kind`. Good deeds are positive and claimable. Penalties are negative and entered by an admin only.
