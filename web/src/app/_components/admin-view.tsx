@@ -12,7 +12,7 @@ import { Avatar, Chip, Icon, Kbd, Section, button, ghost, input } from "./ui";
 
 type ClaimRow = { id: string; note: string | null; title: string | null; member: { display_name: string } | null; deed: { name: string; points: number } | null };
 
-type AwardRow = { id: string; points: number; title: string | null; created_at: string; member: { display_name: string } | null; deed: { name: string } | null };
+type AwardRow = { id: string; points: number; deleted_at: string | null; title: string | null; created_at: string; member: { display_name: string } | null; deed: { name: string } | null };
 
 // shortcut: History (and its modal) holds the latest 100 rows; page through older ones if a household outgrows that.
 const HISTORY = 100;
@@ -32,12 +32,12 @@ export async function AdminView() {
       .select("id, note, title, status, decided_at, member:member!claim_member_id_fkey(display_name), deed:deed_id(name)")
       .neq("status", "pending").order("decided_at", { ascending: false }).limit(HISTORY),
     // Points actually scored, copied onto the entry when accepted.
-    supabase.from("score_entry").select("id, claim_id, points").eq("source", "claim").is("deleted_at", null),
+    supabase.from("score_entry").select("id, claim_id, points, deleted_at").eq("source", "claim"),
     supabase.from("household").select("timezone").single(),
     // Awards and penalties entered directly, with no claim behind them.
     supabase.from("score_entry")
-      .select("id, points, title, created_at, member:member!score_entry_member_id_fkey(display_name), deed:deed_id(name)")
-      .eq("source", "admin").is("deleted_at", null).order("created_at", { ascending: false }).limit(HISTORY),
+      .select("id, points, title, created_at, deleted_at, member:member!score_entry_member_id_fkey(display_name), deed:deed_id(name)")
+      .eq("source", "admin").order("created_at", { ascending: false }).limit(HISTORY),
     supabase.from("deed_group").select("id, name").order("position").order("created_at"),
   ]);
   const scored = new Map((entries ?? []).map((e) => [e.claim_id, e]));
@@ -50,6 +50,7 @@ export async function AdminView() {
     points: c.status === "accepted" ? scored.get(c.id)?.points ?? 0 : 0,
     who: c.member?.display_name,
     entryId: scored.get(c.id)?.id,
+    deleted: !!scored.get(c.id)?.deleted_at,
   }));
   const fromAwards: HistoryRow[] = ((awards ?? []) as unknown as AwardRow[]).map((e) => ({
     id: e.id,
@@ -60,6 +61,7 @@ export async function AdminView() {
     points: e.points,
     who: e.member?.display_name,
     entryId: e.id,
+    deleted: !!e.deleted_at,
   }));
   const history = [...fromClaims, ...fromAwards].sort((a, b) => b.at.localeCompare(a.at)).slice(0, HISTORY);
   const h = await headers();

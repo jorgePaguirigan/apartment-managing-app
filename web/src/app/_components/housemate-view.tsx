@@ -22,7 +22,7 @@ export async function HousemateView({ me }: { me: Me }) {
     supabase.from("claim").select("id, status, note, title, created_at, deed:deed_id(name, points)").eq("member_id", me.userId).order("created_at", { ascending: false }).limit(100), // the first 10 show; the rest open under See more
     supabase.rpc("leaderboard", { p_period: "this_week" }),
     // Points actually scored: copied onto the entry when approved, so catalog edits never change history.
-    supabase.from("score_entry").select("claim_id, points").eq("member_id", me.userId).eq("source", "claim").is("deleted_at", null),
+    supabase.from("score_entry").select("claim_id, points, deleted_at").eq("member_id", me.userId).eq("source", "claim"),
     supabase.from("household").select("timezone").single(),
     supabase.rpc("available_chores"),
     supabase.from("deed_group").select("id, name").order("position").order("created_at"),
@@ -31,15 +31,16 @@ export async function HousemateView({ me }: { me: Me }) {
   // Their own order first; groups they have not placed yet keep the admin's order after those.
   const myPos = new Map((myOrder ?? []).map((o) => [o.group_id, o.position]));
   const ordered = [...(groups ?? [])].sort((a, b) => (myPos.get(a.id) ?? Infinity) - (myPos.get(b.id) ?? Infinity));
-  const scored = new Map((entries ?? []).map((e) => [e.claim_id, e.points]));
-  // Accepted: the points copied onto the entry (0 if an admin deleted it). Pending: catalog points, unknown for custom claims.
+  const scored = new Map((entries ?? []).map((e) => [e.claim_id, e]));
+  // Accepted: the points copied onto the entry; a deleted entry keeps its points but is marked. Pending: catalog points, unknown for custom claims.
   const history: HistoryRow[] = ((claims ?? []) as unknown as ClaimRow[]).map((c) => ({
     id: c.id,
     title: c.deed?.name ?? c.title ?? "",
     at: c.created_at,
     note: c.note,
     status: c.status,
-    points: c.status === "accepted" ? scored.get(c.id) ?? 0 : c.status === "pending" ? c.deed?.points ?? null : 0,
+    deleted: !!scored.get(c.id)?.deleted_at,
+    points: c.status === "accepted" ? scored.get(c.id)?.points ?? 0 : c.status === "pending" ? c.deed?.points ?? null : 0,
   }));
   const rows = (board ?? []) as BoardRow[];
   const mine = rows.find((r) => r.member_id === me.userId);
