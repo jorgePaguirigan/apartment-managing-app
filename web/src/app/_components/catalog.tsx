@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type DragEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type DragEvent, type ReactNode } from "react";
 import { useFlip, useLocal } from "./reorder";
 import { addGroup, deleteDeed, editDeed, moveDeed, reorderGroups, saveDeed, setDeedActive } from "../actions";
 import { ConfirmButton } from "./confirm-button";
@@ -25,6 +25,18 @@ export function Catalog({ groups, deeds }: { groups: Group[]; deeds: Deed[] }) {
   const [dropped, setDropped] = useState<string | null>(null); // FLIP key of what the user just carried; it lands where dropped
   const [drag, setDrag] = useState<Deed | null>(null);
   const [over, setOver] = useState<string | null | undefined>(undefined);
+  // Collapsed groups are a per-viewer convenience, kept in this browser only.
+  const [collapsed, setCollapsed] = useState<string[]>([]);
+  useEffect(() => {
+    // localStorage only exists in the browser, so it is read after hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    try { setCollapsed(JSON.parse(localStorage.getItem("catalog-collapsed") ?? "[]")); } catch {}
+  }, []);
+  const toggle = (id: string) => {
+    const next = collapsed.includes(id) ? collapsed.filter((x) => x !== id) : [...collapsed, id];
+    setCollapsed(next);
+    try { localStorage.setItem("catalog-collapsed", JSON.stringify(next)); } catch {}
+  };
   const known = new Set(order.map((g) => g.id));
   const sections: Section[] = [
     ...order.map((g) => ({ id: g.id, name: g.name, deeds: view.filter((d) => d.group_id === g.id) })),
@@ -46,7 +58,7 @@ export function Catalog({ groups, deeds }: { groups: Group[]; deeds: Deed[] }) {
     void reorderGroups(ids);
   };
   const dnd: Dnd = {
-    groups: order, drag, over, dropped, assign, nudge,
+    groups: order, drag, over, dropped, assign, nudge, collapsed, toggle,
     start: setDrag, hover: setOver, end: () => { setDrag(null); setOver(undefined); },
   };
 
@@ -84,6 +96,7 @@ export function Catalog({ groups, deeds }: { groups: Group[]; deeds: Deed[] }) {
 type Dnd = {
   groups: Group[]; drag: Deed | null; over: string | null | undefined; dropped: string | null;
   assign: (id: string, to: string | null, carried?: boolean) => void; nudge: (id: string, by: -1 | 1) => void;
+  collapsed: string[]; toggle: (id: string) => void;
   start: (d: Deed) => void; hover: (g: string | null) => void; end: () => void;
 };
 
@@ -100,29 +113,47 @@ function Sections({ sections, dnd }: { sections: Section[]; dnd: Dnd }) {
 
 function GroupSection({ section: s, dnd, first, last }: { section: Section; dnd: Dnd; first: boolean; last: boolean }) {
   const target = dnd.drag !== null && (dnd.drag.group_id ?? null) !== s.id;
+  const key = s.id ?? "none";
+  const open = !dnd.collapsed.includes(key);
   return (
     <section aria-label={s.name} data-group={s.id ?? undefined}
       onDragOver={target ? (e: DragEvent<HTMLElement>) => { e.preventDefault(); if (dnd.over !== s.id) dnd.hover(s.id); } : undefined}
       onDrop={target ? (e) => { e.preventDefault(); dnd.assign(dnd.drag!.id, s.id, true); dnd.end(); } : undefined}
       className={`-mx-2 rounded-2xl px-2 pb-1 transition-[background-color,outline-color] duration-150 ${!target ? "" : dnd.over === s.id ? "bg-accent/20 outline-2 -outline-offset-2 outline-dashed outline-ink/60!" : "outline-2 -outline-offset-2 outline-dashed outline-ink/20!"}`}>
       <GroupHeading name={s.name} count={s.deeds.length} movable={s.id !== null} first={first} last={last} nudge={(by) => dnd.nudge(s.id!, by)}
-        className="border-b border-line pb-1.5 pt-1 font-semibold" />
-      <ul className="divide-y divide-line">
-        {s.deeds.map((d) => <Row key={d.id} deed={d} dnd={dnd} />)}
-        {!s.deeds.length && <li className="py-3 text-sm text-muted">{dnd.drag ? "Drop here" : "Drag deeds here"}</li>}
-      </ul>
+        open={open} toggle={() => dnd.toggle(key)} className="border-b border-line pb-1.5 pt-1 font-semibold" />
+      <div className="fold" data-open={open} inert={!open}>
+        <div className="-mx-2 px-2">
+          <ul className="divide-y divide-line">
+            {s.deeds.map((d) => <Row key={d.id} deed={d} dnd={dnd} />)}
+            {!s.deeds.length && <li className="py-3 text-sm text-muted">{dnd.drag ? "Drop here" : "Drag deeds here"}</li>}
+          </ul>
+        </div>
+      </div>
     </section>
   );
 }
 
 // A group's name with up/down arrows to move it. Shared with the housemate's "I did" cards.
-export function GroupHeading({ name, count, movable, first, last, nudge, className }: {
+export function GroupHeading({ name, count, movable, first, last, nudge, className, open, toggle }: {
   name: string; count?: number; movable: boolean; first: boolean; last: boolean; nudge: (by: -1 | 1) => void; className: string;
+  open?: boolean; toggle?: () => void; // when given, the name is a button that folds the group
 }): ReactNode {
-  return (
-    <h3 className={`flex items-center gap-2 ${className}`}>
+  const label = (
+    <>
+      {toggle && <Icon name="chevron" className="turn size-4 text-muted" />}
       <span className="min-w-0 [overflow-wrap:anywhere]">{name}</span>
       {count !== undefined && <span className="text-xs font-medium text-muted tabular-nums">{count}</span>}
+    </>
+  );
+  return (
+    <h3 className={`flex items-center gap-2 ${className}`}>
+      {toggle ? (
+        <button type="button" aria-expanded={open} onClick={toggle} data-open={open}
+          className="-ml-1 flex min-w-0 items-center gap-2 rounded-lg px-1 py-0.5 text-left transition-[transform,background-color] duration-150 ease-out active:scale-[0.98] [@media(hover:hover)]:hover:bg-surface-2/70">
+          {label}
+        </button>
+      ) : <span className="flex min-w-0 items-center gap-2">{label}</span>}
       {movable && (
         <span className="ml-auto flex shrink-0 gap-1 normal-case tracking-normal">
           <button type="button" aria-label={`Move ${name} up`} title="Move up" disabled={first} onClick={() => nudge(-1)} className={arrow}><Icon name="chevron" className="size-4 -rotate-90" /></button>
