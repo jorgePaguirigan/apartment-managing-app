@@ -172,6 +172,21 @@ input, select, textarea { font-size: 16px; }
 }
 @media (prefers-reduced-transparency: reduce) { .glass::after { display: none; } }
 
+/* Modal (see-more). Opens in 220ms, closes faster; display/overlay are discrete so the exit can play before it hides. */
+.modal, .modal::backdrop {
+  transition: opacity 160ms var(--ease-out-strong), transform 160ms var(--ease-out-strong), overlay 160ms allow-discrete, display 160ms allow-discrete;
+}
+.modal { opacity: 0; transform: scale(0.96); }
+.modal::backdrop { opacity: 0; background: rgb(10 10 8 / 0.45); }
+.modal[open], .modal[open]::backdrop { opacity: 1; transition-duration: 220ms; }
+.modal[open] { transform: none; }
+@starting-style {
+  .modal[open], .modal[open]::backdrop { opacity: 0; }
+  .modal[open] { transform: scale(0.96); }
+}
+@media (prefers-reduced-motion: reduce) { .modal, .modal[open] { transform: none; } }
+html:has(.modal[open]) { overflow: hidden; }
+
 /* More motion. All gated for reduced motion; hover lifts only where hover exists. */
 @media (prefers-reduced-motion: no-preference) {
   .fade-in { animation: fade-in 220ms ease-out both; }
