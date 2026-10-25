@@ -1,6 +1,6 @@
 -- pgTAP tests for removing a housemate. Run with `supabase test db`.
 begin;
-select plan(12);
+select plan(14);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-0000000000d1'), ('00000000-0000-0000-0000-0000000000d2'),
@@ -25,6 +25,10 @@ select public.award('00000000-0000-0000-0000-0000000000d2', (select id from publ
 reset role;
 insert into public.chore (id, household_id, name, weekday, weight)
   values ('00000000-0000-0000-0000-00000000c401', current_setting('t.hh')::uuid, 'Sweep', 1, 1);
+-- Ana was last month's top scorer, so she holds that month's MVP.
+insert into public.score_entry (household_id, member_id, title, points, source, approved_by, created_at)
+  values (current_setting('t.hh')::uuid, '00000000-0000-0000-0000-0000000000d2', 'Big clean', 9, 'admin',
+          '00000000-0000-0000-0000-0000000000d1', date_trunc('month', now()) - interval '3 days');
 insert into public.chore_instance (household_id, chore_id, week_start, assignee, source)
   values (current_setting('t.hh')::uuid, '00000000-0000-0000-0000-00000000c401',
           date_trunc('week', now() at time zone 'Asia/Manila')::date, '00000000-0000-0000-0000-0000000000d2', 'admin');
@@ -47,13 +51,17 @@ select lives_ok($$select public.remove_housemate('00000000-0000-0000-0000-000000
 select is((select count(*) from public.leaderboard('this_week') where member_id = '00000000-0000-0000-0000-0000000000d2'),
   0::bigint, 'removed housemate is off the leaderboard');
 select is((select count(*) from public.score_entry where member_id = '00000000-0000-0000-0000-0000000000d2' and deleted_at is null),
-  1::bigint, 'their score entries are kept');
+  2::bigint, 'their score entries are kept');
 select is((select status from public.claim where id = current_setting('t.claim')::uuid), 'rejected',
   'their pending claim is rejected');
 select is((select assignee from public.chore_instance where chore_id = '00000000-0000-0000-0000-00000000c401'), null,
   'their chore this week goes back to unassigned');
 select throws_ok($$select public.award('00000000-0000-0000-0000-0000000000d2', (select id from public.deed where name = 'Cleaned toilet'))$$,
   null, null, 'a removed housemate cannot be scored');
+select is((select count(*) from public.medals() where member_id = '00000000-0000-0000-0000-0000000000d2'), 0::bigint,
+  'a removed housemate shows no medals');
+select is((select count(*) from public.medals() where kind = 'mvp_month'), 0::bigint,
+  'nobody else inherits the MVP they earned');
 
 -- Ana herself sees nothing of the household any more and cannot claim.
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000d2","role":"authenticated"}';

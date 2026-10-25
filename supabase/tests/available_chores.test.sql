@@ -1,6 +1,6 @@
 -- pgTAP tests for available chores and claiming them any time. Run with `supabase test db`.
 begin;
-select plan(6);
+select plan(7);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-0000000000a1'), ('00000000-0000-0000-0000-0000000000a2'), ('00000000-0000-0000-0000-0000000000a3');
@@ -35,6 +35,11 @@ select is((select count(*) from public.available_chores('2026-10-20 10:00+08')),
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a3","role":"authenticated"}';
 select throws_ok($$select public.dib_chore(current_setting('t.next')::uuid, '2026-10-20 11:00+08')$$,
   '55000', 'already taken', 'nobody else can take it');
+
+-- From Sunday's handout on, she cannot hand it back for someone else to be given.
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a2","role":"authenticated"}';
+select throws_ok($$select public.undib_chore(current_setting('t.next')::uuid, '2026-10-25 00:00+08')$$,
+  '55000', 'too late to release', 'no release once the week''s chores are handed out');
 
 -- Once she says she did it, she cannot release it.
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a2","role":"authenticated"}';

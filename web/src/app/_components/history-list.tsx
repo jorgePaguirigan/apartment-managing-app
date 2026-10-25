@@ -59,7 +59,7 @@ function Rows({ rows, timeZone }: { rows: HistoryRow[]; timeZone: string }) {
           {c.entryId && (
             <details className="mt-1">
               <summary className="cursor-pointer text-xs text-muted transition-colors duration-150 hover:text-ink">Delete…</summary>
-              <form action={deleteEntry} className="mt-2 flex items-center gap-2">
+              <form action={deleteEntry} className="reveal mt-2 flex items-center gap-2">
                 <input type="hidden" name="entry" value={c.entryId} />
                 <p className="flex-1 text-xs text-muted">Hides it from totals. Kept for audit.</p>
                 <SubmitButton className={ghost} pendingText="…">Confirm delete</SubmitButton>

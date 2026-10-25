@@ -19,6 +19,7 @@ const TEXT: Record<string, string> = {
   "invalid-points": "Points must be a whole number other than 0.",
   "dibs-are-closed": "That week is over, so its chores can no longer be claimed.",
   "already-taken": "Someone else already took that chore.",
+  "too-late-to-release": "Chores can only be released before Sunday's handout.",
   "over-your-fair-share": "You already have your fair share of chores.",
   "chore-not-found": "That chore no longer exists.",
   "this-chore-can-no-longer-move": "That chore can no longer be moved.",

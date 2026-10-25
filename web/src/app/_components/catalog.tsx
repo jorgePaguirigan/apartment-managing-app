@@ -95,7 +95,7 @@ function Sections({ sections, dnd }: { sections: Section[]; dnd: Dnd }) {
             onDrop={target ? (e) => { e.preventDefault(); dnd.assign(dnd.drag!.id, s.id); dnd.end(); } : undefined}
             className={`-mx-2 rounded-2xl px-2 pb-1 transition-[background-color,outline-color] duration-150 ${!target ? "" : dnd.over === s.id ? "bg-accent/20 outline-2 -outline-offset-2 outline-dashed outline-ink/60!" : "outline-2 -outline-offset-2 outline-dashed outline-ink/20!"}`}>
             <h3 className="flex items-center gap-2 border-b border-line pb-1.5 pt-1 font-semibold">
-              {s.name}<span className="text-xs font-medium text-muted tabular-nums">{s.deeds.length}</span>
+              <span className="min-w-0 [overflow-wrap:anywhere]">{s.name}</span><span className="text-xs font-medium text-muted tabular-nums">{s.deeds.length}</span>
             </h3>
             <ul className="divide-y divide-line">
               {s.deeds.map((d) => <Row key={d.id} deed={d} dnd={dnd} />)}
@@ -115,8 +115,8 @@ function Row({ deed: d, dnd }: { deed: Deed; dnd: Dnd }) {
     <li data-deed={d.id} draggable={armed}
       onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", d.name); dnd.start(d); }}
       onDragEnd={() => { setArmed(false); dnd.end(); }}
-      className={`removable flex flex-wrap items-center gap-3 py-2.5 transition-[opacity,transform] duration-150 ${lifted ? "scale-[0.98] opacity-40" : ""}`}>
-      <button type="button" aria-label={`Drag ${d.name}`} onPointerDown={() => setArmed(true)} onPointerUp={() => setArmed(false)}
+      className={`removable -mx-2 flex flex-wrap items-center gap-3 rounded-xl px-2 py-2.5 transition-[opacity,transform,background-color] duration-150 [@media(hover:hover)]:hover:bg-surface-2/60 ${lifted ? "scale-[0.98] opacity-40" : ""}`}>
+      <button type="button" aria-label={`Drag ${d.name}`} onPointerDown={() => { setArmed(true); addEventListener("pointerup", () => setArmed(false), { once: true }); }}
         className="-ml-1 grid size-8 shrink-0 cursor-grab place-items-center rounded-lg text-muted transition-[transform,color,background-color] duration-150 ease-out hover:bg-surface-2 hover:text-ink active:scale-90 active:cursor-grabbing [@media(hover:none)]:hidden">
         <Icon name="grip" className="size-4" />
       </button>
