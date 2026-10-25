@@ -209,15 +209,17 @@ export async function setDeedActive(formData: FormData) {
 }
 
 // The schedule page has its own cache entry and error banner.
-function doneSchedule(error: { message: string } | null) {
-  if (error) fail(error.message, "/schedule");
+// Dibs can come from Home's Available chores too, so errors go back to whichever page sent the form.
+function doneSchedule(error: { message: string } | null, from?: FormData) {
+  if (error) fail(error.message, from && str(from, "from") === "/" ? "/" : "/schedule");
   revalidatePath("/schedule");
+  revalidatePath("/");
 }
 
 export async function dibChore(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("dib_chore", { p_instance: str(formData, "instance") });
-  doneSchedule(error);
+  doneSchedule(error, formData);
 }
 
 export async function undibChore(formData: FormData) {

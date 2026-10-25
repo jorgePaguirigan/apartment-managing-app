@@ -69,11 +69,11 @@ select is(pg_temp.q('cccccccc-0000-0000-0000-000000000001', '2026-10-19'), 'Dee,
 -- Week of 19 Oct: 3 chores of total weight 4 for 4 housemates, so a fair share is 1.
 select public.generate_week('2026-10-19', '2026-10-14 12:00+08');
 select is((select count(*) from public.chore_instance where week_start = '2026-10-19'), 3::bigint, 'generate_week creates one instance per active chore');
-select throws_ok($$select public.dib_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000003', '2026-10-19'), '2026-10-14 23:59+08')$$,
-  '55000', 'dibs are closed', 'no dibs before Thursday 00:00');
-select public.dib_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000003', '2026-10-19'), '2026-10-15 00:00+08');
+select throws_ok($$select public.dib_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000003', '2026-10-19'), '2026-10-26 00:00+08')$$,
+  '55000', 'dibs are closed', 'no dibs once the week is over');
+select public.dib_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000003', '2026-10-19'), '2026-10-14 23:59+08');
 select is((select assignee::text || source from public.chore_instance where chore_id = 'cccccccc-0000-0000-0000-000000000003' and week_start = '2026-10-19'),
-  '00000000-0000-0000-0000-000000000001dibs', 'dibs from Thursday 00:00 take the chore');
+  '00000000-0000-0000-0000-000000000001dibs', 'dibs are open any time before the week ends, not only Thursday to Saturday');
 select throws_ok($$select public.dib_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000001', '2026-10-19'), '2026-10-17 23:59+08')$$,
   '55000', 'over your fair share', 'a second dib past the fair share is refused');
 select pg_temp.act('00000000-0000-0000-0000-000000000002');
@@ -89,7 +89,7 @@ select public.generate_week('2026-10-19', '2026-10-17 23:59+08');
 select is((select assignee from public.chore_instance where chore_id = 'cccccccc-0000-0000-0000-000000000002' and week_start = '2026-10-19'),
   null, 'Saturday 23:59: unclaimed chores are not allocated yet');
 select throws_ok($$select public.dib_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000002', '2026-10-19'), '2026-10-18 00:00+08')$$,
-  '55000', 'dibs are closed', 'Sunday 00:00 closes the dibs window');
+  '55000', 'over your fair share', 'Sunday dibs still respect the fair share');
 select public.generate_week('2026-10-19', '2026-10-18 00:00+08');
 select is((select assignee::text || source from public.chore_instance where chore_id = 'cccccccc-0000-0000-0000-000000000002' and week_start = '2026-10-19'),
   '00000000-0000-0000-0000-000000000003queue', 'Sunday 00:00: Trash goes to the lowest load; Cy and Dee tie, name decides');

@@ -75,9 +75,9 @@ Nothing is ever reset. All views are queries over entries by date range (Q10).
 ### 5.2 Weekly cycle **[Default]**
 | When (household time zone) | What happens |
 |---|---|
-| Thursday 00:00 to Saturday 23:59 | Dibs window for next week. A housemate may dib any unclaimed chore, first come first served. |
+| Any time until the week ends | Dibs. A housemate may dib any unclaimed chore of this week or next, first come first served, from the Available chores list on Home or the schedule. |
 | Cap | A housemate may dib up to their fair share: `ceil(total weight / number of housemates)`. |
-| Sunday 00:00 | Window closes. Unclaimed chores are allocated (5.3). Next week's schedule is published. |
+| Sunday 00:00 | Unclaimed chores of the coming week are allocated (5.3). Next week's schedule is published. |
 
 ### 5.3 Allocation of unclaimed chores
 Each chore has a **queue**, worked out from history each time it is read, never stored. Points are not used.
