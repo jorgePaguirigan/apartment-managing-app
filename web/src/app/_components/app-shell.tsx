@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { signOut } from "../actions";
+import { signOut, switchView } from "../actions";
 import { Roamers } from "./roamers";
 import { getHousemates, type Me } from "@/lib/me";
 import { PillNav } from "./pill-nav";
@@ -36,7 +36,15 @@ export async function AppShell({ me, active, children }: { me: Me; active: Tab; 
             <span className="hidden items-center gap-2 sm:flex">
               <Avatar name={me.name} className="size-8" />
               <span className="text-sm font-medium">{me.name}</span>
-              <Chip tone={me.role === "admin" ? "points" : "muted"}>{me.role}</Chip>
+              {me.alsoHousemate ? (
+                <form action={switchView}>
+                  <button title={`Switch to ${me.role === "admin" ? "housemate" : "admin"} view`} className="rounded-full active:scale-[0.96]">
+                    <Chip tone={me.role === "admin" ? "points" : "muted"}>{me.role} ⇄</Chip>
+                  </button>
+                </form>
+              ) : (
+                <Chip tone={me.role === "admin" ? "points" : "muted"}>{me.role}</Chip>
+              )}
             </span>
             <form action={signOut}>
               <button aria-label="Sign out" title="Sign out" className="grid size-10 place-items-center rounded-full border border-line text-muted transition-[transform,color] duration-150 ease-out hover:text-ink active:scale-[0.94]">
