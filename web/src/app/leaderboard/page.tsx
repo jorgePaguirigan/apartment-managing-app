@@ -6,6 +6,7 @@ import { AppShell } from "../_components/app-shell";
 import { Avatar, Chip, Icon } from "../_components/ui";
 import { FlipList } from "../_components/flip-list";
 import { PillNav } from "../_components/pill-nav";
+import { LeaderCard } from "./card";
 import { ExportButton, type Row } from "./export-button";
 
 type BoardRow = { member_id: string; display_name: string; points: number; rank: number };
@@ -58,8 +59,7 @@ export default async function Leaderboard({ searchParams }: PageProps<"/leaderbo
         {rows.map((r, i) => {
           const lead = r.rank === 1 && r.points > 0;
           return (
-            <li key={r.id} data-flip-id={r.id} style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
-              className={`rise flex items-center gap-3 rounded-3xl p-4 ${lead ? "bg-accent text-[#16171b] sm:p-5" : "border border-line bg-surface shadow-[var(--shadow)]"}`}>
+            <LeaderCard key={r.id} id={r.id} lead={lead} delay={Math.min(i, 8) * 40} timeZone={household?.timezone ?? "Asia/Manila"}>
               <span className={`display w-8 text-center font-extrabold ${lead ? "text-3xl" : "text-xl text-muted"}`}>{r.rank}</span>
               <Avatar name={r.name} className={lead ? "size-12" : "size-10"} />
               <div className="min-w-0 flex-1">
@@ -75,7 +75,7 @@ export default async function Leaderboard({ searchParams }: PageProps<"/leaderbo
                 <span className={`display font-extrabold tabular-nums ${lead ? "text-5xl" : "text-3xl"}`}>{r.points}</span>
                 <span className={`ml-1 text-sm font-medium ${lead ? "opacity-70" : "text-muted"}`}>pts</span>
               </p>
-            </li>
+            </LeaderCard>
           );
         })}
       </FlipList>

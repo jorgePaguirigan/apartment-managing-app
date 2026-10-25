@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { safeNext } from "@/lib/safe-next";
 import { errorCode } from "@/lib/errors";
 import { lastAccount } from "@/lib/last-account";
+import type { HistoryRow } from "./_components/history-list";
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 
@@ -312,4 +313,15 @@ export async function logSpend(formData: FormData) {
     p_note: str(formData, "note") || null,
   });
   doneBudget(error);
+}
+
+// One housemate's scored entries, newest first, for the leaderboard cards. Read through the same household read policy as the
+// rest of the app, so nobody outside the household (or a removed member) comes back with rows.
+export async function memberHistory(memberId: string): Promise<HistoryRow[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("score_entry")
+    .select("id, points, title, source, created_at, deleted_at, deed:deed_id(name)")
+    .eq("member_id", memberId).order("created_at", { ascending: false }).limit(100);
+  return ((data ?? []) as unknown as { id: string; points: number; title: string | null; source: "claim" | "admin"; created_at: string; deleted_at: string | null; deed: { name: string } | null }[])
+    .map((e) => ({ id: e.id, title: e.deed?.name ?? e.title ?? "", at: e.created_at, note: null, status: e.source === "claim" ? "accepted" : "awarded", points: e.points, deleted: !!e.deleted_at }));
 }
