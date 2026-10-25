@@ -62,15 +62,20 @@ export function Catalog({ groups, deeds }: { groups: Group[]; deeds: Deed[] }) {
     start: setDrag, hover: setOver, end: () => { setDrag(null); setOver(undefined); },
   };
 
-  // Fill groups in order until CAP rows; groups past the cap wait for See more. Empty groups stay visible as drop targets.
+  // Fill open groups in order until CAP rows; deeds past the cap wait for See more. A folded group shows all its deeds (folded, so
+  // they take no room) and does not use up the cap. Empty groups stay visible as drop targets.
   let room = CAP;
-  const capped = sections.map((s) => { const shown = s.deeds.slice(0, Math.max(room, 0)); room -= s.deeds.length; return { ...s, deeds: shown, cut: shown.length < s.deeds.length }; })
-    .filter((s) => s.deeds.length || (!s.cut && s.id !== null));
+  const capped = sections.map((s) => {
+    if (collapsed.includes(s.id ?? "none")) return { ...s, cut: false };
+    const shown = s.deeds.slice(0, Math.max(room, 0));
+    room -= s.deeds.length;
+    return { ...s, deeds: shown, cut: shown.length < s.deeds.length };
+  }).filter((s) => s.deeds.length || (!s.cut && s.id !== null));
 
   return (
     <>
       <Sections sections={capped} dnd={dnd} />
-      {view.length > CAP && <SeeMore title="Catalog" total={view.length}><Sections sections={sections.filter((s) => s.deeds.length || s.id !== null)} dnd={dnd} /></SeeMore>}
+      {room < 0 && <SeeMore title="Catalog" total={view.length}><Sections sections={sections.filter((s) => s.deeds.length || s.id !== null)} dnd={dnd} /></SeeMore>}
       <form action={addGroup} className="flex gap-2 border-t border-line pt-3">
         <input name="name" required maxLength={40} placeholder="New group, e.g. Kitchen" aria-label="Group name" className={`${input} min-w-0 flex-1`} />
         <SubmitButton className={`${ghost} min-h-12 shrink-0 px-4`} pendingText="Adding…"><Icon name="plus" className="size-4" />Add group</SubmitButton>
