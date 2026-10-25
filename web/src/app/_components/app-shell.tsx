@@ -4,6 +4,7 @@ import { Roamers } from "./roamers";
 import { getHousemates, type Me } from "@/lib/me";
 import { PillNav } from "./pill-nav";
 import { ThemeToggle } from "./theme-toggle";
+import { FiguresToggle } from "./figures-toggle";
 import { LiveRefresh } from "./live-refresh";
 import { Avatar, Chip, Icon, type IconName } from "./ui";
 
@@ -30,6 +31,7 @@ export async function AppShell({ me, active, children }: { me: Me; active: Tab; 
               activeClass="text-bg" idleClass="text-muted hover:text-ink" thumbClass="rounded-full bg-ink" />
           </nav>
           <div className="flex items-center gap-2.5">
+            <FiguresToggle />
             <ThemeToggle />
             <span className="hidden items-center gap-2 sm:flex">
               <Avatar name={me.name} className="size-8" />

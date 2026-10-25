@@ -34,8 +34,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${display.variable} h-full antialiased`}
     >
       <head>
-        {/* Apply a saved theme before first paint so there is no flash. */}
-        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}` }} />
+        {/* Apply a saved theme and figures choice before first paint so there is no flash. */}
+        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;if(localStorage.getItem("figures")==="off")document.documentElement.dataset.figures="off"}catch(e){}` }} />
       </head>
       <body className="flex min-h-dvh flex-col"><GridGlow />
         {children}

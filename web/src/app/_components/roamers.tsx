@@ -78,7 +78,7 @@ export function Roamers({ names }: { names: string[] }) {
   const list = names.slice(0, MAX);
   if (!list.length) return null;
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-x-0 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-10 h-32 overflow-x-clip md:bottom-0">
+    <div aria-hidden data-roamers className="pointer-events-none fixed inset-x-0 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-10 h-32 overflow-x-clip md:bottom-0">
       {list.map((n, i) => <Roamer key={`${n}-${i}`} name={n} />)}
     </div>
   );
