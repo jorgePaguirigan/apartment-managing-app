@@ -1,6 +1,6 @@
 -- pgTAP tests for catalog groups. Run with `supabase test db`.
 begin;
-select plan(6);
+select plan(8);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-0000000000f1'), ('00000000-0000-0000-0000-0000000000f2'), ('00000000-0000-0000-0000-0000000000f3');
@@ -25,11 +25,20 @@ select is((select g.name from public.deed d join public.deed_group g on g.id = d
 select throws_ok($$update public.deed set group_id = '00000000-0000-0000-0000-00000000a003' where id = current_setting('t.deed')::uuid$$,
   '23503', null, 'a deed cannot join another household''s group');
 
+-- Groups keep the order the admin gives them.
+insert into public.deed_group (id, household_id, name) values ('00000000-0000-0000-0000-00000000a002', current_setting('t.hh')::uuid, 'Laundry');
+update public.deed_group set position = 1 where id = '00000000-0000-0000-0000-00000000a001';
+update public.deed_group set position = 0 where id = '00000000-0000-0000-0000-00000000a002';
+select is((select string_agg(name, ',' order by position) from public.deed_group), 'Laundry,Kitchen', 'admin reorders groups');
+
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000f2","role":"authenticated"}';
 select public.join_household(current_setting('t.code'), 'Ana');
+update public.deed_group set position = 9 where id = '00000000-0000-0000-0000-00000000a002';
+select is((select position from public.deed_group where id = '00000000-0000-0000-0000-00000000a002'), 0,
+  'a housemate cannot reorder groups');
 select throws_ok($$insert into public.deed_group (household_id, name) values (current_setting('t.hh')::uuid, 'Mine')$$,
   '42501', null, 'a housemate cannot add a group');
-select is((select count(*) from public.deed_group), 1::bigint, 'a housemate sees only their household''s groups');
+select is((select count(*) from public.deed_group), 2::bigint, 'a housemate sees only their household''s groups');
 
 select * from finish();
 rollback;
