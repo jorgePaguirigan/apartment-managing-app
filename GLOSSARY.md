@@ -9,6 +9,7 @@ Use these words exactly. They match the PRD and the database.
 - **Removed housemate**: a housemate an admin removed (`member.role = 'removed'`). Their history stays; they are off the leaderboard and schedule and can read nothing of the household.
 - **Deed**: one entry in the catalog: a name, a point value, a kind.
 - **Catalog**: the household's list of deeds, edited by admins.
+- **Group**: a named section of the catalog (`deed_group`), such as Kitchen. A deed belongs to at most one.
 - **Good deed / penalty**: `kind`. Good deeds are positive and claimable. Penalties are negative and entered by an admin only.
 - **Claim**: a housemate's "I did X" waiting for an admin. Status: pending, accepted, rejected. A **custom claim** has a typed title instead of a catalog deed, and the admin sets its points on acceptance.
 - **Score entry**: one signed point change on a housemate's total. Points are copied from the deed when it is created. Never edited; only soft-deleted.
