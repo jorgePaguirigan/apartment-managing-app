@@ -1,8 +1,9 @@
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { acceptAll, award, createInvite, editDeed, removeHousemate, revokeInvite, saveDeed, setDeedActive } from "../actions";
+import { acceptAll, award, createInvite, deleteDeed, editDeed, removeHousemate, revokeInvite, saveDeed, setDeedActive } from "../actions";
 import { InboxItem } from "./inbox-item";
 import { CopyButton } from "./copy-button";
+import { ConfirmButton } from "./confirm-button";
 import { HistoryList, type HistoryRow } from "./history-list";
 import { SubmitButton } from "./submit-button";
 import { Shortcuts } from "./shortcuts";
@@ -23,7 +24,7 @@ export async function AdminView() {
     supabase.from("claim")
       .select("id, note, title, member:member!claim_member_id_fkey(display_name), deed:deed_id(name, points)")
       .eq("status", "pending").order("created_at"),
-    supabase.from("deed").select("id, name, points, active").order("kind").order("name"),
+    supabase.from("deed").select("id, name, points, active").is("deleted_at", null).order("kind").order("name"),
     supabase.from("member").select("user_id, display_name").eq("role", "housemate").order("display_name"),
     supabase.from("invite").select("code, expires_at").is("revoked_at", null).order("created_at"),
     supabase.from("claim")
@@ -128,13 +129,17 @@ export async function AdminView() {
         <Section title="Catalog">
           <ul className="divide-y divide-line">
             {deeds?.map((d) => (
-              <li key={d.id} className="flex flex-wrap items-center gap-3 py-2.5 first:pt-0">
+              <li key={d.id} className="removable flex flex-wrap items-center gap-3 py-2.5 first:pt-0">
                 <span className={`min-w-0 flex-1 break-words ${d.active ? "" : "text-muted line-through"}`}>{d.name}</span>
                 <Chip tone={d.points > 0 ? "points" : "bad"}>{signed(d.points)}</Chip>
-                <form action={setDeedActive}>
-                  <input type="hidden" name="deed" value={d.id} />
-                  <SubmitButton name="active" value={d.active ? "0" : "1"} pendingText="…" className={ghost}>{d.active ? "Hide" : "Show"}</SubmitButton>
-                </form>
+                {!d.active && (
+                  <form action={setDeedActive}>
+                    <input type="hidden" name="deed" value={d.id} />
+                    <SubmitButton name="active" value="1" pendingText="…" className={ghost}>Show</SubmitButton>
+                  </form>
+                )}
+                <ConfirmButton label="Delete" pendingText="Deleting…" action={deleteDeed} name="deed" value={d.id}
+                  prompt={`Delete ${d.name}? It leaves the catalog. Points already scored for it stay.`} />
                 <details className="basis-full">
                   <summary className="cursor-pointer text-xs text-muted">Edit</summary>
                   <form action={editDeed} className="mt-2 flex gap-2">

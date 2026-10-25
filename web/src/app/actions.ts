@@ -179,6 +179,13 @@ export async function deleteEntry(formData: FormData) {
   await done(error);
 }
 
+// The deed leaves the catalog; past entries keep its name and points.
+export async function deleteDeed(formData: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_deed", { p_deed: str(formData, "deed") });
+  await done(error);
+}
+
 export async function setDeedActive(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.from("deed").update({ active: str(formData, "active") === "1" }).eq("id", str(formData, "deed"));
