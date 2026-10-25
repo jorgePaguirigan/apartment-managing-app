@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/jorgepaguirigan/Desktop/cmsc/apartment-manager/web/src/app/template.tsx"],"sourcesContent":["// Re-mounts on every navigation, so each page fades in. Opacity only: a transform here would trap the fixed dock.\nexport default function Template({ children }: { children: React.ReactNode }) {\n  return <div className=\"fade-in flex flex-1 flex-col\">{children}</div>;\n}\n"],"names":["Template","children","className"],"mappings":"AAAA,kHAAkH;;;;;;;AACnG,SAASA,SAAS,EAAEC,QAAQ,EAAiC;IAC1E,qBAAO,8OAAC;QAAIC,WAAU;kBAAgCD;;;;;;AACxD"}}]
-}
