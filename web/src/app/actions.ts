@@ -153,6 +153,7 @@ export async function removeHousemate(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("remove_housemate", { p_member: str(formData, "member") });
   await done(error);
+  revalidatePath("/", "layout"); // the leaderboard, schedule and budget pages the admin visited must not keep showing them
 }
 
 export async function createInvite() {

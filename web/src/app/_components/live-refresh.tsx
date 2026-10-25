@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-// Re-renders the page when a claim, score entry or chore changes, so nobody has to reload by hand.
+// Re-renders the page when a claim, score entry, chore or member changes, so nobody has to reload by hand.
 // Also refreshes when the tab comes back to the front, in case the connection dropped while it was hidden.
 export function LiveRefresh() {
   const router = useRouter();
@@ -22,6 +22,7 @@ export function LiveRefresh() {
       .on("postgres_changes", { event: "*", schema: "public", table: "chore_instance" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "spend_entry" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "budget_category" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "member" }, refresh)
       .subscribe();
     const onVisible = () => document.visibilityState === "visible" && router.refresh();
     document.addEventListener("visibilitychange", onVisible);
