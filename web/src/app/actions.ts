@@ -145,6 +145,16 @@ export async function acceptAll() {
   revalidatePath("/");
 }
 
+// The confirm page behind the Accept and Reject buttons in an admin email. The token in the link is the only credential.
+export async function decideByLink(formData: FormData) {
+  const token = str(formData, "token");
+  if (!/^[0-9a-f]{64}$/.test(token)) redirect("/login");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("decide_claim_by_token", { p_token: token, p_accept: formData.get("accept") === "1" });
+  if (error) fail(error.message, `/decide/${token}`);
+  redirect(`/decide/${token}`);
+}
+
 export async function award(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("award", { p_member: str(formData, "member"), p_deed: str(formData, "deed") });

@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Refreshes the Supabase session cookie and sends signed-out visitors to /login.
+// Refreshes the Supabase session cookie and sends signed-out visitors to /login. /decide/<token> is open: the token is the credential.
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const supabase = createServerClient(
@@ -22,7 +22,7 @@ export async function proxy(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
   const path = request.nextUrl.pathname;
-  if (!user && path !== "/" && !path.startsWith("/login") && !path.startsWith("/auth")) {
+  if (!user && path !== "/" && !path.startsWith("/login") && !path.startsWith("/auth") && !path.startsWith("/decide/")) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";
