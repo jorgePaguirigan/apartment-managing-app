@@ -87,6 +87,7 @@ Each chore has a **queue**, worked out from history each time it is read, never 
 - Queue order, front first: (1) the housemate whose last **completed** instance of that chore is oldest, never completed counting as oldest; (2) tie: the oldest last assignment, so whoever sat out longest goes first (the round robin); (3) tie: name, then id.
 - Completed means the chore's claim was accepted and its score entry still stands. Being assigned and missing it does not move anyone back. Only weeks before the one being built count.
 - An admin moving a card (drag and drop) changes that week's schedule only. It never counts as completing.
+- A card the admin moves to Unassigned stays unassigned for the rest of that week: the allocation does not hand it out again. Housemates can still dib it.
 
 Allocation, from Sunday 00:00 before the week:
 1. Dibs stay as taken.
