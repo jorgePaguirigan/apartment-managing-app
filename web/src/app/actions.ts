@@ -155,6 +155,19 @@ export async function decideByLink(formData: FormData) {
   redirect(`/decide/${token}`);
 }
 
+// The admin's choice of when housemates get the claim emails: right away, or at set times, with optional quiet hours.
+export async function saveSchedule(formData: FormData) {
+  const supabase = await createClient();
+  const instant = str(formData, "mode") !== "times";
+  const quiet = instant && formData.get("quiet") === "on";
+  const times = instant && !quiet ? [] : formData.getAll("time").map(String).filter(Boolean);
+  const { error } = await supabase.rpc("set_send_schedule", {
+    p_instant: instant, p_times: times,
+    p_quiet_from: quiet ? str(formData, "quiet_from") : null, p_quiet_until: quiet ? str(formData, "quiet_until") : null,
+  });
+  await done(error);
+}
+
 export async function award(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("award", { p_member: str(formData, "member"), p_deed: str(formData, "deed") });

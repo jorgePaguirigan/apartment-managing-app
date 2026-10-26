@@ -8,6 +8,7 @@ import { ConfirmButton } from "./confirm-button";
 import { HistoryList, type HistoryRow } from "./history-list";
 import { SubmitButton } from "./submit-button";
 import { Shortcuts } from "./shortcuts";
+import { ScheduleCard, type Schedule } from "./schedule-card";
 import { Avatar, Chip, Icon, Kbd, Section, button, ghost, input } from "./ui";
 
 type ClaimRow = { id: string; note: string | null; title: string | null; member: { display_name: string } | null; deed: { name: string; points: number } | null };
@@ -81,6 +82,7 @@ export async function AdminView() {
     points: 0,
   }));
   const history = [...fromClaims, ...fromAwards, ...fromDismissed].sort((a, b) => b.at.localeCompare(a.at)).slice(0, HISTORY);
+  const { data: schedule } = await supabase.from("send_schedule").select("instant, send_times, quiet_from, quiet_until").maybeSingle();
   const h = await headers();
   const origin = h.get("origin") ?? `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
   const active = deeds?.filter((d) => d.active) ?? [];
@@ -215,6 +217,12 @@ export async function AdminView() {
       <div className="space-y-6">
         <Section title="Catalog">
           <Catalog groups={groups ?? []} deeds={(deeds ?? []) as Deed[]} />
+        </Section>
+      </div>
+
+      <div className="lg:col-span-2">
+        <Section title="Email schedule">
+          <ScheduleCard schedule={schedule as Schedule | null} timeZone={household?.timezone ?? "Asia/Manila"} />
         </Section>
       </div>
     </div>

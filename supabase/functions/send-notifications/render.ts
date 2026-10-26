@@ -122,3 +122,43 @@ ${payload.custom ? `<div style="padding-top:14px">${para("You set the points for
   ].join("\n");
   return { subject, html: shell(subject, `${head} · waiting for your decision`, household, inner, "Each button opens a page where you confirm. The link works once and expires in 7 days."), text };
 }
+
+// Several decisions waiting for the same housemate become one email: what happened, the latest standings, everyone
+// overtaken along the way (a pass that was passed back cancels), and the trophies that changed hands overall.
+export function renderDigestEmail({ household, payloads, appUrl }: { household: string; payloads: Decision[]; appUrl: string }): Email {
+  if (payloads.length === 1) return renderHousemateEmail({ household, payload: payloads[0], appUrl });
+  const app = appUrl.replace(/\/$/, "");
+  const subject = oneLine(`${payloads.length} claims decided in ${household}`);
+  const items = payloads.map((p) => p.status === "accepted"
+    ? { line: `${p.actor} ${p.chore}`, tag: `+${p.points}` }
+    : { line: `${p.actor}'s claim for ${p.chore} was rejected`, tag: "" });
+  const accepted = payloads.filter((p): p is Extract<Decision, { status: "accepted" }> => p.status === "accepted");
+
+  const merge = (period: "this_week" | "this_month"): Board => {
+    const pairs = new Map<string, { name: string; by: string }>();
+    for (const p of accepted) for (const o of p.leaderboards[period].overtaken) pairs.set(`${o.name}\u0000${o.by}`, o);
+    const kept = [...pairs.values()].filter((o) => !pairs.has(`${o.by}\u0000${o.name}`));
+    return { before: [], after: accepted[accepted.length - 1].leaderboards[period].after, overtaken: kept };
+  };
+  const net = (pick: (m: { gained: Medal[]; lost: Medal[] }) => Medal[], other: (m: { gained: Medal[]; lost: Medal[] }) => Medal[]) => {
+    const key = (m: Medal) => `${m.member}\u0000${m.label}`;
+    const gone = new Set(accepted.flatMap((p) => other(p.medals)).map(key));
+    const seen = new Set<string>();
+    return accepted.flatMap((p) => pick(p.medals)).filter((m) => !gone.has(key(m)) && !seen.has(key(m)) && seen.add(key(m)));
+  };
+
+  let inner = `${h1(`${payloads.length} claims decided`)}${items.map((i) => `<p class="ink" style="margin:0 0 6px;font-size:15px;line-height:1.5;color:${C.ink}">${esc(i.line)} ${i.tag ? chip(i.tag) : ""}</p>`).join("")}`;
+  let text = [`${payloads.length} claims decided`, household, "", ...items.map((i) => `- ${i.line}${i.tag ? ` (${i.tag})` : ""}`), ""];
+  if (accepted.length) {
+    const week = merge("this_week"), month = merge("this_month");
+    const medals = { gained: net((m) => m.gained, (m) => m.lost), lost: net((m) => m.lost, (m) => m.gained) };
+    const trophies = trophyLines(medals).map((l) => para(/^(.+) earned /.test(l) ? `🏆 ${l}` : l)).join("");
+    inner += `${boardHtml("This week", week, "")}${boardHtml("This month", month, "")}
+<p class="muted" style="margin:22px 0 6px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${C.muted}">Trophies</p>${trophies}`;
+    const rows = (b: Board) => b.after.map((r) => `${r.rank}. ${r.name.padEnd(16)} ${r.points}`).join("\n");
+    text = [...text, "THIS WEEK", rows(week), ...overtakenLines(week), "", "THIS MONTH", rows(month), ...overtakenLines(month), "", "TROPHIES", ...trophyLines(medals), ""];
+  }
+  inner += `<div style="padding-top:18px">${button(`${app}/leaderboard`, "View leaderboard", true)}</div>`;
+  text = [...text, `${app}/leaderboard`, ""];
+  return { subject, html: shell(subject, items.map((i) => i.line).join(" · "), household, inner, `You get this because you live in ${esc(household)}.`), text: text.join("\n") };
+}

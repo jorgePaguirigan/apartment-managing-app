@@ -145,3 +145,47 @@ test("an admin accepts a claim from the emailed link without signing in", async 
   await visitor.page.goto(`/decide/${"0".repeat(64)}`);
   await expect(visitor.page.getByRole("heading", { name: "Link not valid" })).toBeVisible();
 });
+
+test("an admin sets when housemates get the claim emails", async ({ browser }) => {
+  const admin = await newUser(browser);
+  const mate = await newUser(browser);
+  const mateName = `sched${stamp}`;
+
+  await signIn(admin.page, `schedadmin${stamp}@example.com`);
+  await admin.page.getByLabel("Household name").fill("Unit 7D");
+  await admin.page.getByLabel("Your name").fill("Lead");
+  await admin.page.getByRole("button", { name: "Create household" }).click();
+  await admin.page.getByRole("button", { name: "New invite link" }).click();
+  const invite = await admin.page.locator("p.font-mono").first().innerText();
+  await signIn(mate.page, `${mateName}@example.com`, new URL(invite).pathname);
+  await expect(mate.page.getByText(`Hi, ${mateName}`)).toBeVisible();
+
+  // Right away until told otherwise.
+  const p = admin.page;
+  await expect(p.getByRole("heading", { name: "Email schedule" })).toBeVisible();
+  await expect(p.getByText("Emails go out right away.")).toBeVisible();
+
+  // Two set times: the first is offered as 21:00, the second added.
+  await p.getByText("At set times", { exact: true }).click();
+  await p.getByLabel("Send time 1", { exact: true }).fill("12:00");
+  await p.getByRole("button", { name: "Add a time" }).click();
+  await p.getByLabel("Send time 2", { exact: true }).fill("21:00");
+  await expect(p.getByText("Emails go out at 12:00 and 21:00.")).toBeVisible();
+  await p.getByRole("button", { name: "Save schedule" }).click();
+  await p.reload();
+  await expect(p.getByText("Emails go out at 12:00 and 21:00.")).toBeVisible();
+  await expect(p.getByRole("radio", { name: "At set times" })).toBeChecked();
+
+  // Back to right away, with quiet hours; the times become the quiet-hours send times.
+  await p.getByText("Right away", { exact: true }).click();
+  await p.getByLabel("Quiet hours").check();
+  await expect(p.getByText("Emails go out right away, except from 19:00 to 07:00: those go out at 12:00 and 21:00, or when it ends, whichever is first.")).toBeVisible();
+  await p.getByRole("button", { name: "Save schedule" }).click();
+  await p.reload();
+  await expect(p.getByLabel("Quiet hours")).toBeChecked();
+  await expect(p.getByText("those go out at 12:00 and 21:00")).toBeVisible();
+
+  // Housemates never see it.
+  await mate.page.reload();
+  await expect(mate.page.getByRole("heading", { name: "Email schedule" })).toHaveCount(0);
+});

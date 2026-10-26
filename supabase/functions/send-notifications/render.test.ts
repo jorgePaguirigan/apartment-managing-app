@@ -1,7 +1,7 @@
 // Tests for the email renderer. Run with `node --test supabase/functions/send-notifications/render.test.ts`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { renderAdminEmail, renderHousemateEmail, type AdminClaim, type Decision } from "./render.ts";
+import { renderAdminEmail, renderDigestEmail, renderHousemateEmail, type AdminClaim, type Decision } from "./render.ts";
 
 const APP = "https://kasangga.vercel.app";
 const week = {
@@ -111,4 +111,74 @@ test("the emails load nothing remote, and follow dark mode", () => {
 
 test("the housemate email links to the leaderboard", () => {
   assert.match(decision(accepted).html, /href="https:\/\/kasangga\.vercel\.app\/leaderboard"/);
+});
+
+// Several claims decided before a send: one email per housemate.
+const digest = (ps: Decision[]) => renderDigestEmail({ household: "Unit 4B", payloads: ps, appUrl: APP });
+const board = (rows: [string, number][], overtaken: { name: string; by: string }[] = []) => ({
+  before: [], overtaken, after: rows.map(([name, points], i) => ({ name, points, rank: i + 1 })),
+});
+const acc = (actor: string, chore: string, points: number, wk: ReturnType<typeof board>, medals = { gained: [] as { member: string; label: string }[], lost: [] as { member: string; label: string }[] }): Decision =>
+  ({ status: "accepted", actor, chore, points, leaderboards: { this_week: wk, this_month: board([["Maria", 20], ["Ben", 10]]) }, medals });
+
+test("one decision in a batch is the same email as a single decision", () => {
+  assert.deepEqual(digest([accepted]), decision(accepted));
+});
+
+test("a batch lists every claim in one email", () => {
+  const e = digest([
+    acc("Maria", "Cleaned toilet", 5, board([["Maria", 5], ["Ben", 4]])),
+    acc("Ben", "Cooked dinner", 4, board([["Maria", 5], ["Ben", 8]])),
+    { status: "rejected", actor: "Cy", chore: "Dishes" },
+  ]);
+  assert.equal(e.subject, "3 claims decided in Unit 4B");
+  assert.match(e.html, /Maria Cleaned toilet/);
+  assert.match(e.html, /\+5/);
+  assert.match(e.html, /Ben Cooked dinner/);
+  assert.match(e.html, /Cy&#39;s claim for Dishes was rejected|Cy's claim for Dishes was rejected/);
+  assert.match(e.text, /Maria Cleaned toilet \(\+5\)/);
+  assert.match(e.text, /Cy's claim for Dishes was rejected/);
+});
+
+test("the leaderboards in a batch are the latest standings", () => {
+  const e = digest([
+    acc("Maria", "Cleaned toilet", 5, board([["Maria", 5], ["Ben", 4]])),
+    acc("Ben", "Cooked dinner", 4, board([["Ben", 8], ["Maria", 5]])),
+  ]);
+  assert.match(e.text, /1\. Ben\s+8/);
+  assert.doesNotMatch(e.text, /1\. Maria\s+5/);
+});
+
+test("a batch lists everyone overtaken once, and drops a pass that was passed back", () => {
+  const e = digest([
+    acc("Maria", "Cleaned toilet", 5, board([["Maria", 5]], [{ name: "Ben", by: "Maria" }, { name: "Cy", by: "Maria" }])),
+    acc("Maria", "Dishes", 1, board([["Maria", 6]], [{ name: "Ben", by: "Maria" }])),
+    acc("Ben", "Cooked dinner", 4, board([["Ben", 8]], [{ name: "Maria", by: "Ben" }])),
+  ]);
+  assert.doesNotMatch(e.text, /Ben was overtaken by Maria/); // Ben passed Maria back
+  assert.doesNotMatch(e.text, /Maria was overtaken by Ben/);
+  assert.match(e.text, /Cy was overtaken by Maria/);
+});
+
+test("trophies in a batch are net: a gain and a loss of the same trophy cancel", () => {
+  const gain = { gained: [{ member: "Maria", label: "Toilet champion" }], lost: [] };
+  const loss = { gained: [], lost: [{ member: "Maria", label: "Toilet champion" }] };
+  const kept = digest([acc("Maria", "Cleaned toilet", 5, board([["Maria", 5]]), gain), acc("Ben", "Dishes", 1, board([["Maria", 5]]))]);
+  assert.match(kept.text, /Maria earned Toilet champion/);
+  const cancelled = digest([acc("Maria", "Cleaned toilet", 5, board([["Maria", 5]]), gain), acc("Ben", "Cleaned toilet", 5, board([["Maria", 5]]), loss)]);
+  assert.match(cancelled.text, /No trophy changes/);
+  assert.doesNotMatch(cancelled.text, /Toilet champion/);
+});
+
+test("a batch of only rejections has no leaderboards", () => {
+  const e = digest([{ status: "rejected", actor: "Cy", chore: "Dishes" }, { status: "rejected", actor: "Ben", chore: "Cooked dinner" }]);
+  assert.equal(e.subject, "2 claims decided in Unit 4B");
+  assert.doesNotMatch(e.html, /This week|This month/);
+  assert.match(e.html, /Cooked dinner/);
+});
+
+test("names in a batch cannot inject markup", () => {
+  const e = digest([acc("<b>x</b>", "Dishes", 1, board([["Maria", 5]])), acc("Ben", "Dishes", 1, board([["Maria", 5]]))]);
+  assert.doesNotMatch(e.html, /<b>x<\/b>/);
+  assert.match(e.html, /&lt;b&gt;x&lt;\/b&gt;/);
 });
