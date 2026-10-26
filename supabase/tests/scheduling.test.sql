@@ -1,7 +1,7 @@
 -- pgTAP tests for scheduling. Run with `supabase test db`.
 -- Week starts (Monday, Manila): 28 Sep, 5 Oct, 12 Oct, 19 Oct, 26 Oct 2026.
 begin;
-select plan(32);
+select plan(34);
 
 create function pg_temp.act(u uuid) returns void language sql as $$
   select set_config('request.jwt.claims', json_build_object('sub', u, 'role', 'authenticated')::text, true),
@@ -123,6 +123,16 @@ select public.assign_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000001', '20
 select is((select assignee::text || source from public.chore_instance where chore_id = 'cccccccc-0000-0000-0000-000000000001' and week_start = '2026-10-19'),
   '00000000-0000-0000-0000-000000000001admin', 'the admin moves Sweep from Ben to Ana');
 select is(pg_temp.q('cccccccc-0000-0000-0000-000000000001', '2026-10-26'), 'Dee,Cy,Ana,Ben', 'a drag does not count as doing the chore: the queue is unchanged');
+
+-- Unassigned on purpose stays unassigned for the week: reading the schedule again must not hand it out.
+select public.assign_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000001', '2026-10-19'), null, '2026-10-19 12:00+08');
+select public.generate_week('2026-10-19', '2026-10-19 12:01+08');
+select is((select assignee from public.chore_instance where chore_id = 'cccccccc-0000-0000-0000-000000000001' and week_start = '2026-10-19'),
+  null, 'a chore the admin unassigned stays unassigned when the schedule is read again');
+select public.assign_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000001', '2026-10-19'), '00000000-0000-0000-0000-000000000001', '2026-10-19 12:02+08');
+select public.generate_week('2026-10-19', '2026-10-19 12:03+08');
+select is((select assignee from public.chore_instance where chore_id = 'cccccccc-0000-0000-0000-000000000001' and week_start = '2026-10-19'),
+  '00000000-0000-0000-0000-000000000001'::uuid, 'assigning it again works');
 
 -- Next week, on Sunday: Trash (heaviest) -> Ana (first in its queue); Sweep -> Dee; Mop -> Ben.
 select public.generate_week('2026-10-26', '2026-10-25 12:00+08');
