@@ -33,3 +33,7 @@ jobs:
           version: 2.106.0
       - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,mailpit,realtime,storage-api,postgres-meta,supavisor
       - run: supabase test db
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node --test supabase/functions/send-notifications/render.test.ts
