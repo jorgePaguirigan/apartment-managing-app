@@ -104,7 +104,7 @@ export async function AdminView() {
                   <div className="flex items-start gap-3">
                     <Avatar name={c.member?.display_name ?? "?"} className="size-9" />
                     <div className="min-w-0 flex-1">
-                      <p className="break-words"><span className="font-semibold">{c.member?.display_name}</span> did <span className="font-semibold">{c.deed?.name ?? c.title}</span></p>
+                      <p className="break-words"><span className="font-semibold">{c.member?.display_name}</span> <span className="font-semibold">{c.deed?.name ?? (c.title ?? "").replace(/^./, (ch: string) => ch.toLowerCase())}</span></p>
                       {c.note && <p className="break-words text-sm text-muted">&ldquo;{c.note}&rdquo;</p>}
                     </div>
                     {c.deed ? <Chip tone="points">{signed(c.deed.points)}</Chip> : <Chip tone="muted">Custom</Chip>}

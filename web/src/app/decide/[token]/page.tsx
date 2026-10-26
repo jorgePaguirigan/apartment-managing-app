@@ -51,7 +51,9 @@ export default async function Decide({ params, searchParams }: PageProps<"/decid
       <div className="space-y-5">
         <div className="space-y-2">
           <p className="eyebrow">{claim.household} · waiting for you</p>
-          <h1 className="display text-balance text-3xl font-bold">{claim.housemate} did {claim.chore}</h1>
+          <h1 className="display text-balance text-3xl font-bold">
+            {claim.housemate} {claim.custom ? claim.chore.charAt(0).toLowerCase() + claim.chore.slice(1) : claim.chore}
+          </h1>
           <p className="flex flex-wrap items-center gap-2">
             {claim.custom ? <Chip tone="muted">Typed deed</Chip> : <Chip tone="points">+{claim.points}</Chip>}
           </p>

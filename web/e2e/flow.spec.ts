@@ -52,7 +52,7 @@ test("claim, approve, leaderboard and budget across admin and housemate", async 
   await mate.page.getByRole("button", { name: /Cooked dinner/ }).click();
   await expect(mate.page.getByText("Sent to your admin for approval.")).toBeVisible();
   await admin.page.reload();
-  await expect(admin.page.getByText(`${mateName} did Cooked dinner`)).toBeVisible();
+  await expect(admin.page.getByText(`${mateName} Cooked dinner`)).toBeVisible();
   await admin.page.getByRole("button", { name: "Accept", exact: true }).click();
   await expect(admin.page.getByText("All caught up")).toBeVisible();
   await mate.page.goto("/leaderboard");
@@ -127,7 +127,7 @@ test("an admin accepts a claim from the emailed link without signing in", async 
 
   // Signed out: the page shows the claim, and nothing is decided until the button is pressed.
   await visitor.page.goto(`/decide/${token}?do=accept`);
-  await expect(visitor.page.getByRole("heading", { name: `${mateName} did Cooked dinner` })).toBeVisible();
+  await expect(visitor.page.getByRole("heading", { name: `${mateName} Cooked dinner` })).toBeVisible();
   await expect(visitor.page.getByText("+4")).toBeVisible();
   await visitor.page.reload();
   await expect(visitor.page.getByRole("button", { name: "Accept" })).toBeVisible();
