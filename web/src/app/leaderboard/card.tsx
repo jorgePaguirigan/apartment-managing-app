@@ -1,18 +1,23 @@
 "use client";
 
 import { useState, useTransition, type ReactNode } from "react";
+import { PERIODS, type Period } from "@/lib/period";
 import { memberHistory } from "../actions";
 import { HistoryList, type HistoryRow } from "../_components/history-list";
 import { Icon } from "../_components/ui";
 
-// A leaderboard card. Pressing it folds open that housemate's history, fetched when first opened and again on every reopen.
-export function LeaderCard({ id, lead, delay, timeZone, children }: { id: string; lead: boolean; delay: number; timeZone: string; children: ReactNode }) {
+// A leaderboard card. Pressing it folds open that housemate's history for the period on show, fetched on every open. A change of period closes it.
+export function LeaderCard({ id, period, lead, delay, timeZone, children }: { id: string; period: Period; lead: boolean; delay: number; timeZone: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<HistoryRow[] | null>(null);
   const [loading, start] = useTransition();
+  const [shown, setShown] = useState(period);
+  if (shown !== period) { // rows belong to one period: a new period folds the card shut and drops them
+    setShown(period); setOpen(false); setRows(null);
+  }
   const toggle = () => {
     setOpen(!open);
-    if (!open) start(async () => setRows(await memberHistory(id)));
+    if (!open) start(async () => setRows(await memberHistory(id, period)));
   };
   return (
     <li data-flip-id={id} style={{ animationDelay: `${delay}ms` }}
@@ -27,7 +32,7 @@ export function LeaderCard({ id, lead, delay, timeZone, children }: { id: string
           <div className={`mb-4 border-t border-line pt-3`}>
             {rows ? (
               <div className={`transition-opacity duration-150 ${loading ? "opacity-50" : ""}`}>
-                <HistoryList rows={rows} timeZone={timeZone} empty="No points yet." />
+                <HistoryList rows={rows} timeZone={timeZone} empty={`No points ${PERIODS[period].toLowerCase()}.`} />
               </div>
             ) : (
               <div aria-busy className="space-y-2" aria-label="Loading history">

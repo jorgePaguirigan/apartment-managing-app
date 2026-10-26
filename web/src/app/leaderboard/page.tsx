@@ -59,7 +59,7 @@ export default async function Leaderboard({ searchParams }: PageProps<"/leaderbo
         {rows.map((r, i) => {
           const lead = r.rank === 1 && r.points > 0;
           return (
-            <LeaderCard key={r.id} id={r.id} lead={lead} delay={Math.min(i, 8) * 40} timeZone={household?.timezone ?? "Asia/Manila"}>
+            <LeaderCard key={r.id} id={r.id} period={period} lead={lead} delay={Math.min(i, 8) * 40} timeZone={household?.timezone ?? "Asia/Manila"}>
               <span className={`display w-8 text-center font-extrabold ${lead ? "text-3xl" : "text-xl text-muted"}`}>{r.rank}</span>
               <Avatar name={r.name} className={lead ? "size-12" : "size-10"} />
               <div className="min-w-0 flex-1">
