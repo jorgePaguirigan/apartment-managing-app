@@ -15,7 +15,7 @@ Use these words exactly. They match the PRD and the database.
 - **Report**: a housemate telling the admin that a housemate (themselves included) did a penalty deed, or a typed demerit not in the catalog. Status: pending, accepted, rejected. The admin decides; accepting scores the penalty at once. The reporter may stay **anonymous**: the reported housemate is then not told who reported (the admin always sees).
 - **Score entry**: one signed point change on a housemate's total. Points are copied from the deed when it is created. Never edited; only soft-deleted.
 - **Award**: an admin creating a score entry directly, without a claim.
-- **Leaderboard**: housemates ranked by points for a period. Ties share a rank.
+- **Leaderboard**: housemates ranked by points for a period. Ties share a rank. A housemate's card opens to their entries for that period only.
 - **Period**: this week, previous week, this month, previous month, in the household time zone. Weeks start Monday.
 - **Chore**: a recurring task with a name, area, weekday, weight (1 to 3) and an optional deed claimed when it is done.
 - **Schedule**: the week's chore instances and who has each one. A new one is generated every week.

@@ -58,6 +58,14 @@ test("claim, approve, leaderboard and budget across admin and housemate", async 
   await expect(mate.page.getByRole("listitem").filter({ hasText: mateName })).toContainText("4");
   // The admin is not a housemate: never ranked.
   await expect(mate.page.getByText("Boss")).toHaveCount(0);
+  // A card's history follows the period on show: the claim is this week's, not last week's.
+  const card = mate.page.getByRole("listitem").filter({ hasText: mateName });
+  await card.getByRole("button").click();
+  await expect(card.getByText("Cooked dinner")).toBeVisible();
+  await mate.page.getByRole("link", { name: "Last week" }).click();
+  await card.getByRole("button").click();
+  await expect(card.getByText("No points last week.")).toBeVisible();
+  await expect(card.getByText("Cooked dinner")).toHaveCount(0);
 
   // Budget: admin sets an envelope, the housemate spends from it, overspending turns negative.
   await admin.page.goto("/budget");
