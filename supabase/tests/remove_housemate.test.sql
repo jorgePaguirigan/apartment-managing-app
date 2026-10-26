@@ -1,6 +1,6 @@
 -- pgTAP tests for removing a housemate. Run with `supabase test db`.
 begin;
-select plan(14);
+select plan(20);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-0000000000d1'), ('00000000-0000-0000-0000-0000000000d2'),
@@ -69,6 +69,27 @@ select is((select count(*) from public.member where user_id <> auth.uid()), 0::b
 select is((select role from public.member), 'removed', 'removed housemate can still read their own row');
 select throws_ok($$select public.submit_claim((select id from public.deed limit 1))$$, null, null,
   'removed housemate cannot submit a claim');
+
+-- Ana can rejoin through a new invite: same row, history intact, back on the leaderboard under her new name.
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000d1","role":"authenticated"}';
+select set_config('t.code2', public.create_invite(), true);
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000d2","role":"authenticated"}';
+select lives_ok($$select public.join_household(current_setting('t.code2'), 'Anita')$$, 'a removed housemate rejoins with a new invite');
+select is((select role from public.member where user_id = auth.uid()), 'housemate', 'they are a housemate again');
+select is((select display_name from public.member where user_id = auth.uid()), 'Anita', 'with the name they picked');
+select is((select count(*) from public.score_entry where member_id = auth.uid() and deleted_at is null), 2::bigint,
+  'their old history is still theirs');
+select throws_ok($$select public.join_household(current_setting('t.code2'), 'Anita')$$, '55000', 'already in a household',
+  'once back, they cannot join again');
+
+-- A removed housemate cannot use a revoked invite, or one from another household.
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000d1","role":"authenticated"}';
+select public.remove_housemate('00000000-0000-0000-0000-0000000000d2');
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000d4","role":"authenticated"}';
+select set_config('t.other', public.create_invite(), true);
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000d2","role":"authenticated"}';
+select throws_ok($$select public.join_household(current_setting('t.other'), 'Ana')$$, '55000', 'already in a household',
+  'a removed housemate cannot jump to another household');
 
 select * from finish();
 rollback;

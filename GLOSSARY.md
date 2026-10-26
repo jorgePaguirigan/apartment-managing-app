@@ -6,7 +6,7 @@ Use these words exactly. They match the PRD and the database.
 - **Admin**: runs the household. Approves claims, enters penalties, edits the catalog. Not scored, not on the leaderboard.
 - **Housemate**: a scored resident. Submits claims, never awards points.
 - **Member**: the database row for either an admin or a housemate (`member.role`). Use "admin" or "housemate" in prose.
-- **Removed housemate**: a housemate an admin removed (`member.role = 'removed'`). Their history stays; they are off the leaderboard and schedule and can read nothing of the household.
+- **Removed housemate**: a housemate an admin removed (`member.role = 'removed'`). Their history stays; they are off the leaderboard and schedule and can read nothing of the household. A new invite brings them back with their history.
 - **Deed**: one entry in the catalog: a name, a point value, a kind.
 - **Catalog**: the household's list of deeds, edited by admins.
 - **Group**: a named section of the catalog (`deed_group`), such as Kitchen. A deed belongs to at most one. The admin sets the order (`position`); a housemate may keep their own order (`member_group_order`).
