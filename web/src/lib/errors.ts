@@ -40,6 +40,7 @@ const TEXT: Record<string, string> = {
   "weak-password": "Use a password with at least 8 characters.",
   "email-not-confirmed": "Confirm your email first, using the link we sent you.",
   "bad-link": "That sign-in link is invalid or expired.",
+  "link-not-valid": "This link is invalid or has expired.",
 };
 
 export const errorCode = (message: string) => {

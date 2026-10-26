@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 
 const MAIL = process.env.E2E_MAIL_URL!;
@@ -51,7 +52,7 @@ test("claim, approve, leaderboard and budget across admin and housemate", async 
   await mate.page.getByRole("button", { name: /Cooked dinner/ }).click();
   await expect(mate.page.getByText("Sent to your admin for approval.")).toBeVisible();
   await admin.page.reload();
-  await expect(admin.page.getByText(`${mateName} did Cooked dinner`)).toBeVisible();
+  await expect(admin.page.getByText(`${mateName} Cooked dinner`)).toBeVisible();
   await admin.page.getByRole("button", { name: "Accept", exact: true }).click();
   await expect(admin.page.getByText("All caught up")).toBeVisible();
   await mate.page.goto("/leaderboard");
@@ -93,4 +94,54 @@ test("claim, approve, leaderboard and budget across admin and housemate", async 
   // Last month shows nothing: these categories did not exist yet.
   await admin.page.goto("/budget?m=prev");
   await expect(admin.page.getByText("No categories yet")).toBeVisible();
+});
+
+// The sender issues decision tokens in production; here the test plays the sender straight against the local database.
+function issueToken(mateName: string) {
+  const sql = `select public.issue_decision_token(c.id, a.user_id) from public.claim c
+    join public.member m on m.user_id = c.member_id and m.display_name = '${mateName}'
+    join public.member a on a.household_id = c.household_id and a.role = 'admin'
+    where c.status = 'pending' limit 1`;
+  return execSync(`docker exec supabase_db_apartment-manager psql -U postgres -At -c "${sql.replace(/\s+/g, " ")}"`, { encoding: "utf8" }).trim().split("\n")[0];
+}
+
+test("an admin accepts a claim from the emailed link without signing in", async ({ browser }) => {
+  const admin = await newUser(browser);
+  const mate = await newUser(browser);
+  const visitor = await newUser(browser); // no session at all
+  const mateName = `link${stamp}`;
+
+  await signIn(admin.page, `linkadmin${stamp}@example.com`);
+  await admin.page.getByLabel("Household name").fill("Unit 9C");
+  await admin.page.getByLabel("Your name").fill("Chief");
+  await admin.page.getByRole("button", { name: "Create household" }).click();
+  await admin.page.getByRole("button", { name: "New invite link" }).click();
+  const invite = await admin.page.locator("p.font-mono").first().innerText();
+  await signIn(mate.page, `${mateName}@example.com`, new URL(invite).pathname);
+  await expect(mate.page.getByText(`Hi, ${mateName}`)).toBeVisible();
+  await mate.page.getByRole("button", { name: /Cooked dinner/ }).click();
+  await expect(mate.page.getByText("Sent to your admin for approval.")).toBeVisible();
+
+  const token = issueToken(mateName);
+  expect(token).toMatch(/^[0-9a-f]{64}$/);
+
+  // Signed out: the page shows the claim, and nothing is decided until the button is pressed.
+  await visitor.page.goto(`/decide/${token}?do=accept`);
+  await expect(visitor.page.getByRole("heading", { name: `${mateName} Cooked dinner` })).toBeVisible();
+  await expect(visitor.page.getByText("+4")).toBeVisible();
+  await visitor.page.reload();
+  await expect(visitor.page.getByRole("button", { name: "Accept" })).toBeVisible();
+
+  await visitor.page.getByRole("button", { name: "Accept" }).click();
+  await expect(visitor.page.getByRole("heading", { name: "Accepted" })).toBeVisible();
+  await visitor.page.reload();
+  await expect(visitor.page.getByRole("heading", { name: "Accepted" })).toBeVisible(); // a second visit cannot decide again
+  await expect(visitor.page.getByRole("button", { name: "Reject" })).toHaveCount(0);
+
+  await mate.page.goto("/leaderboard");
+  await expect(mate.page.getByRole("listitem").filter({ hasText: mateName })).toContainText("4");
+
+  // A made-up link shows nothing about any claim.
+  await visitor.page.goto(`/decide/${"0".repeat(64)}`);
+  await expect(visitor.page.getByRole("heading", { name: "Link not valid" })).toBeVisible();
 });
