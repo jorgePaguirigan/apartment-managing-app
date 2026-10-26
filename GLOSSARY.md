@@ -22,3 +22,8 @@ Use these words exactly. They match the PRD and the database.
 - **Dibs**: a housemate taking an unclaimed chore, any time until its week ends, up to a fair share of the weight. Open chores are listed under Available chores on Home. An admin who moves a chore to Unassigned keeps it unassigned for that week; it is not handed out again.
 - **Queue**: the order of housemates for one chore, worked out from history: oldest completion first, then longest without it. Never stored.
 - **Medal**: a badge worked out from score entries when read (champion, MVP of the month, streak). Never stored.
+- **Scored member**: an admin or housemate who is on the leaderboard: every housemate, and an admin who opted in as a housemate.
+- **Admin email**: the email an admin gets when a claim is submitted, with Accept and Reject buttons.
+- **Housemate email**: the email scored members get after a claim is decided, with the leaderboards, who was overtaken and medals gained or lost.
+- **Decision link**: the single-use, expiring link in an admin email that opens a confirm page for one claim. Nothing is decided until the admin confirms.
+- **Send schedule**: the admin's choice of when housemate emails go out: instant, or at set times, with an optional hold-after rule. Admin emails ignore it.

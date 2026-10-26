@@ -67,6 +67,14 @@ Nothing is ever reset. All views are queries over entries by date range (Q10).
 - Button on the leaderboard renders the selected month as a shareable PNG: title, month, ranked list with points and medals, household name.
 - Generated on the client and shared with the system share sheet (iOS) or downloaded (web). No server storage.
 
+### 4.7 Claim emails
+- Sent from one Gmail account of the product owner over SMTP, with the display name "Kasangga". A custom sender address needs a domain, which the product owner does not have. **[Default]**
+- **Admin email**: when a housemate submits a claim, every admin gets an email at once with the housemate, the deed, its points and the note, and Accept and Reject buttons. A button opens a confirm page (no sign-in); the decision is made only when the admin confirms there. The link is single use and expires. A custom claim has no Accept button, since the admin must type its points; it links to the inbox. If two admins decide, the first decision wins.
+- **Housemate email**: when a claim is decided, every scored member (housemates, and an admin who is also a housemate) gets an email: who, which deed, the points, the leaderboard for this week and for this month after the decision, who was overtaken (or that nobody was), and any medal gained or lost because of it. A rejected claim gets a short email saying it was rejected, with no ranks or medals.
+- Only claims send emails. Admin awards, penalties, reports and deletions send none.
+- **Frequency**: an admin sets how often housemate emails go out. Instant, or a list of send times (e.g. 13:00 and 21:00) in the household time zone, with an optional rule "after a given time, hold everything and send once at a given time". A batched email lists every decided claim since the last send. Admin emails are always instant.
+- Medals gained or lost are the difference between the medals just before and just after the decision, per 4.5.
+
 ## 5. Feature 2: Scheduling (v2, needs Feature 1)
 
 ### 5.1 Setup (admin)
@@ -120,7 +128,7 @@ Postgres row-level security on `household_id` and role is required. Housemates c
 ## 8. Non-goals (v1 through v3)
 
 - Android, multiple households, bill splitting or money owed, linking real bank accounts or e-wallets.
-- Custom medals, chore swaps, automatic penalties, chat or comments, notifications beyond claim approval results and the admin inbox.
+- Custom medals, chore swaps, automatic penalties, chat or comments, notifications beyond claim approval results, the admin inbox and the claim emails in 4.7.
 
 ## 9. Build order
 
