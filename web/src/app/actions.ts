@@ -70,10 +70,10 @@ export async function signOut() {
   redirect("/login");
 }
 
-// Admins who opted in as housemates flip between the two views; the choice lives in a cookie.
-export async function switchView() {
+// Admins who opted in as housemates pick a view; the choice lives in a cookie.
+export async function setView(view: "admin" | "housemate") {
   const jar = await cookies();
-  jar.set("view", jar.get("view")?.value === "housemate" ? "admin" : "housemate", { path: "/", maxAge: 60 * 60 * 24 * 365 });
+  jar.set("view", view === "housemate" ? "housemate" : "admin", { path: "/", maxAge: 60 * 60 * 24 * 365 });
   revalidatePath("/", "layout");
 }
 

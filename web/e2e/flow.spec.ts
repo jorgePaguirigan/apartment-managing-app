@@ -215,10 +215,10 @@ test("an admin makes a housemate an admin who can score claims but not their own
   // The promoted housemate sees the admin page, and cannot accept their own claim.
   await mate.page.reload();
   await expect(mate.page.getByRole("heading", { name: "Inbox" })).toBeVisible();
-  await mate.page.getByTitle("Switch to housemate view").click();
+  await mate.page.getByRole("group", { name: "View" }).getByRole("button", { name: "Housemate" }).click();
   await mate.page.getByRole("button", { name: /Cooked dinner/ }).click();
   await expect(mate.page.getByText("Sent to your admin for approval.")).toBeVisible();
-  await mate.page.getByTitle("Switch to admin view").click();
+  await mate.page.getByRole("group", { name: "View" }).getByRole("button", { name: "Admin" }).click();
   await expect(mate.page.getByText(`${mateName} Cooked dinner`)).toBeVisible();
   await mate.page.getByRole("button", { name: "Accept", exact: true }).click();
   await expect(mate.page.getByText("Another admin has to decide your own claim.")).toBeVisible();
@@ -268,4 +268,47 @@ test("a claim with a contributor scores both housemates", async ({ browser }) =>
   await ben.page.goto("/");
   await expect(ben.page.getByText("Cooked dinner").last()).toBeVisible();
   await expect(ben.page.getByText("+4").last()).toBeVisible();
+});
+
+test("an admin who lives there too turns it on and off and switches view", async ({ browser }) => {
+  const admin = await newUser(browser);
+  const p = admin.page;
+  await signIn(p, `boss4${stamp}@example.com`);
+  await p.getByLabel("Household name").fill("Unit 7E");
+  await p.getByLabel("Your name").fill("Boss4");
+  await p.getByRole("button", { name: "Create household" }).click();
+
+  // Off: a switch with a plain hint, and no view switch yet.
+  const live = p.getByRole("switch", { name: "I live here too" });
+  await expect(live).toHaveAttribute("aria-checked", "false");
+  await expect(p.getByRole("group", { name: "View" })).toHaveCount(0);
+
+  // On at once, and the view switch appears.
+  await live.click();
+  await expect(live).toHaveAttribute("aria-checked", "true");
+  const view = p.getByRole("group", { name: "View" });
+  await expect(view.getByRole("button", { name: "Admin" })).toHaveAttribute("aria-pressed", "true");
+
+  // Housemate view, kept across a reload; then back to admin.
+  await view.getByRole("button", { name: "Housemate" }).click();
+  await expect(p.getByRole("heading", { name: "I did…" })).toBeVisible();
+  await p.reload();
+  await expect(p.getByRole("group", { name: "View" }).getByRole("button", { name: "Housemate" })).toHaveAttribute("aria-pressed", "true");
+  await p.getByRole("group", { name: "View" }).getByRole("button", { name: "Admin" }).click();
+  await expect(p.getByRole("heading", { name: "Inbox" })).toBeVisible();
+
+  // On a phone the view switch is still there.
+  await p.setViewportSize({ width: 375, height: 800 });
+  await expect(p.getByRole("group", { name: "View" })).toBeVisible();
+  await p.setViewportSize({ width: 1280, height: 800 });
+
+  // Turning it off asks first, because it takes them off the leaderboard. Cancel keeps it on.
+  await live.click();
+  await expect(p.getByText("You leave the leaderboard and the schedule")).toBeVisible();
+  await p.getByRole("button", { name: "Cancel" }).click();
+  await expect(live).toHaveAttribute("aria-checked", "true");
+  await live.click();
+  await p.getByRole("button", { name: "Turn off" }).click();
+  await expect(live).toHaveAttribute("aria-checked", "false");
+  await expect(p.getByRole("group", { name: "View" })).toHaveCount(0);
 });

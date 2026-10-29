@@ -7,8 +7,9 @@ import { AppShell } from "./_components/app-shell";
 import { AdminView } from "./_components/admin-view";
 import { HousemateView } from "./_components/housemate-view";
 import { CenterCard } from "./_components/center-card";
-import { signOut, setAlsoHousemate } from "./actions";
-import { button, ghost } from "./_components/ui";
+import { signOut } from "./actions";
+import { button } from "./_components/ui";
+import { HousemateToggle } from "./_components/housemate-toggle";
 
 export default async function Home({ searchParams }: PageProps<"/">) {
   const { error } = await searchParams;
@@ -23,12 +24,9 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       <Banner error={error as string | undefined} />
       {me.role === "admin" ? (
         <>
-          <div className="rise flex flex-wrap items-center justify-between gap-3">
+          <div className="rise flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h1 className="display text-4xl font-extrabold">Hi, {me.name}</h1>
-            <form action={setAlsoHousemate}>
-              <input type="hidden" name="on" value={me.alsoHousemate ? "0" : "1"} />
-              <button className={ghost}>{me.alsoHousemate ? "Stop being a housemate" : "I live here too"}</button>
-            </form>
+            <div className="sm:max-w-sm"><HousemateToggle on={me.alsoHousemate} /></div>
           </div>
           <AdminView />
         </>
