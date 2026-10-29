@@ -1,6 +1,6 @@
 -- An admin who lives in the apartment can opt in as a housemate; other admins stay unscored.
 begin;
-select plan(8);
+select plan(9);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-00000000000a'), ('00000000-0000-0000-0000-00000000000c'), ('00000000-0000-0000-0000-000000000001');
@@ -22,7 +22,14 @@ select throws_ok($$select public.submit_claim('dddddddd-0000-0000-0000-000000000
 select lives_ok($$select public.set_also_housemate(true)$$, 'an admin can opt in as a housemate');
 select lives_ok($$select set_config('t.claim', public.submit_claim('dddddddd-0000-0000-0000-000000000001')::text, true)$$,
   'an opted-in admin can claim');
-select lives_ok($$select public.decide_claim(current_setting('t.claim')::uuid, true)$$, 'an admin can accept their own claim');
+select throws_ok($$select public.decide_claim(current_setting('t.claim')::uuid, true)$$, '42501', 'cannot decide your own claim',
+  'an admin cannot accept their own claim');
+
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000c","role":"authenticated"}';
+set local request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000c';
+select lives_ok($$select public.decide_claim(current_setting('t.claim')::uuid, true)$$, 'another admin accepts it');
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}';
+set local request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
 select results_eq($$select display_name, points from public.leaderboard('this_week') order by display_name$$,
   $$values ('Admin A'::text, 2::bigint), ('Ana'::text, 0::bigint)$$,
   'the opted-in admin is ranked; the other admin is not');

@@ -189,3 +189,37 @@ test("an admin sets when housemates get the claim emails", async ({ browser }) =
   await mate.page.reload();
   await expect(mate.page.getByRole("heading", { name: "Email schedule" })).toHaveCount(0);
 });
+
+test("an admin makes a housemate an admin who can score claims but not their own", async ({ browser }) => {
+  const admin = await newUser(browser);
+  const mate = await newUser(browser);
+  const mateName = `promo${stamp}`;
+
+  await signIn(admin.page, `boss2${stamp}@example.com`);
+  await admin.page.getByLabel("Household name").fill("Unit 5C");
+  await admin.page.getByLabel("Your name").fill("Boss2");
+  await admin.page.getByRole("button", { name: "Create household" }).click();
+  await admin.page.getByRole("button", { name: "New invite link" }).click();
+  const invite = await admin.page.locator("p.font-mono").first().innerText();
+  await signIn(mate.page, `promo${stamp}@example.com`, new URL(invite).pathname);
+  await expect(mate.page.getByText(`Hi, ${mateName}`)).toBeVisible();
+
+  // Edit > Make admin asks once, then the card shows an Admin tag and loses its Edit button.
+  await admin.page.reload();
+  const row = admin.page.getByRole("listitem").filter({ hasText: mateName });
+  await row.getByRole("button", { name: "Edit" }).click();
+  await row.getByRole("button", { name: "Make admin" }).click();
+  await row.getByRole("button", { name: "Make admin" }).last().click();
+  await expect(row.getByText("Admin", { exact: true })).toBeVisible();
+
+  // The promoted housemate sees the admin page, and cannot accept their own claim.
+  await mate.page.reload();
+  await expect(mate.page.getByRole("heading", { name: "Inbox" })).toBeVisible();
+  await mate.page.getByTitle("Switch to housemate view").click();
+  await mate.page.getByRole("button", { name: /Cooked dinner/ }).click();
+  await expect(mate.page.getByText("Sent to your admin for approval.")).toBeVisible();
+  await mate.page.getByTitle("Switch to admin view").click();
+  await expect(mate.page.getByText(`${mateName} Cooked dinner`)).toBeVisible();
+  await mate.page.getByRole("button", { name: "Accept", exact: true }).click();
+  await expect(mate.page.getByText("Another admin has to decide your own claim.")).toBeVisible();
+});

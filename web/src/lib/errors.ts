@@ -12,6 +12,7 @@ const TEXT: Record<string, string> = {
   "claim-not-found": "That claim no longer exists.",
   "claim-already-decided": "That claim was already decided.",
   "target-must-be-a-housemate-in-this-household": "Pick a housemate in this household.",
+  "cannot-decide-your-own-claim": "Another admin has to decide your own claim.",
   "entry-not-found": "That entry no longer exists.",
   "unknown-time-zone": "Pick a time zone from the list.",
   "invalid-title": "Describe the deed in 1 to 80 characters.",

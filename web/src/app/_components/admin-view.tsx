@@ -1,10 +1,10 @@
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { acceptAll, award, createInvite, removeHousemate, revokeInvite } from "../actions";
+import { acceptAll, award, createInvite, revokeInvite } from "../actions";
 import { InboxItem } from "./inbox-item";
 import { CopyButton } from "./copy-button";
 import { Catalog, type Deed } from "./catalog";
-import { ConfirmButton } from "./confirm-button";
+import { HousemateEdit } from "./housemate-edit";
 import { HistoryList, type HistoryRow } from "./history-list";
 import { SubmitButton } from "./submit-button";
 import { Shortcuts } from "./shortcuts";
@@ -29,7 +29,7 @@ export async function AdminView() {
       .select("id, note, title, member:member!claim_member_id_fkey(display_name), deed:deed_id(name, points)")
       .eq("status", "pending").order("created_at"),
     supabase.from("deed").select("id, name, points, active, group_id").is("deleted_at", null).order("kind").order("name"),
-    supabase.from("member").select("user_id, display_name").eq("scored", true).order("display_name"),
+    supabase.from("member").select("user_id, display_name, role").eq("scored", true).order("display_name"),
     supabase.from("invite").select("code, expires_at").is("revoked_at", null).order("created_at"),
     supabase.from("claim")
       .select("id, note, title, status, decided_at, member:member!claim_member_id_fkey(display_name), deed:deed_id(name)")
@@ -178,8 +178,7 @@ export async function AdminView() {
               <li key={m.user_id} className="removable -mx-2 flex flex-wrap items-center gap-3 rounded-xl px-2 py-2.5 first:pt-0 last:pb-0 [@media(hover:hover)]:hover:bg-surface-2/60">
                 <Avatar name={m.display_name} className="size-9" />
                 <span className="min-w-0 flex-1 truncate font-semibold">{m.display_name}</span>
-                <ConfirmButton label="Remove" pendingText="Removing…" action={removeHousemate} name="member" value={m.user_id}
-                  prompt={`Remove ${m.display_name}? Their past points stay in History; their open chores go back to unassigned.`} />
+                {m.role === "admin" ? <Chip>Admin</Chip> : <HousemateEdit id={m.user_id} name={m.display_name} />}
               </li>
             ))}
             {!housemates?.length && <li className="text-sm text-muted">No housemates yet. Share an invite link above.</li>}
