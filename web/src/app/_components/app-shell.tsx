@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
-import { signOut, switchView } from "../actions";
+import { signOut } from "../actions";
 import { Roamers } from "./roamers";
 import { getHousemates, type Me } from "@/lib/me";
 import { PillNav } from "./pill-nav";
 import { ThemeToggle } from "./theme-toggle";
 import { FiguresToggle } from "./figures-toggle";
 import { LiveRefresh } from "./live-refresh";
+import { ViewSwitch } from "./view-switch";
 import { Avatar, Chip, Icon, type IconName } from "./ui";
 
 type Tab = "home" | "schedule" | "budget" | "leaderboard";
@@ -36,15 +37,7 @@ export async function AppShell({ me, active, children }: { me: Me; active: Tab; 
             <span className="hidden items-center gap-2 sm:flex">
               <Avatar name={me.name} className="size-8" />
               <span className="text-sm font-medium">{me.name}</span>
-              {me.alsoHousemate ? (
-                <form action={switchView}>
-                  <button title={`Switch to ${me.role === "admin" ? "housemate" : "admin"} view`} className="rounded-full active:scale-[0.96]">
-                    <Chip tone={me.role === "admin" ? "points" : "muted"}>{me.role} ⇄</Chip>
-                  </button>
-                </form>
-              ) : (
-                <Chip tone={me.role === "admin" ? "points" : "muted"}>{me.role}</Chip>
-              )}
+              <Chip tone={me.role === "admin" ? "points" : "muted"}>{me.role}</Chip>
             </span>
             <form action={signOut}>
               <button aria-label="Sign out" title="Sign out" className="grid size-10 place-items-center rounded-full border border-line text-muted transition-[transform,color] duration-150 ease-out hover:text-ink active:scale-[0.94]">
@@ -55,7 +48,10 @@ export async function AppShell({ me, active, children }: { me: Me; active: Tab; 
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 px-4 py-6 pb-32 sm:px-6 sm:py-8 md:pb-10">{children}</main>
+      <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 px-4 py-6 pb-32 sm:px-6 sm:py-8 md:pb-10">
+        {me.alsoHousemate && <div className="rise"><ViewSwitch view={me.role} tall /></div>}
+        {children}
+      </main>
 
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 md:hidden" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
         <PillNav id="dock" items={TABS} active={active} className="flex gap-1 rounded-full bg-ink p-1.5 shadow-lg shadow-black/20" idleLabelClass="sr-only" linkClass="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold transition-[color,transform] duration-150 ease-out active:scale-[0.96]"

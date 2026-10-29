@@ -10,7 +10,7 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 |---|---|---|---|---|
 | F1 | Make a housemate an admin (Edit dropdown per card in the Housemates table) | `make-admin` | 🔵 PR open, waiting for your UI approval | |
 | F2 | Contributors dropdown on "I did…" claims | `contributors` | 🔵 PR open, waiting for your UI approval | |
-| F3 | Better "I live here too" toggle and admin/housemate view switch | `admin-housemate-buttons` | ⚪ not started | |
+| F3 | Better "I live here too" toggle and admin/housemate view switch | `admin-housemate-buttons` | 🔵 PR open, waiting for your UI approval | |
 
 ### Decisions made
 - A promoted admin stays scored (`also_housemate` on): keeps points, chores and leaderboard spot.
