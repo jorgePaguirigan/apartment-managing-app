@@ -226,6 +226,11 @@ html[data-figures="off"] [data-roamers] { opacity: 0; translate: 0 12px; visibil
   .wipe:active { transform: none; }
 }
 
+/* Popover panel: fades and scales in from its trigger's corner. It is mounted only while open, so there is no closed state to style. */
+.pop { transform-origin: top left; transition: opacity 180ms var(--ease-out-strong), transform 180ms var(--ease-out-strong); }
+@starting-style { .pop { opacity: 0; transform: scale(0.96) translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .pop { transition: opacity 150ms ease; } @starting-style { .pop { transform: none; } } }
+
 /* More motion. All gated for reduced motion; hover lifts only where hover exists. */
 @media (prefers-reduced-motion: no-preference) {
   .fade-in { animation: fade-in 220ms ease-out both; }

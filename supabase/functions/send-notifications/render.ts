@@ -7,11 +7,11 @@ type Medal = { member: string; label: string };
 export type Decision =
   | { status: "rejected"; actor: string; chore: string }
   | {
-      status: "accepted"; actor: string; chore: string; points: number;
+      status: "accepted"; actor: string; chore: string; points: number; contributors?: string[];
       leaderboards: { this_week: Board; this_month: Board };
       medals: { gained: Medal[]; lost: Medal[] };
     };
-export type AdminClaim = { housemate: string; chore: string; points: number | null; note: string | null; custom: boolean };
+export type AdminClaim = { housemate: string; chore: string; points: number | null; note: string | null; custom: boolean; contributors?: string[] };
 export type Email = { subject: string; html: string; text: string };
 
 const C = { bg: "#f2efe6", surface: "#fbfaf5", surface2: "#e8e4d8", ink: "#16171b", muted: "#5c5a52", line: "#d8d3c4", accent: "#cbff41", bad: "#be2a1f" };
@@ -21,6 +21,8 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 const oneLine = (s: string) => s.replace(/\s+/g, " ").trim();
 // A typed deed is lowercase after the name ("Maria fixed the shelf"); a catalog deed keeps its capital.
 const deedWords = (chore: string, custom: boolean) => (custom ? chore.charAt(0).toLowerCase() + chore.slice(1) : chore);
+// "with Ben and Cy" when a claim has contributors, else nothing.
+const withWords = (xs?: string[]) => (xs?.length ? `with ${list(xs)}` : "");
 const list = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
 
 // Names grouped by who passed them: "Ben and Cy were overtaken by Maria".
@@ -88,13 +90,14 @@ export function renderHousemateEmail({ household, payload, appUrl }: { household
   const subject = oneLine(`${head} +${payload.points}`);
   const { this_week: week, this_month: month } = payload.leaderboards;
   const trophies = trophyLines(payload.medals).map((l) => para(/^(.+) (earned) /.test(l) ? `🏆 ${l}` : l)).join("");
-  const inner = `${h1(head)}<p style="margin:0 0 4px">${chip(`+${payload.points}`)}</p>
+  const who = withWords(payload.contributors);
+  const inner = `${h1(head)}${who ? para(who) : ""}<p style="margin:0 0 4px">${chip(`+${payload.points}`)}</p>
 ${boardHtml("This week", week, payload.actor)}${boardHtml("This month", month, payload.actor)}
 <p class="muted" style="margin:22px 0 6px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${C.muted}">Trophies</p>${trophies}
 <div style="padding-top:18px">${button(`${app}/leaderboard`, "View leaderboard", true)}</div>`;
   const rows = (b: Board) => b.after.map((r) => `${r.rank}. ${r.name.padEnd(16)} ${r.points}`).join("\n");
   const text = [
-    `${head} (+${payload.points})`, household, "",
+    `${head} (+${payload.points})`, ...(who ? [who] : []), household, "",
     "THIS WEEK", rows(week), ...overtakenLines(week), "",
     "THIS MONTH", rows(month), ...overtakenLines(month), "",
     "TROPHIES", ...trophyLines(payload.medals), "", `${app}/leaderboard`, "",
@@ -107,15 +110,16 @@ export function renderAdminEmail({ household, payload, appUrl, acceptUrl, reject
   const app = appUrl.replace(/\/$/, "");
   const head = `${payload.housemate} ${deedWords(payload.chore, payload.custom)}`;
   const subject = oneLine(`${head}: approve?`);
+  const who = withWords(payload.contributors);
   const note = payload.note ? `<p class="soft muted" style="margin:14px 0 0;background:${C.surface2};color:${C.muted};border-radius:14px;padding:10px 14px;font-size:14px;line-height:1.5">&ldquo;${esc(payload.note)}&rdquo;</p>` : "";
   const first = payload.custom ? button(app, "Open the app", false) : button(acceptUrl, "Accept", true);
   const reject = `<a class="ghost" href="${esc(rejectUrl)}" style="display:inline-block;color:${C.bad};text-decoration:none;border:1px solid ${C.line};border-radius:999px;padding:12px 23px;font-size:15px;font-weight:600">Reject</a>`;
   const inner = `<p class="muted" style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${C.muted}">Waiting for you</p>
-${h1(head)}<p style="margin:0">${payload.custom ? chip("Typed deed") : chip(`+${payload.points}`)}</p>${note}
+${h1(head)}${who ? para(who) : ""}<p style="margin:0">${payload.custom ? chip("Typed deed") : chip(`+${payload.points}`)}</p>${note}
 ${payload.custom ? `<div style="padding-top:14px">${para("You set the points for a typed deed, so accept it in the app. You can reject it here.", true)}</div>` : ""}
 <div style="padding-top:20px">${first}&nbsp;&nbsp;${reject}</div>`;
   const text = [
-    `${head} (${payload.custom ? "Typed deed" : `+${payload.points}`}) is waiting for you.`, household,
+    `${head} (${payload.custom ? "Typed deed" : `+${payload.points}`}) is waiting for you.`, ...(who ? [who] : []), household,
     ...(payload.note ? ["", `"${payload.note}"`] : []), "",
     ...(payload.custom ? [`Open the app: ${app}`] : [`Accept: ${acceptUrl}`]), `Reject: ${rejectUrl}`, "",
     "Each link works once and expires in 7 days.", "",

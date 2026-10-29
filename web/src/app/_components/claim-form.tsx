@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { setMyGroupOrder, submitClaim, submitCustomClaim } from "../actions";
 import { useFlip, useLocal } from "./reorder";
 import { GroupHeading } from "./catalog";
+import { ContributorsPicker } from "./contributors-picker";
 import { SubmitButton } from "./submit-button";
 import { Icon, Kbd, button, input } from "./ui";
 
@@ -28,11 +29,12 @@ function DeedButton({ deed }: { deed: Deed }) {
 // One tap sends a claim to the admin. The optional note goes with the next tap.
 // Cards follow the catalog groups in this housemate's own order, set with the up/down arrows on each heading; deeds
 // with no group come last under Other. Their order never changes the admin's catalog.
-export function ClaimForm({ deeds, groups }: { deeds: Deed[]; groups: Group[] }) {
+export function ClaimForm({ deeds, groups, mates }: { deeds: Deed[]; groups: Group[]; mates: { id: string; name: string }[] }) {
   const ref = useRef<HTMLFormElement>(null);
   const customRef = useRef<HTMLFormElement>(null);
   const list = useRef<HTMLDivElement>(null);
   const [sent, setSent] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
   const [order, setOrder] = useLocal(groups, (gs) => gs.map((g) => g.id).join());
   const known = new Set(order.map((g) => g.id));
   const sections = [
@@ -58,17 +60,21 @@ export function ClaimForm({ deeds, groups }: { deeds: Deed[]; groups: Group[] })
     setSent(false);
     await submitClaim(formData);
     ref.current?.reset();
+    setPicked([]);
     setSent(true);
   }
   async function customAction(formData: FormData) {
     setSent(false);
     await submitCustomClaim(formData);
     customRef.current?.reset();
+    setPicked([]);
     setSent(true);
   }
   return (
     <div className="space-y-3">
+    {mates.length > 0 && <ContributorsPicker mates={mates} picked={picked} onChange={setPicked} />}
     <form ref={ref} action={action} className="space-y-3">
+      {picked.map((id) => <input key={id} type="hidden" name="contributor" value={id} />)}
       <input name="note" placeholder="Add a note (optional)" aria-label="Note for your admin" className={input} />
       <div ref={list} className="space-y-3">
         {sections.map((s) => (
@@ -83,6 +89,7 @@ export function ClaimForm({ deeds, groups }: { deeds: Deed[]; groups: Group[] })
       </div>
     </form>
     <form ref={customRef} action={customAction} className="space-y-2 border-t border-line pt-3">
+      {picked.map((id) => <input key={id} type="hidden" name="contributor" value={id} />)}
       <label className="block space-y-1.5 text-sm font-semibold">
         <span>Something else? Say what you did<Kbd>⌘+</Kbd></span>
         <span className="flex gap-2">
