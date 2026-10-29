@@ -182,3 +182,19 @@ test("names in a batch cannot inject markup", () => {
   assert.doesNotMatch(e.html, /<b>x<\/b>/);
   assert.match(e.html, /&lt;b&gt;x&lt;\/b&gt;/);
 });
+
+// Contributors: the claimer's name stays in the subject; the body says who else did it.
+test("a housemate email names the contributors", () => {
+  const e = decision({ ...accepted, contributors: ["Ben", "Cy"] } as Decision);
+  assert.match(e.html, /with Ben and Cy/);
+  assert.match(e.text, /with Ben and Cy/);
+  assert.equal(e.subject, "Maria Cleaned toilet +5");
+  assert.doesNotMatch(decision(accepted).html, /with Ben/);
+});
+
+test("the admin email names the contributors, escaped", () => {
+  const e = admin({ ...claim, contributors: ["Ben", "<b>Cy</b>"] });
+  assert.match(e.html, /with Ben and &lt;b&gt;Cy&lt;\/b&gt;/);
+  assert.match(e.text, /with Ben and <b>Cy<\/b>/);
+  assert.doesNotMatch(admin(claim).text, /with /);
+});

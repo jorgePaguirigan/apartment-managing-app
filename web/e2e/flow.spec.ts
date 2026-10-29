@@ -223,3 +223,45 @@ test("an admin makes a housemate an admin who can score claims but not their own
   await mate.page.getByRole("button", { name: "Accept", exact: true }).click();
   await expect(mate.page.getByText("Another admin has to decide your own claim.")).toBeVisible();
 });
+
+test("a claim with a contributor scores both housemates", async ({ browser }) => {
+  const admin = await newUser(browser);
+  const ana = await newUser(browser);
+  const ben = await newUser(browser);
+  const anaName = `ana${stamp}`;
+  const benName = `ben${stamp}`;
+
+  await signIn(admin.page, `boss3${stamp}@example.com`);
+  await admin.page.getByLabel("Household name").fill("Unit 6D");
+  await admin.page.getByLabel("Your name").fill("Boss3");
+  await admin.page.getByRole("button", { name: "Create household" }).click();
+  await admin.page.getByRole("button", { name: "New invite link" }).click();
+  const invite = await admin.page.locator("p.font-mono").first().innerText();
+  await signIn(ana.page, `${anaName}@example.com`, new URL(invite).pathname);
+  await signIn(ben.page, `${benName}@example.com`, new URL(invite).pathname);
+  await expect(ben.page.getByText(`Hi, ${benName}`)).toBeVisible();
+
+  // Ana names Ben, then taps the deed. The picker counts her in: 2 of 2 people.
+  await ana.page.reload();
+  await ana.page.getByRole("button", { name: /Contributors/ }).click();
+  await ana.page.getByRole("group", { name: "Contributors" }).getByText(benName).click();
+  await expect(ana.page.getByRole("button", { name: /Contributors/ })).toContainText(`With ${benName}`);
+  await expect(ana.page.getByRole("button", { name: /Contributors/ })).toContainText("2/2");
+  await ana.page.getByRole("button", { name: /Cooked dinner/ }).click();
+  await expect(ana.page.getByText("Sent to your admin for approval.")).toBeVisible();
+  await expect(ana.page.getByRole("button", { name: /Contributors/ })).toContainText("Just me");
+
+  // The admin sees who was with Ana, accepts once, and both are scored.
+  await admin.page.reload();
+  await expect(admin.page.getByText(`With ${benName}`)).toBeVisible();
+  await admin.page.getByRole("button", { name: "Accept", exact: true }).click();
+  await expect(admin.page.getByText("All caught up")).toBeVisible();
+  await ana.page.goto("/leaderboard");
+  await expect(ana.page.getByRole("listitem").filter({ hasText: anaName })).toContainText("4");
+  await expect(ana.page.getByRole("listitem").filter({ hasText: benName })).toContainText("4");
+
+  // Ben's History has the claim as a normal card.
+  await ben.page.goto("/");
+  await expect(ben.page.getByText("Cooked dinner").last()).toBeVisible();
+  await expect(ben.page.getByText("+4").last()).toBeVisible();
+});

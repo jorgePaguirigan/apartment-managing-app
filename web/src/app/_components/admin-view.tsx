@@ -11,7 +11,7 @@ import { Shortcuts } from "./shortcuts";
 import { ScheduleCard, type Schedule } from "./schedule-card";
 import { Avatar, Chip, Icon, Kbd, Section, button, ghost, input } from "./ui";
 
-type ClaimRow = { id: string; note: string | null; title: string | null; member: { display_name: string } | null; deed: { name: string; points: number } | null };
+type ClaimRow = { id: string; note: string | null; title: string | null; member: { display_name: string } | null; deed: { name: string; points: number } | null; contributors?: { member: { display_name: string } | null }[] };
 
 type ReportRow = { id: string; title: string | null; anonymous: boolean; reporter: { display_name: string } | null; subject: { display_name: string } | null; deed: { name: string; points: number } | null };
 
@@ -26,7 +26,7 @@ export async function AdminView() {
   const supabase = await createClient();
   const [{ data: claims }, { data: deeds }, { data: housemates }, { data: invites }, { data: decided }, { data: entries }, { data: household }, { data: awards }, { data: groups }, { data: reports }, { data: dismissed }] = await Promise.all([
     supabase.from("claim")
-      .select("id, note, title, member:member!claim_member_id_fkey(display_name), deed:deed_id(name, points)")
+      .select("id, note, title, member:member!claim_member_id_fkey(display_name), deed:deed_id(name, points), contributors:claim_contributor(member:member!claim_contributor_member_id_fkey(display_name))")
       .eq("status", "pending").order("created_at"),
     supabase.from("deed").select("id, name, points, active, group_id").is("deleted_at", null).order("kind").order("name"),
     supabase.from("member").select("user_id, display_name, role").eq("scored", true).order("display_name"),
@@ -35,7 +35,7 @@ export async function AdminView() {
       .select("id, note, title, status, decided_at, member:member!claim_member_id_fkey(display_name), deed:deed_id(name)")
       .neq("status", "pending").order("decided_at", { ascending: false }).limit(HISTORY),
     // Points actually scored, copied onto the entry when accepted.
-    supabase.from("score_entry").select("id, claim_id, points, deleted_at").eq("source", "claim"),
+    supabase.from("score_entry").select("id, claim_id, points, deleted_at, member:member!score_entry_member_id_fkey(display_name)").eq("source", "claim"),
     supabase.from("household").select("timezone").single(),
     // Awards and penalties entered directly, with no claim behind them.
     supabase.from("score_entry")
@@ -50,18 +50,19 @@ export async function AdminView() {
       .select("id, title, anonymous, decided_at, reporter:member!report_reporter_id_fkey(display_name), subject:member!report_subject_id_fkey(display_name), deed:deed_id(name, points)")
       .eq("status", "rejected").order("decided_at", { ascending: false }).limit(HISTORY),
   ]);
-  const scored = new Map((entries ?? []).map((e) => [e.claim_id, e]));
-  const fromClaims: HistoryRow[] = ((decided ?? []) as unknown as (Omit<ClaimRow, "deed"> & { status: "accepted" | "rejected"; decided_at: string; deed: { name: string } | null })[]).map((c) => ({
-    id: c.id,
-    title: c.deed?.name ?? c.title ?? "",
-    at: c.decided_at,
-    note: c.note,
-    status: c.status,
-    points: c.status === "accepted" ? scored.get(c.id)?.points ?? 0 : 0,
-    who: c.member?.display_name,
-    entryId: scored.get(c.id)?.id,
-    deleted: !!scored.get(c.id)?.deleted_at,
-  }));
+  type Scored = { id: string; points: number; deleted_at: string | null; member: { display_name: string } | null };
+  const scored = new Map<string, Scored[]>();
+  for (const e of (entries ?? []) as unknown as (Scored & { claim_id: string })[]) scored.set(e.claim_id, [...(scored.get(e.claim_id) ?? []), e]);
+  // An accepted claim with contributors is one History row per person, so each person's entry can be deleted on its own.
+  const fromClaims: HistoryRow[] = ((decided ?? []) as unknown as (Omit<ClaimRow, "deed"> & { status: "accepted" | "rejected"; decided_at: string; deed: { name: string } | null })[]).flatMap((c) => {
+    const base = { title: c.deed?.name ?? c.title ?? "", at: c.decided_at, note: c.note, status: c.status };
+    const mine = c.status === "accepted" ? scored.get(c.id) ?? [] : [];
+    if (mine.length < 2) {
+      const e = mine[0];
+      return [{ ...base, id: c.id, points: e?.points ?? 0, who: c.member?.display_name, entryId: e?.id, deleted: !!e?.deleted_at }];
+    }
+    return mine.map((e) => ({ ...base, id: `${c.id}:${e.id}`, points: e.points, who: e.member?.display_name, entryId: e.id, deleted: !!e.deleted_at }));
+  });
   const fromAwards: HistoryRow[] = ((awards ?? []) as unknown as AwardRow[]).map((e) => ({
     id: e.id,
     title: e.deed?.name ?? e.title ?? "",
@@ -107,6 +108,7 @@ export async function AdminView() {
                     <Avatar name={c.member?.display_name ?? "?"} className="size-9" />
                     <div className="min-w-0 flex-1">
                       <p className="break-words"><span className="font-semibold">{c.member?.display_name}</span> <span className="font-semibold">{c.deed?.name ?? (c.title ?? "").replace(/^./, (ch: string) => ch.toLowerCase())}</span></p>
+                      {!!c.contributors?.length && <p className="break-words text-sm text-muted">With {c.contributors.map((x) => x.member?.display_name).join(", ")}</p>}
                       {c.note && <p className="break-words text-sm text-muted">&ldquo;{c.note}&rdquo;</p>}
                     </div>
                     {c.deed ? <Chip tone="points">{signed(c.deed.points)}</Chip> : <Chip tone="muted">Custom</Chip>}

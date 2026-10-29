@@ -44,12 +44,13 @@ A shared app for housemates to track who contributes to the apartment. Housemate
 - Reports: a housemate may report a housemate (themselves included) for a penalty from the catalog, or type a demerit that is not in the catalog (1 to 80 characters). The report waits in the admin inbox; the admin accepts or rejects. Accepting a catalog report scores that penalty's points; a typed demerit needs negative points from the admin. The reporter chooses whether the reported housemate sees "Reported by <name>" or "Reported anonymously" beside the entry; the admin always sees the reporter. The reported housemate cannot read the report itself. A reporter cannot have two identical reports waiting. Removing a housemate rejects their waiting reports, about them or from them. Housemates still never award points: only the admin's decision creates the entry.
 5. Admin may also add an award directly (no claim) and may delete any entry. Deleting is soft: the entry is hidden, kept for audit.
 - Custom claim: if a deed is not in the catalog, the housemate types a short description (1 to 80 characters) instead. The admin enters positive points when accepting; the entry stores that title and those points. Custom entries count for totals, MVP and streaks, never for Champion. A housemate cannot have two identical custom claims waiting.
+- Contributors: a claim, catalog or custom, may name other scored members who did it with the claimer (the **Contributors** dropdown under "I did…"). The claimer is always counted. Everyone named must be a scored member of the household, listed once, so a claim never has more people than the household has housemates. Accepting scores the deed's full points once for each person (the points are not split); rejecting scores nobody. A contributor removed before the decision gets nothing. Each person's entry can be deleted on its own, and each contributor sees the claim in their own History as if they had claimed it. Chore-done claims do not take contributors.
 - Changing a catalog deed's points never changes past entries (the points are copied onto the entry).
 - An admin can delete a deed. It leaves the catalog and can no longer be claimed or awarded; past entries keep its name and points, waiting claims for it are rejected, and chores linked to it stop filing claims.
 - Claims left pending are shown with age. **[Default]** No auto-expiry.
 
 ### 4.3 Score entries
-Immutable apart from soft delete. Fields: `housemate`, `deed`, `points`, `source` (`claim` or `admin`), `report_note`, `approved_by`, `created_at`, `deleted_at`.
+Immutable apart from soft delete. Fields: `housemate`, `deed`, `points`, `source` (`claim` or `admin`; a claim with contributors scores one entry per person), `report_note`, `approved_by`, `created_at`, `deleted_at`.
 Nothing is ever reset. All views are queries over entries by date range (Q10).
 
 ### 4.4 Leaderboard
@@ -123,7 +124,7 @@ Allocation, from Sunday 00:00 before the week:
 
 ## 7. Data model (sketch)
 
-`household` (name, timezone), `member` (user, household, role), `deed` (name, points, kind, active), `claim` (member, deed, note, status, decided_by, decided_at), `score_entry`, `chore`, `chore_instance` (chore, week_start, assignee, dibbed, done), `washer_slot` (weekday, member), `budget_category`, `spend_entry`.
+`household` (name, timezone), `member` (user, household, role), `deed` (name, points, kind, active), `claim` (member, deed, note, status, decided_by, decided_at), `claim_contributor` (claim, member), `score_entry`, `chore`, `chore_instance` (chore, week_start, assignee, dibbed, done), `washer_slot` (weekday, member), `budget_category`, `spend_entry`.
 Postgres row-level security on `household_id` and role is required. Housemates cannot write `score_entry` directly.
 
 ## 8. Non-goals (v1 through v3)

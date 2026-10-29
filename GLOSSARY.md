@@ -12,6 +12,7 @@ Use these words exactly. They match the PRD and the database.
 - **Group**: a named section of the catalog (`deed_group`), such as Kitchen. A deed belongs to at most one. The admin sets the order (`position`); a housemate may keep their own order (`member_group_order`).
 - **Good deed / penalty**: `kind`. Good deeds are positive and claimable. Penalties are negative and entered by an admin only.
 - **Claim**: a housemate's "I did X" waiting for an admin. Status: pending, accepted, rejected. A **custom claim** has a typed title instead of a catalog deed, and the admin sets its points on acceptance.
+- **Contributor**: a scored member a claimer names as having done the deed with them. On acceptance each contributor gets their own score entry with the full points. The claimer is always counted, and a claim has at most as many people as the household has housemates.
 - **Report**: a housemate telling the admin that a housemate (themselves included) did a penalty deed, or a typed demerit not in the catalog. Status: pending, accepted, rejected. The admin decides; accepting scores the penalty at once. The reporter may stay **anonymous**: the reported housemate is then not told who reported (the admin always sees).
 - **Score entry**: one signed point change on a housemate's total. Points are copied from the deed when it is created. Never edited; only soft-deleted.
 - **Award**: an admin creating a score entry directly, without a claim.

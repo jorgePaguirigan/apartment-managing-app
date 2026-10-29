@@ -112,13 +112,13 @@ export async function joinHousehold(formData: FormData) {
 
 export async function submitClaim(formData: FormData) {
   const supabase = await createClient();
-  const { error } = await supabase.rpc("submit_claim", { p_deed: str(formData, "deed"), p_note: str(formData, "note") || null });
+  const { error } = await supabase.rpc("submit_claim", { p_deed: str(formData, "deed"), p_note: str(formData, "note") || null, p_contributors: formData.getAll("contributor").map(String) });
   await done(error);
 }
 
 export async function submitCustomClaim(formData: FormData) {
   const supabase = await createClient();
-  const { error } = await supabase.rpc("submit_custom_claim", { p_title: str(formData, "title"), p_note: str(formData, "note") || null });
+  const { error } = await supabase.rpc("submit_custom_claim", { p_title: str(formData, "title"), p_note: str(formData, "note") || null, p_contributors: formData.getAll("contributor").map(String) });
   await done(error);
 }
 
