@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { SubmitButton } from "./submit-button";
-import { button, danger, ghost } from "./ui";
+import { danger, ghost } from "./ui";
+
+// Same size as `danger`, in the ink colour of the main button.
+const calmButton = danger.replace("bg-bad", "bg-ink");
 
 // Button that asks once before it submits: red by default, `tone="calm"` for a non-destructive action. The confirm takes a full row inside a flex-wrap parent.
 export function ConfirmButton({ label, pendingText, prompt, action, name, value, className = "", tone = "danger" }: {
@@ -10,7 +13,7 @@ export function ConfirmButton({ label, pendingText, prompt, action, name, value,
 }) {
   const [open, setOpen] = useState(false);
   const calm = tone === "calm";
-  const look = calm ? `${button} min-h-10 px-3.5 py-2 text-sm` : danger;
+  const look = calm ? calmButton : danger;
   if (!open) return <button type="button" onClick={() => setOpen(true)} className={`${look} ${className}`}>{label}</button>;
   return (
     <form action={action} className={`reveal flex basis-full items-center gap-2 rounded-2xl p-3 ${calm ? "bg-surface-2" : "bg-bad/10"}`}>
