@@ -25,6 +25,7 @@ A shared app for housemates to track who contributes to the apartment. Housemate
 - An admin is **not** a housemate: no points, no chores, not on the leaderboard.
 - A person has exactly one role. If an admin also lives in the apartment, they need a second login as a housemate. **[Default]** See open item O1.
 - Housemates never award points to anyone, themselves included.
+- An admin can make a housemate an admin (Edit menu on the Housemates card). They stay a scored housemate, so they keep their points and chores and can score other people's claims. Nobody can accept or reject their own claim; another admin decides it. There is no way to take admin back in the app yet.
 - An admin can remove a housemate. Their past entries stay in history and still count in medal contests, but they show no medals; their waiting claims are rejected and their unfinished chores from this week on go back to unassigned. A removed housemate can rejoin through a new invite; their old history is theirs again.
 
 ## 4. Feature 1: Scoring (v1)

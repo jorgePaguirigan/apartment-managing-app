@@ -3,7 +3,7 @@
 Use these words exactly. They match the PRD and the database.
 
 - **Household**: the apartment. One in v1. Has a time zone (default `Asia/Manila`).
-- **Admin**: runs the household. Approves claims, enters penalties, edits the catalog. Not scored, not on the leaderboard.
+- **Admin**: runs the household. Approves claims, enters penalties, edits the catalog. Not scored unless they also live there (a **scored member**); an admin never decides their own claim. An admin can promote a housemate (`make_admin`), who stays scored.
 - **Housemate**: a scored resident. Submits claims, never awards points.
 - **Member**: the database row for either an admin or a housemate (`member.role`). Use "admin" or "housemate" in prose.
 - **Removed housemate**: a housemate an admin removed (`member.role = 'removed'`). Their history stays; they are off the leaderboard and schedule and can read nothing of the household. A new invite brings them back with their history.
