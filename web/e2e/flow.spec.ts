@@ -278,14 +278,15 @@ test("an admin who lives there too turns it on and off and switches view", async
   await p.getByLabel("Your name").fill("Boss4");
   await p.getByRole("button", { name: "Create household" }).click();
 
-  // Off: a switch with a plain hint, and no view switch yet.
-  const live = p.getByRole("switch", { name: "I live here too" });
-  await expect(live).toHaveAttribute("aria-checked", "false");
+  // Off: one plain button, and no view switch yet.
+  const join = p.getByRole("button", { name: "I live here too" });
+  const stop = p.getByRole("button", { name: "Stop being a housemate" });
+  await expect(stop).toHaveCount(0);
   await expect(p.getByRole("group", { name: "View" })).toHaveCount(0);
 
   // On at once, and the view switch appears.
-  await live.click();
-  await expect(live).toHaveAttribute("aria-checked", "true");
+  await join.click();
+  await expect(stop).toBeVisible();
   const view = p.getByRole("group", { name: "View" });
   await expect(view.getByRole("button", { name: "Admin" })).toHaveAttribute("aria-pressed", "true");
 
@@ -303,12 +304,12 @@ test("an admin who lives there too turns it on and off and switches view", async
   await p.setViewportSize({ width: 1280, height: 800 });
 
   // Turning it off asks first, because it takes them off the leaderboard. Cancel keeps it on.
-  await live.click();
+  await stop.click();
   await expect(p.getByText("You leave the leaderboard and the schedule")).toBeVisible();
   await p.getByRole("button", { name: "Cancel" }).click();
-  await expect(live).toHaveAttribute("aria-checked", "true");
-  await live.click();
+  await expect(stop).toBeVisible();
+  await stop.click();
   await p.getByRole("button", { name: "Turn off" }).click();
-  await expect(live).toHaveAttribute("aria-checked", "false");
+  await expect(join).toBeVisible();
   await expect(p.getByRole("group", { name: "View" })).toHaveCount(0);
 });
