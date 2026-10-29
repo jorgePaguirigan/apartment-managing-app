@@ -24,9 +24,9 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       <Banner error={error as string | undefined} />
       {me.role === "admin" ? (
         <>
-          <div className="rise flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="rise flex flex-wrap items-center justify-between gap-3">
             <h1 className="display text-4xl font-extrabold">Hi, {me.name}</h1>
-            <div className="sm:max-w-sm"><HousemateToggle on={me.alsoHousemate} /></div>
+            <HousemateToggle on={me.alsoHousemate} />
           </div>
           <AdminView />
         </>
