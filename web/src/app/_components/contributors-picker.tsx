@@ -6,18 +6,20 @@ import { Avatar, Icon } from "./ui";
 type Mate = { id: string; name: string };
 
 // "Contributors" dropdown under I did…. Lists the other housemates; the claimer is always counted, so a claim holds at most
-// everyone in the house. The panel stays mounted and fades/scales from the trigger (.pop in globals.css) so it can be reopened mid-motion.
+// everyone in the house. The panel only exists while open, so it can never show closed-looking-open; it fades and scales in from the trigger (.pop).
+// It closes on a second tap of the trigger, Escape, a tap anywhere else, or focus leaving it.
 export function ContributorsPicker({ mates, picked, onChange }: { mates: Mate[]; picked: string[]; onChange: (ids: string[]) => void }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const panel = useId();
   useEffect(() => {
     if (!open) return;
-    const away = (e: PointerEvent) => { if (!root.current?.contains(e.target as Node)) setOpen(false); };
+    const away = (e: Event) => { if (!root.current?.contains(e.target as Node)) setOpen(false); }; // a tap elsewhere, or Tab to another control
     const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
     document.addEventListener("pointerdown", away);
+    document.addEventListener("focusin", away);
     document.addEventListener("keydown", esc);
-    return () => { document.removeEventListener("pointerdown", away); document.removeEventListener("keydown", esc); };
+    return () => { document.removeEventListener("pointerdown", away); document.removeEventListener("focusin", away); document.removeEventListener("keydown", esc); };
   }, [open]);
 
   const names = mates.filter((m) => picked.includes(m.id)).map((m) => m.name);
@@ -31,7 +33,8 @@ export function ContributorsPicker({ mates, picked, onChange }: { mates: Mate[];
         <span className="display shrink-0 rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-bold tabular-nums">{picked.length + 1}/{mates.length + 1}</span>
         <Icon name="chevron" className={`size-4 shrink-0 text-muted transition-transform duration-200 ease-out ${open ? "rotate-90" : ""}`} />
       </button>
-      <div id={panel} role="group" aria-label="Contributors" data-open={open} inert={!open}
+      {open && (
+      <div id={panel} role="group" aria-label="Contributors"
         className="pop absolute inset-x-0 top-full z-20 mt-2 max-h-72 overflow-y-auto rounded-2xl border border-line bg-surface p-1.5 shadow-[var(--shadow)]">
         <p className="px-3 pb-1 pt-1.5 text-xs text-muted">Who did it with you? Each person gets the full points when your admin accepts.</p>
         {mates.map((m) => (
@@ -45,6 +48,7 @@ export function ContributorsPicker({ mates, picked, onChange }: { mates: Mate[];
           </label>
         ))}
       </div>
+      )}
     </div>
   );
 }

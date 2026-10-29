@@ -243,10 +243,14 @@ test("a claim with a contributor scores both housemates", async ({ browser }) =>
 
   // Ana names Ben, then taps the deed. The picker counts her in: 2 of 2 people.
   await ana.page.reload();
+  await expect(ana.page.getByRole("group", { name: "Contributors" })).toHaveCount(0); // closed until asked for
   await ana.page.getByRole("button", { name: /Contributors/ }).click();
+  await expect(ana.page.getByRole("group", { name: "Contributors" })).toBeVisible();
   await ana.page.getByRole("group", { name: "Contributors" }).getByText(benName).click();
   await expect(ana.page.getByRole("button", { name: /Contributors/ })).toContainText(`With ${benName}`);
   await expect(ana.page.getByRole("button", { name: /Contributors/ })).toContainText("2/2");
+  await ana.page.keyboard.press("Escape");
+  await expect(ana.page.getByRole("group", { name: "Contributors" })).toHaveCount(0); // Escape closes it
   await ana.page.getByRole("button", { name: /Cooked dinner/ }).click();
   await expect(ana.page.getByText("Sent to your admin for approval.")).toBeVisible();
   await expect(ana.page.getByRole("button", { name: /Contributors/ })).toContainText("Just me");
