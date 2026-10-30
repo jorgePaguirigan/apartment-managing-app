@@ -97,12 +97,13 @@ test("claim, approve, leaderboard and budget across admin and housemate", async 
 });
 
 // The sender issues decision tokens in production; here the test plays the sender straight against the local database.
+const psql = (sql: string) =>
+  execSync(`docker exec supabase_db_apartment-manager psql -U postgres -At -c "${sql.replace(/\s+/g, " ")}"`, { encoding: "utf8" }).trim().split("\n")[0];
+
 function issueToken(mateName: string) {
-  const sql = `select public.issue_decision_token(c.id, a.user_id) from public.claim c
+  return psql(`select public.issue_decision_token(c.id) from public.claim c
     join public.member m on m.user_id = c.member_id and m.display_name = '${mateName}'
-    join public.member a on a.household_id = c.household_id and a.role = 'admin'
-    where c.status = 'pending' limit 1`;
-  return execSync(`docker exec supabase_db_apartment-manager psql -U postgres -At -c "${sql.replace(/\s+/g, " ")}"`, { encoding: "utf8" }).trim().split("\n")[0];
+    where c.status = 'pending' limit 1`);
 }
 
 test("an admin accepts a claim from the emailed link without signing in", async ({ browser }) => {
@@ -144,6 +145,38 @@ test("an admin accepts a claim from the emailed link without signing in", async 
   // A made-up link shows nothing about any claim.
   await visitor.page.goto(`/decide/${"0".repeat(64)}`);
   await expect(visitor.page.getByRole("heading", { name: "Link not valid" })).toBeVisible();
+});
+
+test("with two admins the link asks who you are, and records that admin", async ({ browser }) => {
+  const admin = await newUser(browser);
+  const co = await newUser(browser);
+  const mate = await newUser(browser);
+  const visitor = await newUser(browser);
+  const mateName = `pick${stamp}`;
+  const coName = `co${stamp}`;
+
+  await signIn(admin.page, `pickadmin${stamp}@example.com`);
+  await admin.page.getByLabel("Household name").fill("Unit 9D");
+  await admin.page.getByLabel("Your name").fill("Chief");
+  await admin.page.getByRole("button", { name: "Create household" }).click();
+  await admin.page.getByRole("button", { name: "New invite link" }).click();
+  const invite = await admin.page.locator("p.font-mono").first().innerText();
+  await signIn(co.page, `${coName}@example.com`, new URL(invite).pathname);
+  await expect(co.page.getByText(`Hi, ${coName}`)).toBeVisible();
+  psql(`update public.member set role = 'admin' where display_name = '${coName}'`);
+  await signIn(mate.page, `${mateName}@example.com`, new URL(invite).pathname);
+  await mate.page.getByRole("button", { name: /Cooked dinner/ }).click();
+  await expect(mate.page.getByText("Sent to your admin for approval.")).toBeVisible();
+
+  await visitor.page.goto(`/decide/${issueToken(mateName)}`);
+  const accept = visitor.page.getByRole("button", { name: "Accept" });
+  await expect(visitor.page.getByText("Who are you?")).toBeVisible();
+  await expect(accept).toBeDisabled();
+  await visitor.page.getByRole("radio", { name: coName }).check({ force: true });
+  await expect(accept).toBeEnabled();
+  await accept.click();
+  await expect(visitor.page.getByRole("heading", { name: "Accepted" })).toBeVisible({ timeout: 20_000 });
+  expect(psql(`select m.display_name from public.claim c join public.member m on m.user_id = c.decided_by where c.status = 'accepted' and c.member_id = (select user_id from public.member where display_name = '${mateName}')`)).toBe(coName);
 });
 
 test("an admin sets when housemates get the claim emails", async ({ browser }) => {

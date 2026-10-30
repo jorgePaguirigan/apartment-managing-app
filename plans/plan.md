@@ -8,8 +8,8 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| E1 | One housemate email per decision: first recipient in `to`, the rest in `cc` | `one-housemate-email` | 🔵 PR open | |
-| E2 | One admin email per claim submission: first admin in `to`, the rest in `cc`; one shared decision link, the admin picks who they are on the confirm page | `one-admin-email` | ⚪ not started | |
+| E1 | One housemate email per decision: first recipient in `to`, the rest in `cc` | `one-housemate-email` | 🔵 PR open | [#59](https://github.com/jorgePaguirigan/apartment-managing-app/pull/59) |
+| E2 | One admin email per claim submission: first admin in `to`, the rest in `cc`; one shared decision link, the admin picks who they are on the confirm page | `one-admin-email` | 🔵 PR open, waiting for your UI approval (stacked on E1) | |
 
 ### Decisions made
 - The decider is whoever clicks: the confirm page asks "Who are you?" and `decided_by` / `approved_by` record that admin.

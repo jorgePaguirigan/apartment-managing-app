@@ -17,15 +17,21 @@ export type Email = { subject: string; html: string; text: string };
 export type MailRow = { id: string; kind: string; claim_id: string; recipient_id: string; email: string | null };
 export type MailGroup<R extends MailRow> = { rows: R[]; lead: R[]; emails: string[] };
 
-// Rows that become one email. An admin row is its own email. Housemate rows are gathered per person, then people waiting
+// Rows that become one email. Admin rows for the same claim share one: first admin "to", the rest "cc". Housemate rows are gathered per person, then people waiting
 // on the same set of claims share one email: the first is "to", the rest "cc". `lead` is the first person's rows, which
 // carry the payloads; `rows` is everyone's, so each can be marked sent.
 export function groupForMail<R extends MailRow>(rows: R[]): MailGroup<R>[] {
   const groups: MailGroup<R>[] = [];
+  const byClaim = new Map<string, MailGroup<R>>();
   const bySet = new Map<string, MailGroup<R>>();
   const byPerson = new Map<string, R[]>();
   for (const row of rows) {
-    if (row.kind === "admin_claim") { groups.push({ rows: [row], lead: [row], emails: row.email ? [row.email] : [] }); continue; }
+    if (row.kind === "admin_claim") {
+      const g = byClaim.get(row.claim_id);
+      if (g) { g.rows.push(row); if (row.email) g.emails.push(row.email); continue; }
+      const n = { rows: [row], lead: [row], emails: row.email ? [row.email] : [] };
+      byClaim.set(row.claim_id, n); groups.push(n); continue;
+    }
     byPerson.set(row.recipient_id, [...(byPerson.get(row.recipient_id) ?? []), row]);
   }
   for (const mine of byPerson.values()) {

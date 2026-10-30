@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
   const { data: rows, error } = await db.rpc("take_notifications", { p_limit: 100 });
   if (error) return Response.json({ error: error.message }, { status: 500 });
 
-  // Admin emails go one by one. Housemates waiting on the same claims share one email (first in to, the rest in cc).
+  // Admins on the same claim share one email, and so do housemates waiting on the same claims: first in to, the rest in cc.
   const groups = groupForMail(rows ?? []);
 
   let sent = 0, failed = 0;
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
       if (!emails.length) throw new Error("recipient has no email address");
       let mail;
       if (row.kind === "admin_claim") {
-        const { data: token, error: e } = await db.rpc("issue_decision_token", { p_claim: row.claim_id, p_admin: row.recipient_id });
+        const { data: token, error: e } = await db.rpc("issue_decision_token", { p_claim: row.claim_id });
         if (e) throw e;
         mail = renderAdminEmail({
           household: row.household, payload: row.payload as AdminClaim, appUrl: app,

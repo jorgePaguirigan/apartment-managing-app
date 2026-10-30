@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { decideByLink } from "../../actions";
+import { DecideForm } from "../../_components/decide-form";
 import { CenterCard } from "../../_components/center-card";
-import { SubmitButton } from "../../_components/submit-button";
-import { Banner, Chip, Icon, button, danger, ghost } from "../../_components/ui";
+import { Banner, Chip, Icon, button, ghost } from "../../_components/ui";
 
 // Keep the token out of search results and out of the Referer header.
 export const metadata = { title: "Decide a claim", robots: { index: false }, referrer: "no-referrer" as const };
@@ -14,6 +13,7 @@ export default async function Decide({ params, searchParams }: PageProps<"/decid
   const supabase = await createClient();
   const { data } = await supabase.rpc("claim_for_token", { p_token: token });
   const claim = data?.[0];
+  const { data: admins } = await supabase.rpc("admins_for_token", { p_token: token });
 
   if (!claim) {
     return (
@@ -61,19 +61,7 @@ export default async function Decide({ params, searchParams }: PageProps<"/decid
         </div>
         <Banner error={error as string | undefined} />
         {claim.custom && <p className="text-sm text-muted">You set the points for a typed deed, so accept it in the app. You can reject it here.</p>}
-        <form action={decideByLink} className="grid grid-cols-2 gap-3">
-          <input type="hidden" name="token" value={token} />
-          {claim.custom ? (
-            <Link href="/" className={ghost}>Open the app</Link>
-          ) : (
-            <SubmitButton name="accept" value="1" pendingText="Accepting…" className={rejectFirst ? ghost : button}>
-              <Icon name="check" />Accept
-            </SubmitButton>
-          )}
-          <SubmitButton name="accept" value="0" pendingText="Rejecting…" className={rejectFirst ? danger : ghost}>
-            <Icon name="x" />Reject
-          </SubmitButton>
-        </form>
+        <DecideForm token={token} admins={admins ?? []} custom={claim.custom} rejectFirst={rejectFirst} />
       </div>
     </CenterCard>
   );

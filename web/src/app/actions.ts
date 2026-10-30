@@ -150,8 +150,9 @@ export async function decideByLink(formData: FormData) {
   const token = str(formData, "token");
   if (!/^[0-9a-f]{64}$/.test(token)) redirect("/login");
   const supabase = await createClient();
-  const { error } = await supabase.rpc("decide_claim_by_token", { p_token: token, p_accept: formData.get("accept") === "1" });
+  const { error } = await supabase.rpc("decide_claim_by_token", { p_token: token, p_accept: formData.get("accept") === "1", p_admin: str(formData, "admin") });
   if (error) fail(error.message, `/decide/${token}`);
+  revalidatePath(`/decide/${token}`);
   redirect(`/decide/${token}`);
 }
 

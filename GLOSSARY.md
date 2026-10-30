@@ -24,7 +24,7 @@ Use these words exactly. They match the PRD and the database.
 - **Queue**: the order of housemates for one chore, worked out from history: oldest completion first, then longest without it. Never stored.
 - **Medal**: a badge worked out from score entries when read (champion, MVP of the month, streak). Never stored.
 - **Scored member**: an admin or housemate who is on the leaderboard: every housemate, and an admin who opted in as a housemate.
-- **Admin email**: the email an admin gets when a claim is submitted, with Accept and Reject buttons.
-- **Housemate email**: the email scored members get after a claim is decided, with the leaderboards, who was overtaken and medals gained or lost.
-- **Decision link**: the single-use, expiring link in an admin email that opens a confirm page for one claim. Nothing is decided until the admin confirms.
+- **Admin email**: the one email the admins get when a claim is submitted (first admin to, the others cc), with Accept and Reject buttons.
+- **Housemate email**: the one email scored members get after a claim is decided (first to, the rest cc), with the leaderboards, who was overtaken and medals gained or lost.
+- **Decision link**: the single-use, expiring link in the admin email, shared by the admins, that opens a confirm page for one claim. The admin picks who they are there, and nothing is decided until they confirm.
 - **Send schedule**: the admin's choice of when housemate emails go out: instant, or at set times, with an optional hold-after rule. Admin emails ignore it.
