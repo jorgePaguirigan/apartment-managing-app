@@ -228,8 +228,22 @@ test("a housemate without an address is left out of the list, but their row is s
   assert.equal(out[0].rows.length, 2);
 });
 
-test("an admin email is never shared, even for the same claim", () => {
+test("admins waiting on the same claim share one email: first in to, the rest in cc", () => {
   const a = { ...hrow("1", "c1", "ana"), kind: "admin_claim" };
   const b = { ...hrow("2", "c1", "ben"), kind: "admin_claim" };
+  const out = groupForMail([a, b]);
+  assert.equal(out.length, 1);
+  assert.deepEqual(out[0].emails, ["ana@x.test", "ben@x.test"]);
+  assert.deepEqual(out[0].rows.map((r) => r.id), ["1", "2"]);
+});
+
+test("admin emails for different claims stay separate", () => {
+  const a = { ...hrow("1", "c1", "ana"), kind: "admin_claim" };
+  const b = { ...hrow("2", "c2", "ana"), kind: "admin_claim" };
   assert.equal(groupForMail([a, b]).length, 2);
+});
+
+test("an admin and a housemate waiting on the same claim never share an email", () => {
+  const a = { ...hrow("1", "c1", "ana"), kind: "admin_claim" };
+  assert.equal(groupForMail([a, hrow("2", "c1", "ana")]).length, 2);
 });
