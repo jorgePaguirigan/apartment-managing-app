@@ -2,7 +2,7 @@
 // notification_sender migration), which proves who it is with a shared secret in the x-cron-secret header.
 import { createClient } from "npm:@supabase/supabase-js@2.118.0";
 import nodemailer from "npm:nodemailer@6.9.16";
-import { renderAdminEmail, renderDigestEmail, type AdminClaim, type Decision } from "./render.ts";
+import { groupForMail, renderAdminEmail, renderDigestEmail, type AdminClaim, type Decision } from "./render.ts";
 
 const env = (k: string) => Deno.env.get(k) ?? "";
 
@@ -24,21 +24,14 @@ Deno.serve(async (req) => {
   const { data: rows, error } = await db.rpc("take_notifications", { p_limit: 100 });
   if (error) return Response.json({ error: error.message }, { status: 500 });
 
-  // Admin emails go one by one. Housemate emails waiting for the same person become one email.
-  type Row = NonNullable<typeof rows>[number];
-  const groups: Row[][] = [];
-  const byRecipient = new Map<string, Row[]>();
-  for (const row of rows ?? []) {
-    if (row.kind === "admin_claim") { groups.push([row]); continue; }
-    const g = byRecipient.get(row.recipient_id);
-    if (g) g.push(row); else { const n = [row]; byRecipient.set(row.recipient_id, n); groups.push(n); }
-  }
+  // Admin emails go one by one. Housemates waiting on the same claims share one email (first in to, the rest in cc).
+  const groups = groupForMail(rows ?? []);
 
   let sent = 0, failed = 0;
-  for (const group of groups) {
-    const row = group[0];
+  for (const { rows: group, lead, emails } of groups) {
+    const row = lead[0];
     try {
-      if (!row.email) throw new Error("recipient has no email address");
+      if (!emails.length) throw new Error("recipient has no email address");
       let mail;
       if (row.kind === "admin_claim") {
         const { data: token, error: e } = await db.rpc("issue_decision_token", { p_claim: row.claim_id, p_admin: row.recipient_id });
@@ -48,9 +41,9 @@ Deno.serve(async (req) => {
           acceptUrl: `${app}/decide/${token}?do=accept`, rejectUrl: `${app}/decide/${token}?do=reject`,
         });
       } else {
-        mail = renderDigestEmail({ household: row.household, payloads: group.map((r) => r.payload as Decision), appUrl: app });
+        mail = renderDigestEmail({ household: row.household, payloads: lead.map((r) => r.payload as Decision), appUrl: app });
       }
-      await transport.sendMail({ from: `Kasangga <${user || "notifier@localhost"}>`, to: row.email, ...mail });
+      await transport.sendMail({ from: `Kasangga <${user || "notifier@localhost"}>`, to: emails[0], cc: emails.slice(1), ...mail });
       for (const r of group) await db.rpc("finish_notification", { p_id: r.id });
       sent++;
     } catch (e) {

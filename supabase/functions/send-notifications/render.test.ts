@@ -1,7 +1,7 @@
 // Tests for the email renderer. Run with `node --test supabase/functions/send-notifications/render.test.ts`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { renderAdminEmail, renderDigestEmail, renderHousemateEmail, type AdminClaim, type Decision } from "./render.ts";
+import { groupForMail, renderAdminEmail, renderDigestEmail, renderHousemateEmail, type AdminClaim, type Decision } from "./render.ts";
 
 const APP = "https://kasangga.vercel.app";
 const week = {
@@ -197,4 +197,39 @@ test("the admin email names the contributors, escaped", () => {
   assert.match(e.html, /with Ben and &lt;b&gt;Cy&lt;\/b&gt;/);
   assert.match(e.text, /with Ben and <b>Cy<\/b>/);
   assert.doesNotMatch(admin(claim).text, /with /);
+});
+
+// One email goes to every housemate who is waiting on the same claims: the first in "to", the rest in "cc".
+const hrow = (id: string, claim: string, who: string, email: string | null = `${who}@x.test`) =>
+  ({ id, kind: "housemate_decision", claim_id: claim, recipient_id: who, email });
+
+test("housemates waiting on the same claim share one email: first in to, the rest in cc", () => {
+  const out = groupForMail([hrow("1", "c1", "ana"), hrow("2", "c1", "ben"), hrow("3", "c1", "cy")]);
+  assert.equal(out.length, 1);
+  assert.deepEqual(out[0].emails, ["ana@x.test", "ben@x.test", "cy@x.test"]);
+  assert.deepEqual(out[0].rows.map((r) => r.id), ["1", "2", "3"]);
+});
+
+test("a housemate with several claims waiting gets them together, shared with whoever waits on the same set", () => {
+  const out = groupForMail([hrow("1", "c1", "ana"), hrow("2", "c2", "ana"), hrow("3", "c2", "ben"), hrow("4", "c1", "ben")]);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].lead.length, 2);
+  assert.equal(out[0].rows.length, 4);
+});
+
+test("a housemate waiting on a different set gets their own email", () => {
+  const out = groupForMail([hrow("1", "c1", "ana"), hrow("2", "c1", "ben"), hrow("3", "c2", "cy")]);
+  assert.deepEqual(out.map((g) => g.emails), [["ana@x.test", "ben@x.test"], ["cy@x.test"]]);
+});
+
+test("a housemate without an address is left out of the list, but their row is still finished", () => {
+  const out = groupForMail([hrow("1", "c1", "ana"), hrow("2", "c1", "ben", null)]);
+  assert.deepEqual(out[0].emails, ["ana@x.test"]);
+  assert.equal(out[0].rows.length, 2);
+});
+
+test("an admin email is never shared, even for the same claim", () => {
+  const a = { ...hrow("1", "c1", "ana"), kind: "admin_claim" };
+  const b = { ...hrow("2", "c1", "ben"), kind: "admin_claim" };
+  assert.equal(groupForMail([a, b]).length, 2);
 });

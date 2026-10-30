@@ -14,6 +14,31 @@ export type Decision =
 export type AdminClaim = { housemate: string; chore: string; points: number | null; note: string | null; custom: boolean; contributors?: string[] };
 export type Email = { subject: string; html: string; text: string };
 
+export type MailRow = { id: string; kind: string; claim_id: string; recipient_id: string; email: string | null };
+export type MailGroup<R extends MailRow> = { rows: R[]; lead: R[]; emails: string[] };
+
+// Rows that become one email. An admin row is its own email. Housemate rows are gathered per person, then people waiting
+// on the same set of claims share one email: the first is "to", the rest "cc". `lead` is the first person's rows, which
+// carry the payloads; `rows` is everyone's, so each can be marked sent.
+export function groupForMail<R extends MailRow>(rows: R[]): MailGroup<R>[] {
+  const groups: MailGroup<R>[] = [];
+  const bySet = new Map<string, MailGroup<R>>();
+  const byPerson = new Map<string, R[]>();
+  for (const row of rows) {
+    if (row.kind === "admin_claim") { groups.push({ rows: [row], lead: [row], emails: row.email ? [row.email] : [] }); continue; }
+    byPerson.set(row.recipient_id, [...(byPerson.get(row.recipient_id) ?? []), row]);
+  }
+  for (const mine of byPerson.values()) {
+    const key = mine.map((r) => r.claim_id).sort().join();
+    const g = bySet.get(key);
+    const email = mine[0].email;
+    if (g) { g.rows.push(...mine); if (email) g.emails.push(email); continue; }
+    const n = { rows: [...mine], lead: mine, emails: email ? [email] : [] };
+    bySet.set(key, n); groups.push(n);
+  }
+  return groups;
+}
+
 const C = { bg: "#f2efe6", surface: "#fbfaf5", surface2: "#e8e4d8", ink: "#16171b", muted: "#5c5a52", line: "#d8d3c4", accent: "#cbff41", bad: "#be2a1f" };
 const FONT = `-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif`;
 
