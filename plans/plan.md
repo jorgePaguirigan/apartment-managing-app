@@ -1,6 +1,46 @@
 # Feature batch plan
 
-## Current batch: promote admins, contributors, admin/housemate buttons (started 2026-10-29)
+## Current batch: one email per claim (started 2026-10-30)
+
+Plan approved 2026-10-30. Claude updates this table as each milestone moves. One branch and PR per milestone; a UI milestone stops for your approval of the screenshot. Hosted `supabase db push` only with your OK.
+
+Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
+
+| # | Milestone | Branch | Status | PR |
+|---|---|---|---|---|
+| E1 | One housemate email per decision: first recipient in `to`, the rest in `cc` | `one-housemate-email` | 🔵 PR open | |
+| E2 | One admin email per claim submission: first admin in `to`, the rest in `cc`; one shared decision link, the admin picks who they are on the confirm page | `one-admin-email` | ⚪ not started | |
+
+### Decisions made
+- The decider is whoever clicks: the confirm page asks "Who are you?" and `decided_by` / `approved_by` record that admin.
+- Housemate email uses `cc` as asked, so housemates see each other's addresses (bcc was offered and declined).
+- Housemates with the same set of waiting claims share one email; a different set (for example after a retry) gets its own.
+
+### E1: One housemate email
+- **Backend:** none. The outbox keeps one row per recipient, so batching and retries stay per person.
+- **Sender:** group people with an identical waiting claim set; first is `to`, the rest `cc`. Recipients without an address are left out; the group fails only if nobody has one.
+- **Test:** `groupRecipients()` helper in `render.ts` with tests in `render.test.ts` (three housemates, one email; different set, own email; missing address skipped).
+- **Files:** `send-notifications/index.ts`, `render.ts`, `render.test.ts`.
+
+### E2: One admin email, decided by whoever clicks
+- **Docs first:** PRD 4.7, GLOSSARY (Admin email, Decision link).
+- **Backend:** one migration. Token per claim (`issue_decision_token(claim)`, `admin_id` dropped); `admins_for_token(token)` lists the household's admins; `decide_claim_by_token(token, accept, admin)` requires a current admin of that household (42501 otherwise); first decision wins.
+- **Sender:** group admin rows by claim, one token, first admin `to`, the rest `cc`.
+- **UI:** confirm page "Who are you?" with pressable admin chips; Accept and Reject disabled until one is picked. Hover (gated), press `scale(0.97)`, reduced motion, dark mode, phone width. Screenshots before the PR counts as done.
+- **Test:** pgTAP in `decision_links.test.sql` (any admin can use the link, non-admin and other-household admin refused, pick recorded in `decided_by` and `approved_by`, single use, first decision wins) plus a scripted browser run of the picker.
+- **Files:** `PRD.md`, `GLOSSARY.md`, new migration, `decision_links.test.sql`, `index.ts`, `render.ts`, `render.test.ts`, `web/src/app/decide/[token]/page.tsx`, `web/src/app/actions.ts`.
+
+### Order
+E1, then E2. Both branch from an up-to-date `main`.
+
+### Not checked / skipped
+- Real Gmail delivery and the hosted cron do not run locally; only the local mail catcher is used.
+- The E2 migration must be pushed to hosted Supabase (ask first) and the sender function redeployed.
+- Weakness accepted: anyone holding the link can claim to be any admin.
+
+---
+
+## Previous batch: promote admins, contributors, admin/housemate buttons (2026-10-29)
 
 Plan approved 2026-10-29. Claude updates this table as each milestone moves. One branch and PR per milestone; a UI milestone stops for your approval of the screenshot before the next one starts. Hosted `supabase db push` only with your OK.
 
