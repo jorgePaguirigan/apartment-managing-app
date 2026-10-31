@@ -9,7 +9,7 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
 | S1 | Phones (320 to 430 wide, portrait and landscape) fit and work; screen-check test; screenshots | `fit-phones` | 🔵 PR open, waiting for your UI approval | [64](https://github.com/jorgePaguirigan/apartment-managing-app/pull/64) |
-| S2 | Tablets (744 to 1366 wide, portrait and landscape) fit and work; same test extended; screenshots | `fit-tablets` | ⚪ not started | |
+| S2 | Tablets (744 to 1366 wide, portrait and landscape) fit and work; same test extended; screenshots | `fit-tablets` | 🔵 PR open, waiting for your UI approval | [65](https://github.com/jorgePaguirigan/apartment-managing-app/pull/65) |
 | L1 | Diagnose the 15 s and 20 s page loads; report causes and fixes; **stop and wait for your pick** | none (report only) | ✅ reported; you picked fixes 1, 2 and 3 | |
 | L2 | Implement the fixes you pick | `faster-page-loads` | 🔵 PR open, waiting for your UI approval | [66](https://github.com/jorgePaguirigan/apartment-managing-app/pull/66) |
 
@@ -49,6 +49,15 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 - **Skills used:** mobile-native, tdd, emil-design-eng, apple-design, ui-ux-pro-max, pr.
 - **Not run:** break-ui, blast-radius, code-review skills (I reviewed the diff by hand; it is 6 source files).
 - **Decision to confirm:** 44px targets make some list rows taller on touch screens (catalog rows with "Edit" about 90px in landscape).
+
+### S2 result (tablets)
+- **Test:** `screens.spec.ts` now also runs 10 tablet sizes (744 to 1366 wide, portrait and landscape); 19 sizes in all, light and dark. The first run was already green because the phone fixes carry over, so the test was widened first: it now checks every short word on the page for being broken mid-word, not only buttons.
+- **Bugs it found and fixed:**
+  - Header on landscape tablets: nav labels broke mid-word ("Hom / e", "Schedul / e") and so did the role chip. Nav links and chips never wrap now.
+  - Header at 1366px: the household name shrank to three letters. The header and main column grow to `max-w-5xl` from 1280px, and the avatar plus role chip show from 1280px; the signed-in name moved into the avatar's tooltip (it is still in the "Hi, name" greeting).
+  - Dock at 320px: the Leaderboard tab was 3px too wide once its label stopped wrapping; the dock pads less under 360px.
+- **Skills used:** mobile-native, tdd, emil-design-eng, apple-design, ui-ux-pro-max, pr.
+- **Decision to confirm:** I did not add two-column layouts on tablets. Portrait tablets keep the single column (the deed grid is already three across) and landscape tablets keep the admin's two columns. Say if you want more.
 
 ### L1 / L2 result (slow pages)
 - **L1 finding:** I could not reproduce 15 to 20 seconds, on your hosted database signed in or on an emulated phone. Server time was 0.4 to 3.3 s per page and almost all of it was database calls waiting in a row, so the work became making the site feel faster (your pick: 1, 2 and 3).
