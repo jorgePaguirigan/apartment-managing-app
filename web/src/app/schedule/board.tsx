@@ -11,10 +11,12 @@ export type Card = {
 };
 export type Housemate = { id: string; name: string };
 
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+// The week starts on Sunday, but a chore's weekday stays 1 = Monday to 7 = Sunday.
+const weekdayOf = (row: number) => (row === 0 ? 7 : row);
 const small = `${ghost} min-h-8 px-2.5 py-1 text-xs`;
 
-// "2026-10-19" plus n days, as a day number. Plain date arithmetic, no time zone involved.
+// "2026-10-18" (a Sunday) plus n days, as a day number. Plain date arithmetic, no time zone involved.
 const dayLabel = (weekStart: string, n: number) =>
   new Intl.DateTimeFormat("en", { day: "numeric", timeZone: "UTC" }).format(new Date(Date.parse(`${weekStart}T00:00:00Z`) + n * 86_400_000));
 
@@ -59,12 +61,12 @@ export function Board({ weekStart, phase, housemates, cards, meId, isAdmin, show
                 <span className="display text-lg font-bold tabular-nums">{dayLabel(weekStart, i)}</span>
               </th>
               {columns.map((c) => {
-                const target = drag !== null && drag.weekday === i + 1 && drag.assignee !== c.id;
+                const target = drag !== null && drag.weekday === weekdayOf(i) && drag.assignee !== c.id;
                 return (
                   <td key={c.id ?? "none"} onDragOver={target ? (e) => e.preventDefault() : undefined}
                     onDrop={target ? (e) => { e.preventDefault(); assign(drag.id, c.id); setDrag(null); } : undefined}
                     className={`space-y-1.5 p-1.5 align-top transition-colors duration-150 ${target ? "bg-accent/30 outline-2 -outline-offset-2 outline-dashed outline-ink/40" : ""}`}>
-                    {view.filter((k) => k.weekday === i + 1 && k.assignee === c.id).map((k) => (
+                    {view.filter((k) => k.weekday === weekdayOf(i) && k.assignee === c.id).map((k) => (
                       <div key={k.id} draggable={movable(k)} onDragStart={() => setDrag(k)} onDragEnd={() => setDrag(null)}
                         className={`rounded-2xl border border-line bg-surface p-2.5 text-sm ${movable(k) ? "cursor-grab active:cursor-grabbing" : ""} ${drag?.id === k.id ? "opacity-50" : ""}`}>
                         <p className="font-semibold leading-tight">{k.name}</p>

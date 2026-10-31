@@ -31,7 +31,7 @@ insert into public.score_entry (household_id, member_id, title, points, source, 
           '00000000-0000-0000-0000-0000000000d1', date_trunc('month', now()) - interval '3 days');
 insert into public.chore_instance (household_id, chore_id, week_start, assignee, source)
   values (current_setting('t.hh')::uuid, '00000000-0000-0000-0000-00000000c401',
-          date_trunc('week', now() at time zone 'Asia/Manila')::date, '00000000-0000-0000-0000-0000000000d2', 'admin');
+          public.period_start('week', now() at time zone 'Asia/Manila')::date, '00000000-0000-0000-0000-0000000000d2', 'admin');
 set local role authenticated;
 
 -- Only an admin of the same household can remove, and only a housemate.

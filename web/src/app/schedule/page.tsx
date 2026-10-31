@@ -16,7 +16,6 @@ type DoerRow = { deed_name: string; member_id: string; display_name: string; tim
 const PHASE_TEXT: Record<string, string> = {
   early: "Claim any open chore now. Unclaimed chores are handed out Sunday 00:00.",
   dibs: "Claim any open chore now. Unclaimed chores are handed out Sunday 00:00.",
-  published: "This schedule is set.",
   current: "This week's schedule.",
   past: "A finished week.",
 };
@@ -27,7 +26,7 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
   const supabase = await createClient();
   const housemateRows = getHousemates(); // also feeds the shell
 
-  // The database decides which Monday it is in the household time zone, and fills the week in if it is not yet.
+  // The database decides which Sunday it is in the household time zone, and fills the week in if it is not yet.
   const [{ me }, { data: weekStart }] = await Promise.all([getMe(), supabase.rpc("schedule_week", { p_weeks: next ? 1 : 0 })]);
   if (!me || typeof weekStart !== "string") redirect("/");
 
@@ -134,7 +133,7 @@ function ChoreForm({ deeds }: { deeds: { id: string; name: string }[] }) {
     <form action={saveChore} className="grid gap-2 sm:grid-cols-2">
       <input name="name" required placeholder="Chore, e.g. Sweep the floor" aria-label="Chore name" className={input} />
       <input name="area" placeholder="Area, e.g. Living room" aria-label="Area" className={input} />
-      <select name="weekday" aria-label="Weekday" className={input}>{DAY_NAMES.map((d, i) => <option key={d} value={i + 1}>{d}</option>)}</select>
+      <select name="weekday" aria-label="Weekday" className={input}>{[7, 1, 2, 3, 4, 5, 6].map((v) => <option key={v} value={v}>{DAY_NAMES[v - 1]}</option>)}</select>
       <select name="weight" aria-label="Weight" className={input}>{[1, 2, 3].map((w) => <option key={w} value={w}>Weight {w}</option>)}</select>
       <select name="deed" aria-label="Deed claimed when done" className={`${input} sm:col-span-2`}>
         <option value="">No deed (cannot be claimed)</option>

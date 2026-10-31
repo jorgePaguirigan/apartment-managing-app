@@ -89,8 +89,8 @@ Nothing is ever reset. All views are queries over entries by date range (Q10).
 |---|---|
 | Any time until the week ends | Dibs. A housemate may dib any unclaimed chore of this week or next, first come first served, from the Available chores list on Home or the schedule. |
 | Cap | A housemate may dib up to their fair share: `ceil(total weight / number of housemates)`. |
-| Sunday 00:00 | Unclaimed chores of the coming week are allocated (5.3). Next week's schedule is published. |
-| Release | A housemate may release a chore they dibbed until Sunday 00:00 before its week, and not once it is marked done. |
+| Sunday 00:00, the week starts | Unclaimed chores of that week are allocated (5.3). The schedule is final for the week apart from admin moves and dibs. |
+| Release | A housemate may release a chore they dibbed until its week starts (Sunday 00:00), and not once it is marked done. |
 
 ### 5.3 Allocation of unclaimed chores
 Each chore has a **queue**, worked out from history each time it is read, never stored. Points are not used.
@@ -99,7 +99,7 @@ Each chore has a **queue**, worked out from history each time it is read, never 
 - An admin moving a card (drag and drop) changes that week's schedule only. It never counts as completing.
 - A card the admin moves to Unassigned stays unassigned for the rest of that week: the allocation does not hand it out again. Housemates can still dib it.
 
-Allocation, from Sunday 00:00 before the week:
+Allocation, at the start of the week (Sunday 00:00):
 1. Dibs stay as taken.
 2. Take unclaimed chores, heaviest first.
 3. Give each chore to the housemate with the lowest current load (dibbed weight plus already allocated).
