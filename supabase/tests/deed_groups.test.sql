@@ -1,6 +1,6 @@
 -- pgTAP tests for catalog groups. Run with `supabase test db`.
 begin;
-select plan(8);
+select plan(9);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-0000000000f1'), ('00000000-0000-0000-0000-0000000000f2'), ('00000000-0000-0000-0000-0000000000f3');
@@ -20,6 +20,8 @@ select lives_ok($$insert into public.deed_group (id, household_id, name) values 
   'admin adds a group');
 select lives_ok($$update public.deed set group_id = '00000000-0000-0000-0000-00000000a001' where id = current_setting('t.deed')::uuid$$,
   'admin moves a deed into it');
+select throws_ok($$insert into public.deed_group (household_id, name) values (current_setting('t.hh')::uuid, ' ungrouped ')$$,
+  '23514', null, 'a group cannot be named Ungrouped, which is what deeds with no group are called');
 select is((select g.name from public.deed d join public.deed_group g on g.id = d.group_id where d.id = current_setting('t.deed')::uuid),
   'Kitchen', 'the deed is in Kitchen');
 select throws_ok($$update public.deed set group_id = '00000000-0000-0000-0000-00000000a003' where id = current_setting('t.deed')::uuid$$,
