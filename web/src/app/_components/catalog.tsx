@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type DragEvent, type ReactNode } from "react";
 import { useFlip, useLocal } from "./reorder";
-import { addGroup, deleteDeed, editDeed, moveDeed, reorderGroups, saveDeed, setDeedActive } from "../actions";
+import { addGroup, deleteDeed, deleteGroup, editDeed, moveDeed, renameGroup, reorderGroups, saveDeed, setDeedActive } from "../actions";
 import { ConfirmButton } from "./confirm-button";
 import { SeeMore } from "./see-more";
 import { SubmitButton } from "./submit-button";
@@ -120,13 +120,26 @@ function GroupSection({ section: s, dnd, first, last }: { section: Section; dnd:
   const target = dnd.drag !== null && (dnd.drag.group_id ?? null) !== s.id;
   const key = s.id ?? "none";
   const open = !dnd.collapsed.includes(key);
+  const [editing, setEditing] = useState(false);
   return (
     <section aria-label={s.name} data-group={s.id ?? undefined}
       onDragOver={target ? (e: DragEvent<HTMLElement>) => { e.preventDefault(); if (dnd.over !== s.id) dnd.hover(s.id); } : undefined}
       onDrop={target ? (e) => { e.preventDefault(); dnd.assign(dnd.drag!.id, s.id, true); dnd.end(); } : undefined}
       className={`-mx-2 rounded-2xl px-2 pb-1 transition-[background-color,outline-color] duration-150 ${!target ? "" : dnd.over === s.id ? "bg-accent/20 outline-2 -outline-offset-2 outline-dashed outline-ink/60!" : "outline-2 -outline-offset-2 outline-dashed outline-ink/20!"}`}>
       <GroupHeading name={s.name} count={s.deeds.length} movable={s.id !== null} first={first} last={last} nudge={(by) => dnd.nudge(s.id!, by)}
-        open={open} toggle={() => dnd.toggle(key)} className="border-b border-line pb-1.5 pt-1 font-semibold" />
+        open={open} toggle={() => dnd.toggle(key)} edit={s.id === null ? undefined : { open: editing, toggle: () => setEditing(!editing) }}
+        className="border-b border-line pb-1.5 pt-1 font-semibold" />
+      {editing && s.id !== null && (
+        <div className="reveal flex flex-wrap items-center gap-2 py-2">
+          <form action={async (f) => { setEditing(false); await renameGroup(f); }} className="flex min-w-0 flex-1 gap-2">
+            <input type="hidden" name="group" value={s.id} />
+            <input name="name" defaultValue={s.name} required maxLength={40} aria-label={`Rename ${s.name}`} className={`${input} min-w-0 flex-1 py-2`} />
+            <SubmitButton className={ghost} pendingText="…">Save</SubmitButton>
+          </form>
+          <ConfirmButton label="Delete group" pendingText="Deleting…" action={deleteGroup} name="group" value={s.id}
+            prompt={`Delete ${s.name}? Its deeds move to Ungrouped.`} />
+        </div>
+      )}
       <div className="fold" data-open={open} inert={!open}>
         <div className="-mx-2 px-2">
           <ul className="divide-y divide-line">
@@ -140,9 +153,10 @@ function GroupSection({ section: s, dnd, first, last }: { section: Section; dnd:
 }
 
 // A group's name with up/down arrows to move it. Shared with the housemate's "I did" cards.
-export function GroupHeading({ name, count, movable, first, last, nudge, className, open, toggle }: {
+export function GroupHeading({ name, count, movable, first, last, nudge, className, open, toggle, edit }: {
   name: string; count?: number; movable: boolean; first: boolean; last: boolean; nudge: (by: -1 | 1) => void; className: string;
   open?: boolean; toggle?: () => void; // when given, the name is a button that folds the group
+  edit?: { open: boolean; toggle: () => void }; // when given, a pencil opens the group's rename and delete
 }): ReactNode {
   const label = (
     <>
@@ -161,6 +175,12 @@ export function GroupHeading({ name, count, movable, first, last, nudge, classNa
       ) : <span className="flex min-w-0 items-center gap-2">{label}</span>}
       {movable && (
         <span className="ml-auto flex shrink-0 gap-1 normal-case tracking-normal">
+          {edit && (
+            <button type="button" aria-label={`Edit ${name}`} title="Rename or delete" aria-expanded={edit.open} onClick={edit.toggle}
+              className={`${arrow} group/edit ${edit.open ? "bg-surface-2 text-ink" : ""}`}>
+              <Icon name="pencil" className="size-4 transition-transform duration-200 ease-out [@media(hover:hover)]:group-hover/edit:-rotate-12" />
+            </button>
+          )}
           <button type="button" aria-label={`Move ${name} up`} title="Move up" disabled={first} onClick={() => nudge(-1)} className={arrow}><Icon name="chevron" className="size-4 -rotate-90" /></button>
           <button type="button" aria-label={`Move ${name} down`} title="Move down" disabled={last} onClick={() => nudge(1)} className={arrow}><Icon name="chevron" className="size-4 rotate-90" /></button>
         </span>
