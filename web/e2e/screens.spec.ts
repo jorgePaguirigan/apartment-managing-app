@@ -4,7 +4,7 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 type State = Exclude<NonNullable<Parameters<Browser["newContext"]>[0]>["storageState"], string | undefined>;
 import { issueToken, newUser, psql, signIn } from "./helpers";
 
-// Every screen at every phone size must fit: no sideways scroll, nothing cut off, nothing hidden under the dock,
+// Every screen at every phone and tablet size must fit: no sideways scroll, nothing cut off, nothing hidden under the dock,
 // tap targets big enough, modals inside the viewport, no console errors. Also saves a screenshot of each screen.
 type Device = { name: string; width: number; height: number };
 const PHONES: Device[] = [
@@ -18,7 +18,19 @@ const PHONES: Device[] = [
   { name: "phone-landscape-844x390", width: 844, height: 390 },
   { name: "phone-landscape-932x430", width: 932, height: 430 },
 ];
-const DEVICES = PHONES;
+const TABLETS: Device[] = [
+  { name: "tablet-744x1133", width: 744, height: 1133 }, // iPad mini
+  { name: "tablet-768x1024", width: 768, height: 1024 }, // iPad 9.7
+  { name: "tablet-800x1280", width: 800, height: 1280 }, // Android tablet
+  { name: "tablet-820x1180", width: 820, height: 1180 }, // iPad 10.9
+  { name: "tablet-834x1194", width: 834, height: 1194 }, // iPad Pro 11
+  { name: "tablet-1024x1366", width: 1024, height: 1366 }, // iPad Pro 12.9
+  { name: "tablet-landscape-1133x744", width: 1133, height: 744 },
+  { name: "tablet-landscape-1180x820", width: 1180, height: 820 },
+  { name: "tablet-landscape-1194x834", width: 1194, height: 834 },
+  { name: "tablet-landscape-1366x1024", width: 1366, height: 1024 },
+];
+const DEVICES = [...PHONES, ...TABLETS];
 const OUT = "screens-out/screens"; // not under test-results: Playwright empties that folder at the start of every run
 const dark = !!process.env.SCREENS_DARK;
 const stamp = Date.now();
@@ -104,17 +116,15 @@ async function inspect(page: Page, d: Device, name: string, errors: string[]) {
       const r = el.getBoundingClientRect();
       if (r.height < 44 || r.width < 44) out.push(`tap target ${Math.round(r.width)}x${Math.round(r.height)}: ${label(el)}`);
     }
-    // A short one-word label that wraps has been broken mid-word ("Acce / pt"). Long user text is allowed to wrap.
-    for (const el of document.querySelectorAll("button, summary, [role=button]")) {
-      if (!visible(el)) continue;
-      const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-      for (let n = walk.nextNode(); n; n = walk.nextNode()) {
-        const text = (n.textContent ?? "").trim();
-        if (text.length < 2 || text.length > 20 || /\s/.test(text)) continue;
-        const range = document.createRange();
-        range.selectNodeContents(n);
-        if (new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size > 1) out.push(`label breaks mid-word: ${label(el)} (overflow-wrap ${getComputedStyle(n.parentElement!).overflowWrap}, word-break ${getComputedStyle(n.parentElement!).wordBreak}, button ${Math.round(el.getBoundingClientRect().width)}px, ${n.parentElement!.outerHTML.slice(0, 90)})`);
-      }
+    // A short one-word text that wraps has been broken mid-word ("Hom / e"). Long user text is allowed to wrap.
+    const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+      const text = (n.textContent ?? "").trim();
+      const owner = n.parentElement;
+      if (!owner || text.length < 2 || text.length > 20 || /\s/.test(text) || !visible(owner) || exempt(owner)) continue;
+      const range = document.createRange();
+      range.selectNodeContents(n);
+      if (new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size > 1) out.push(`text breaks mid-word: ${label(owner)}`);
     }
     const dock = [...document.querySelectorAll("nav")].find((n) => getComputedStyle(n).position === "fixed" && visible(n));
     const main = document.querySelector("main");
