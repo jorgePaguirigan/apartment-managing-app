@@ -8,7 +8,7 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| C1 | "See more" in the Catalog shows only the chores not shown (30 chores, 20 shown: See more (10)) | `see-more-hidden-count` | 🔵 PR open, waiting for your UI approval | PR_URL |
+| C1 | "See more" in the Catalog shows only the chores not shown (30 chores, 20 shown: See more (10)) | `see-more-hidden-count` | 🔵 PR open, waiting for your UI approval | [63](https://github.com/jorgePaguirigan/apartment-managing-app/pull/63) |
 
 ### Decisions made
 - Only the Catalog button changes. The History list uses the same button and still shows its full total; say if you want it changed too.
