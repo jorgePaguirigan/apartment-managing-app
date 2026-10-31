@@ -75,7 +75,7 @@ export function Catalog({ groups, deeds }: { groups: Group[]; deeds: Deed[] }) {
   return (
     <>
       <Sections sections={capped} dnd={dnd} />
-      {room < 0 && <SeeMore title="Catalog" total={view.length}><Sections sections={sections.filter((s) => s.deeds.length || s.id !== null)} dnd={dnd} /></SeeMore>}
+      {room < 0 && <SeeMore title="Catalog" total={-room}><Sections sections={sections.filter((s) => s.deeds.length || s.id !== null)} dnd={dnd} /></SeeMore>}
       <form action={addGroup} className="flex gap-2 border-t border-line pt-3">
         <input name="name" required maxLength={40} placeholder="New group, e.g. Kitchen" aria-label="Group name" className={`${input} min-w-0 flex-1`} />
         <SubmitButton className={`${ghost} min-h-12 shrink-0 px-4`} pendingText="Adding…"><Icon name="plus" className="size-4" />Add group</SubmitButton>
