@@ -13,7 +13,7 @@ A shared app for housemates to track who contributes to the apartment. Housemate
 - Backend: Supabase (Postgres, Auth, Realtime). Business rules live in the database or in Supabase functions, never duplicated per client. **Stack is decided**: Q8.
 - Sign-in: Sign in with Apple and email magic link. No passwords.
 - Single household in v1. Every table carries `household_id` so multi-household can come later without a rewrite.
-- Currency: PHP only. Time zone: household setting, default `Asia/Manila`. Week runs Monday to Sunday in that zone.
+- Currency: PHP only. Time zone: household setting, default `Asia/Manila`. Week runs Sunday to Saturday in that zone.
 
 ## 3. Roles
 
@@ -144,7 +144,7 @@ Postgres row-level security on `household_id` and role is required. Housemates c
 - Rejecting a claim, or deleting an entry, leaves totals consistent. No negative claim can be made by a housemate.
 - A housemate calling the API directly cannot create a score entry, approve a claim, or edit the catalog (rejected by row-level security).
 - Editing a deed's points does not change any past total.
-- The week and month boundaries follow the household time zone. An entry at 23:59 Sunday counts in that week.
+- The week and month boundaries follow the household time zone. An entry at 23:59 Saturday counts in that week; one at 00:00 Sunday starts the next.
 - The exported image shows the selected month's ranking and matches the on-screen leaderboard.
 - Allocation (v2): Ana and Ben completed Sweep recently, Cy and Dee did not. Cy and Dee are ahead of them in the Sweep queue, and the one who has sat out longest goes first. A dib beats the queue. An admin drag never changes the queue. This must be a pgTAP test (`supabase/tests/scheduling.test.sql`).
 - Budget (v3): total left equals the sum of category lefts. Spending in one category never changes another.

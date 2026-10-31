@@ -16,9 +16,9 @@ insert into public.deed (id, household_id, name, points, kind) values
   ('dddddddd-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000000', 'Toilet', 5, 'good'),
   ('dddddddd-0000-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000000', 'Dishes', 1, 'good');
 
--- Weeks start Monday: 14 Sep, 21 Sep, 28 Sep, 5 Oct 2026 (Manila).
--- Ana: Toilet in the weeks of 14 and 21 Sep (admin awards). Dishes in the same two weeks, as Ben also did.
--- Ben: accepted dishes claims in all four weeks (a 4-week streak), Toilet once in the week of 28 Sep.
+-- Weeks start Sunday: 13 Sep, 20 Sep, 27 Sep, 4 Oct 2026 (Manila).
+-- Ana: Toilet in the weeks of 13 and 20 Sep (admin awards). Dishes in the same two weeks, as Ben also did.
+-- Ben: accepted dishes claims in all four weeks (a 4-week streak), Toilet once in the week of 27 Sep.
 insert into public.score_entry (household_id, member_id, deed_id, points, source, approved_by, created_at)
 select 'aaaaaaaa-0000-0000-0000-000000000000', m, d, p, s, '00000000-0000-0000-0000-00000000000a', t::timestamptz
 from (values
@@ -47,8 +47,8 @@ select is((select count(*) from public.medals('2026-10-18 12:00+08')
            where member_id = '00000000-0000-0000-0000-000000000001' and label = 'Dishes champion'), 0::bigint,
   'a deed two housemates did is nobody''s champion');
 select is((select period_start from public.medals('2026-10-18 12:00+08')
-           where member_id = '00000000-0000-0000-0000-000000000002' and kind = 'streak'), date '2026-09-14',
-  'four claim weeks in a row is a streak, starting 14 Sep');
+           where member_id = '00000000-0000-0000-0000-000000000002' and kind = 'streak'), date '2026-09-13',
+  'four claim weeks in a row is a streak, starting 13 Sep');
 select is((select count(*) from public.medals('2026-10-18 12:00+08')
            where member_id = '00000000-0000-0000-0000-000000000001' and kind = 'streak'), 0::bigint,
   'admin-awarded entries do not count toward a streak');
