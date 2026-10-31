@@ -346,3 +346,34 @@ test("an admin who lives there too turns it on and off and switches view", async
   await expect(join).toBeVisible();
   await expect(p.getByRole("group", { name: "View" })).toHaveCount(0);
 });
+
+test("an admin renames and deletes a catalog group, and its deeds stay", async ({ browser }) => {
+  const admin = await newUser(browser);
+  const p = admin.page;
+  await signIn(p, `groups${stamp}@example.com`);
+  await p.getByLabel("Household name").fill("Unit 5C");
+  await p.getByLabel("Your name").fill("Boss");
+  await p.getByRole("button", { name: "Create household" }).click();
+
+  await p.getByLabel("Group name", { exact: true }).fill("Kitchen");
+  await p.getByRole("button", { name: "Add group" }).click();
+  const kitchen = p.getByRole("region", { name: "Kitchen" });
+  await expect(kitchen).toBeVisible();
+
+  // Rename it from the pencil beside its arrows.
+  await p.getByRole("button", { name: "Edit Kitchen" }).click();
+  await p.getByLabel("Rename Kitchen").fill("Dishes");
+  await p.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(p.getByRole("region", { name: "Dishes" })).toBeVisible();
+  await expect(p.getByRole("region", { name: "Kitchen" })).toHaveCount(0);
+
+  // Delete asks first; Cancel keeps it. The deeds move to Ungrouped.
+  await p.getByRole("button", { name: "Edit Dishes" }).click();
+  await p.getByRole("button", { name: "Delete group" }).click();
+  await p.getByRole("button", { name: "Cancel" }).click();
+  await expect(p.getByRole("region", { name: "Dishes" })).toBeVisible();
+  await p.getByRole("button", { name: "Delete group" }).click();
+  await p.getByRole("button", { name: "Delete group" }).last().click();
+  await expect(p.getByRole("region", { name: "Dishes" })).toHaveCount(0);
+  await expect(p.getByRole("region", { name: "Ungrouped" }).getByText("Cooked dinner")).toBeVisible();
+});

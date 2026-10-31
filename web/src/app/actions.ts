@@ -265,6 +265,19 @@ export async function addGroup(formData: FormData) {
   await done(error);
 }
 
+export async function renameGroup(formData: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("deed_group").update({ name: str(formData, "name") }).eq("id", str(formData, "group"));
+  await done(error);
+}
+
+// The group's deeds fall back to Ungrouped.
+export async function deleteGroup(formData: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("deed_group").delete().eq("id", str(formData, "group"));
+  await done(error);
+}
+
 // Called by the catalog when the admin drops a deed on a group. null means Ungrouped.
 export async function moveDeed(deed: string, group: string | null) {
   const supabase = await createClient();

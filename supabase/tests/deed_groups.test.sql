@@ -1,6 +1,6 @@
 -- pgTAP tests for catalog groups. Run with `supabase test db`.
 begin;
-select plan(9);
+select plan(16);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-0000000000f1'), ('00000000-0000-0000-0000-0000000000f2'), ('00000000-0000-0000-0000-0000000000f3');
@@ -33,6 +33,16 @@ update public.deed_group set position = 1 where id = '00000000-0000-0000-0000-00
 update public.deed_group set position = 0 where id = '00000000-0000-0000-0000-00000000a002';
 select is((select string_agg(name, ',' order by position) from public.deed_group), 'Laundry,Kitchen', 'admin reorders groups');
 
+-- Admin renames and deletes groups.
+select lives_ok($$update public.deed_group set name = 'Kitchen & dishes' where id = '00000000-0000-0000-0000-00000000a001'$$, 'admin renames a group');
+select is((select name from public.deed_group where id = '00000000-0000-0000-0000-00000000a001'), 'Kitchen & dishes', 'the new name is saved');
+select throws_ok($$update public.deed_group set name = 'Ungrouped' where id = '00000000-0000-0000-0000-00000000a001'$$,
+  '23514', null, 'a group cannot be renamed to Ungrouped');
+select lives_ok($$delete from public.deed_group where id = '00000000-0000-0000-0000-00000000a002'$$, 'admin deletes a group');
+select is((select count(*) from public.deed_group where id = '00000000-0000-0000-0000-00000000a002'), 0::bigint, 'the group is gone');
+insert into public.deed_group (id, household_id, name) values ('00000000-0000-0000-0000-00000000a002', current_setting('t.hh')::uuid, 'Laundry');
+update public.deed_group set position = 0 where id = '00000000-0000-0000-0000-00000000a002';
+
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000f2","role":"authenticated"}';
 select public.join_household(current_setting('t.code'), 'Ana');
 update public.deed_group set position = 9 where id = '00000000-0000-0000-0000-00000000a002';
@@ -40,6 +50,10 @@ select is((select position from public.deed_group where id = '00000000-0000-0000
   'a housemate cannot reorder groups');
 select throws_ok($$insert into public.deed_group (household_id, name) values (current_setting('t.hh')::uuid, 'Mine')$$,
   '42501', null, 'a housemate cannot add a group');
+update public.deed_group set name = 'Mine' where id = '00000000-0000-0000-0000-00000000a001';
+select is((select name from public.deed_group where id = '00000000-0000-0000-0000-00000000a001'), 'Kitchen & dishes', 'a housemate cannot rename a group');
+delete from public.deed_group where id = '00000000-0000-0000-0000-00000000a001';
+select is((select count(*) from public.deed_group where id = '00000000-0000-0000-0000-00000000a001'), 1::bigint, 'a housemate cannot delete a group');
 select is((select count(*) from public.deed_group), 2::bigint, 'a housemate sees only their household''s groups');
 
 select * from finish();
