@@ -377,3 +377,36 @@ test("an admin renames and deletes a catalog group, and its deeds stay", async (
   await expect(p.getByRole("region", { name: "Dishes" })).toHaveCount(0);
   await expect(p.getByRole("region", { name: "Ungrouped" }).getByText("Cooked dinner")).toBeVisible();
 });
+
+test("the catalog's See more counts only the deeds not shown", async ({ browser }) => {
+  const admin = await newUser(browser);
+  const p = admin.page;
+  await signIn(p, `seemore${stamp}@example.com`);
+  await p.getByLabel("Household name").fill("Unit 6D");
+  await p.getByLabel("Your name").fill("Boss");
+  await p.getByRole("button", { name: "Create household" }).click();
+
+  // The starter catalog fits under the cap of 20 rows, so there is nothing to see more of.
+  const rows = p.locator("[data-deed]");
+  await expect(rows.first()).toBeVisible();
+  const start = await rows.count();
+  expect(start).toBeLessThan(20);
+  await expect(p.getByRole("button", { name: /See more/ })).toHaveCount(0);
+
+  let total = start;
+  const add = async (to: number) => {
+    for (; total < to; total++) {
+      await p.getByLabel("Deed name").first().fill(`Extra ${total}`);
+      await p.getByLabel("Points").first().fill("1");
+      await p.getByRole("button", { name: "Add deed" }).click();
+      await expect(p.getByText(`Extra ${total}`).first()).toBeVisible();
+    }
+  };
+  // Exactly the cap: still no button. One over: one hidden, not the whole catalog.
+  await add(20);
+  await expect(p.getByRole("button", { name: /See more/ })).toHaveCount(0);
+  await add(21);
+  await expect(p.getByRole("button", { name: "See more (1)" })).toBeVisible();
+  await add(24);
+  await expect(p.getByRole("button", { name: "See more (4)" })).toBeVisible();
+});

@@ -1,6 +1,29 @@
 # Feature batch plan
 
-## Current batch: one email per claim (started 2026-10-30)
+## Current batch: Catalog See more count (started 2026-10-31)
+
+Plan approved 2026-10-31. One branch and PR per milestone. No migration, so no hosted `supabase db push`.
+
+Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
+
+| # | Milestone | Branch | Status | PR |
+|---|---|---|---|---|
+| C1 | "See more" in the Catalog shows only the chores not shown (30 chores, 20 shown: See more (10)) | `see-more-hidden-count` | 🔵 PR open, waiting for your UI approval | PR_URL |
+
+### Decisions made
+- Only the Catalog button changes. The History list uses the same button and still shows its full total; say if you want it changed too.
+
+### C1: See more shows what is hidden
+- **Found:** `catalog.tsx` passes `total={view.length}` (every deed) to `SeeMore`, so with 36 deeds and 20 shown it reads "See more (36)". The code already tracks the hidden count: `room` goes negative by exactly the number of deeds past the cap of 20.
+- **Backend:** none.
+- **UI:** the label only; pass `-room` instead of `view.length`. The button keeps its look, hover and press (`ghost`). The modal still lists the whole catalog.
+- **Edge:** deeds in folded groups do not use up the cap, so they are not counted as hidden. The button still appears only when something is hidden.
+- **Test:** a Playwright flow that adds deeds past the cap and asserts the label equals total minus 20; it fails today because it shows the total.
+- **Files:** `web/src/app/_components/catalog.tsx`, `web/e2e/flow.spec.ts`.
+
+---
+
+## Previous batch: one email per claim (started 2026-10-30)
 
 Plan approved 2026-10-30. Claude updates this table as each milestone moves. One branch and PR per milestone; a UI milestone stops for your approval of the screenshot. Hosted `supabase db push` only with your OK.
 
@@ -8,8 +31,8 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| E1 | One housemate email per decision: first recipient in `to`, the rest in `cc` | `one-housemate-email` | 🔵 PR open | [#59](https://github.com/jorgePaguirigan/apartment-managing-app/pull/59) |
-| E2 | One admin email per claim submission: first admin in `to`, the rest in `cc`; one shared decision link, the admin picks who they are on the confirm page | `one-admin-email` | 🔵 PR open, waiting for your UI approval (stacked on E1) | |
+| E1 | One housemate email per decision: first recipient in `to`, the rest in `cc` | `one-housemate-email` | ✅ merged | [#59](https://github.com/jorgePaguirigan/apartment-managing-app/pull/59) |
+| E2 | One admin email per claim submission: first admin in `to`, the rest in `cc`; one shared decision link, the admin picks who they are on the confirm page | `one-admin-email` | ✅ merged | [#60](https://github.com/jorgePaguirigan/apartment-managing-app/pull/60) |
 
 ### Decisions made
 - The decider is whoever clicks: the confirm page asks "Who are you?" and `decided_by` / `approved_by` record that admin.
