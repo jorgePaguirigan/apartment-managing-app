@@ -1,6 +1,54 @@
 # Feature batch plan
 
-## Current batch: all phone and tablet sizes, slow page loads (started 2026-10-31)
+## Current batch: weeks start on Sunday (started 2026-11-01)
+
+Plan written 2026-11-01, waiting for approval. Each milestone branches from an up-to-date `main`. W2 is UI and stops for your approval of the screenshots. No hosted `supabase db push` without your OK.
+
+Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
+
+| # | Milestone | Branch | Status | PR |
+|---|---|---|---|---|
+| W1 | One Sunday-week rule in SQL for scores: leaderboard, history, medals, emails; docs; pgTAP | `sunday-weeks-scores` | 🔵 PR open | [67](https://github.com/jorgePaguirigan/apartment-managing-app/pull/67) |
+| W2 | Chore schedule on Sunday weeks: columns Sun to Sat, hand-out at week start, existing instances shifted; screenshots | `sunday-weeks-schedule` | ⚪ not started | |
+
+### Decisions made
+- Everything moves, not only scores (your answer): leaderboard, medals, history, emails, and the chore schedule.
+- Medals are recomputed on the new weeks, past included. Nothing is stored, so no data changes.
+- Unclaimed chores are handed out at Sunday 00:00, which is now the start of the week itself (before: the Sunday before a Monday week). Dibs stay open until the week ends; release stops at Sunday 00:00 of its week.
+- Today is Sunday 2026-11-01, so a new week starts today: "This week" is empty until the first entry today, and "Previous week" holds Sun 25 Oct to Sat 31 Oct.
+
+### Found in the code
+- Weeks come from `date_trunc('week', …)`, which is Monday in Postgres. It is repeated in about 10 functions: `leaderboard`, `member_history`, `period_snapshot` and medals (`notifications`), `generate_week`, `schedule_week`, `reports`, `remove_housemate`, `week_phase`, `dib_window_open`, release (`review_fixes`).
+- `chore.weekday` is 1 = Monday to 7 = Sunday, and `chore_instance.week_start` is a Monday.
+- The web schedule board has Monday-first columns and hard-coded "handed out Sunday 00:00" text. iOS has no schedule or leaderboard code yet. Not checked in detail: `ios/`.
+
+### W1: scores
+- **Docs first:** PRD line 16 and GLOSSARY "Period" say Sunday to Saturday.
+- **Moved to W2:** `reports` and `remove_housemate` compare against `chore_instance.week_start`, so they change with the schedule.
+- **Backend:** one SQL function `period_start(unit, timestamp)` (was planned as `week_start`) = `date_trunc('week', t + 1 day) - 1 day` in a new migration; every `date_trunc('week', …)` above calls it. Functions are re-created with `create or replace`, same bodies otherwise.
+- **Test first:** pgTAP: an entry at Sunday 00:00 (household zone) counts in the new week; one at Saturday 23:59 stays in the old. Also medals: two entries on a Saturday and the next Sunday count as two different weeks, which fails today.
+- **UI:** none. The leaderboard reads from SQL.
+- **Files:** `PRD.md`, `GLOSSARY.md`, one new migration, `supabase/tests/sunday_weeks.test.sql`, edits to tests that pin Monday dates.
+
+### W2: schedule
+- **Backend:** `schedule_week` and `generate_week` accept Sundays; `week_phase`, `dib_window_open` and release shift one day (hand-out at `week_start`, not `week_start - 1`). Day of an instance is `week_start + weekday % 7`, so chore weekdays (1 = Monday) are not renumbered. A data step moves each existing `week_start` back one day. Caveat: an old Sunday chore dated the last day of its old week moves to the first day of the shifted week.
+- **UI:** board columns Sun to Sat (weekday order 7, 1 to 6), copy "handed out Sunday 00:00" stays true as week start, weekday picker lists Sunday first. Hover and press feedback unchanged.
+- **Test:** pgTAP for the new boundaries (the existing `scheduling.test.sql` dates move to Sundays); a Playwright run on the local app asserting column order and that today's column is highlighted.
+- **Files:** one migration, `supabase/tests/scheduling.test.sql`, `web/src/app/schedule/page.tsx`, `board.tsx`, `housemate-view.tsx` if it assumes Monday.
+
+### Skills I will use
+- **domain-modeling:** update the PRD and glossary first.
+- **tdd:** pgTAP red first for each rule.
+- **blast-radius:** check every caller of the week functions, and iOS.
+- **diagnosing-bugs:** only if a medal or phase test breaks unexpectedly.
+- **emil-design-eng, apple-design, ui-ux-pro-max:** the board column change (W2).
+- **run, code-review, pr:** local check, review, PR text.
+
+### Order and not checked
+1. W1 then merge, 2. W2 then merge. The hosted database needs both migrations pushed together, after your OK; between W1 and W2 the app would show scores on Sunday weeks and chores on Monday weeks, so I would not push W1 alone.
+- Not checked yet: the hosted schedule data, iOS, and the claim-email edge function's reading of week fields (`render.ts` only reads labels).
+
+## Previous batch: all phone and tablet sizes, slow page loads (started 2026-10-31)
 
 Plan written 2026-10-31, waiting for approval. One branch and PR per milestone, each branched from an up-to-date `main` (not from `see-more-hidden-count`, whose PR is still open). A UI milestone stops for your approval of the screenshots. No hosted `supabase db push` or deploy without your OK.
 

@@ -93,8 +93,8 @@ insert into public.score_entry (household_id, member_id, deed_id, points, source
 select 'aaaaaaaa-0000-0000-0000-000000000000', m, 'dddddddd-0000-0000-0000-000000000001', p, 'admin',
        '00000000-0000-0000-0000-00000000000a', t::timestamptz
 from (values
-  ('00000000-0000-0000-0000-000000000001'::uuid, 5, '2026-10-18 23:59:59+08'),  -- Sunday: previous week
-  ('00000000-0000-0000-0000-000000000001'::uuid, 2, '2026-10-19 00:00:00+08'),  -- Monday: this week
+  ('00000000-0000-0000-0000-000000000001'::uuid, 5, '2026-10-17 23:59:59+08'),  -- Saturday: previous week
+  ('00000000-0000-0000-0000-000000000001'::uuid, 2, '2026-10-18 00:00:00+08'),  -- Sunday: this week
   ('00000000-0000-0000-0000-000000000002'::uuid, 2, '2026-10-20 10:00:00+08')   -- this week
 ) v (m, p, t);
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-000000000001","role":"authenticated"}';
@@ -105,7 +105,7 @@ select results_eq($$select display_name, points, rank from public.leaderboard('t
   'tied housemates share rank 1 this week');
 select results_eq($$select display_name, points, rank from public.leaderboard('prev_week', '2026-10-21 12:00:00+08') $$,
   $$values ('Ana'::text, 5::bigint, 1::bigint), ('Ben'::text, 0::bigint, 2::bigint)$$,
-  'Sunday 23:59 Manila counts in the previous week');
+  'Saturday 23:59 Manila counts in the previous week');
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}';
 set local request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
 select public.delete_entry((select id from public.score_entry where points = 5));
