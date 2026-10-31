@@ -138,10 +138,9 @@ export async function decideClaim(formData: FormData) {
 export async function acceptAll() {
   const supabase = await createClient();
   const { data } = await supabase.from("claim").select("id").eq("status", "pending").not("deed_id", "is", null);
-  for (const { id } of data ?? []) {
-    const { error } = await supabase.rpc("decide_claim", { p_claim: id, p_accept: true });
-    if (error && !error.message.includes("already decided")) fail(error.message);
-  }
+  const results = await Promise.all((data ?? []).map(({ id }) => supabase.rpc("decide_claim", { p_claim: id, p_accept: true })));
+  const failed = results.find(({ error }) => error && !error.message.includes("already decided"));
+  if (failed?.error) fail(failed.error.message);
   revalidatePath("/");
 }
 

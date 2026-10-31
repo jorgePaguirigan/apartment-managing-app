@@ -80,6 +80,15 @@ const TONES = {
   muted: "bg-surface-2 text-muted",
 };
 
+// Grey rows shown inside a section while its data streams in.
+export function Skeleton({ rows = 3 }: { rows?: number }) {
+  return (
+    <div aria-busy="true" aria-label="Loading" className="space-y-3">
+      {Array.from({ length: rows }, (_, i) => <div key={i} className="h-10 animate-pulse rounded-xl bg-surface-2" />)}
+    </div>
+  );
+}
+
 export function Chip({ tone = "muted", className = "text-xs px-2.5 py-0.5", children }: { tone?: keyof typeof TONES; className?: string; children: ReactNode }) {
   return <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full font-semibold tabular-nums ${className} ${TONES[tone]}`}>{children}</span>;
 }

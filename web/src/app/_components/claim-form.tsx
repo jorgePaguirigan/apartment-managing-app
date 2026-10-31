@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useOptimistic, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { setMyGroupOrder, submitClaim, submitCustomClaim } from "../actions";
 import { useFlip, useLocal } from "./reorder";
@@ -34,6 +34,7 @@ export function ClaimForm({ deeds, groups, mates }: { deeds: Deed[]; groups: Gro
   const customRef = useRef<HTMLFormElement>(null);
   const list = useRef<HTMLDivElement>(null);
   const [sent, setSent] = useState(false);
+  const [shownSent, showSent] = useOptimistic(sent);
   const [picked, setPicked] = useState<string[]>([]);
   const [order, setOrder] = useLocal(groups, (gs) => gs.map((g) => g.id).join());
   const known = new Set(order.map((g) => g.id));
@@ -56,20 +57,22 @@ export function ClaimForm({ deeds, groups, mates }: { deeds: Deed[]; groups: Gro
     setOrder(ids.flatMap((id) => order.filter((g) => g.id === id)));
     void setMyGroupOrder(ids);
   }
-  async function action(formData: FormData) {
-    setSent(false);
-    await submitClaim(formData);
-    ref.current?.reset();
+  // The confirmation shows the moment you tap (useOptimistic: plain state set in a form action only shows once it finishes).
+  // A refused claim redirects with an error, which rejects here, and the confirmation goes away.
+  async function send(claim: (fd: FormData) => Promise<void>, formData: FormData, form: HTMLFormElement | null) {
+    showSent(true);
+    try {
+      await claim(formData);
+    } catch (e) {
+      setSent(false);
+      throw e;
+    }
+    form?.reset();
     setPicked([]);
     setSent(true);
   }
-  async function customAction(formData: FormData) {
-    setSent(false);
-    await submitCustomClaim(formData);
-    customRef.current?.reset();
-    setPicked([]);
-    setSent(true);
-  }
+  const action = (formData: FormData) => send(submitClaim, formData, ref.current);
+  const customAction = (formData: FormData) => send(submitCustomClaim, formData, customRef.current);
   return (
     <div className="space-y-3">
     {mates.length > 0 && <ContributorsPicker mates={mates} picked={picked} onChange={setPicked} />}
@@ -99,7 +102,7 @@ export function ClaimForm({ deeds, groups, mates }: { deeds: Deed[]; groups: Gro
       </label>
       <p className="text-xs text-muted">Your admin picks the points when approving.</p>
     </form>
-    <p role="status" className="min-h-5 text-sm font-semibold text-ok">{sent ? "Sent to your admin for approval." : ""}</p>
+    <p role="status" className="min-h-5 text-sm font-semibold text-ok">{shownSent ? "Sent to your admin for approval." : ""}</p>
     </div>
   );
 }
