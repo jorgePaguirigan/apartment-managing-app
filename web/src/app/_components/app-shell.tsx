@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { signOut } from "../actions";
 import { Roamers } from "./roamers";
 import { getHousemates, type Me } from "@/lib/me";
@@ -18,12 +18,11 @@ const TABS: { key: Tab; href: string; label: string; icon: IconName }[] = [
 ];
 
 // Top bar everywhere. Tabs sit in the bar on wide screens and float as a pill along the bottom on phones.
-export async function AppShell({ me, active, children }: { me: Me; active: Tab; children: ReactNode }) {
-  const housemates = await getHousemates();
+export function AppShell({ me, active, children }: { me: Me; active: Tab; children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col">
       <LiveRefresh />
-      <Roamers names={housemates.map((h) => h.display_name)} />
+      <Suspense fallback={null}><ShellRoamers /></Suspense>
       <header className="glass sticky top-0 z-20 bg-bg/70 backdrop-blur-xl backdrop-saturate-150" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <div className="mx-auto flex h-16 w-full max-w-4xl items-center gap-4 px-4 sm:px-6">
           <p className="display min-w-0 flex-1 truncate text-xl font-bold">{me.household}</p>
@@ -59,4 +58,10 @@ export async function AppShell({ me, active, children }: { me: Me; active: Tab; 
       </nav>
     </div>
   );
+}
+
+// The figures are decoration, so the page does not wait for the housemate list to draw them.
+async function ShellRoamers() {
+  const housemates = await getHousemates();
+  return <Roamers names={housemates.map((h) => h.display_name)} />;
 }

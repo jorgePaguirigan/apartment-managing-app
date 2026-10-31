@@ -10,8 +10,8 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 |---|---|---|---|---|
 | S1 | Phones (320 to 430 wide, portrait and landscape) fit and work; screen-check test; screenshots | `fit-phones` | 🔵 PR open, waiting for your UI approval | [64](https://github.com/jorgePaguirigan/apartment-managing-app/pull/64) |
 | S2 | Tablets (744 to 1366 wide, portrait and landscape) fit and work; same test extended; screenshots | `fit-tablets` | ⚪ not started | |
-| L1 | Diagnose the 15 s and 20 s page loads; report causes and fixes; **stop and wait for your pick** | none (report only) | ⚪ not started | |
-| L2 | Implement the fixes you pick | `faster-page-loads` | ⚪ not started | |
+| L1 | Diagnose the 15 s and 20 s page loads; report causes and fixes; **stop and wait for your pick** | none (report only) | ✅ reported; you picked fixes 1, 2 and 3 | |
+| L2 | Implement the fixes you pick | `faster-page-loads` | 🔵 PR open, waiting for your UI approval | PRLINK |
 
 ### Decisions made
 - Feature 1 is split into phones then tablets so each PR stays small and reviewable.
@@ -49,6 +49,15 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 - **Skills used:** mobile-native, tdd, emil-design-eng, apple-design, ui-ux-pro-max, pr.
 - **Not run:** break-ui, blast-radius, code-review skills (I reviewed the diff by hand; it is 6 source files).
 - **Decision to confirm:** 44px targets make some list rows taller on touch screens (catalog rows with "Edit" about 90px in landscape).
+
+### L1 / L2 result (slow pages)
+- **L1 finding:** I could not reproduce 15 to 20 seconds, on your hosted database signed in or on an emulated phone. Server time was 0.4 to 3.3 s per page and almost all of it was database calls waiting in a row, so the work became making the site feel faster (your pick: 1, 2 and 3).
+- **Numbers (800 ms added to every database call, dev server, local backend):** admin home 3.9 s to 2.4 s for first content (all content 2.8 s); housemate home 2.9 s to 2.4 s; schedule unchanged at 2.9 s.
+- **3. Fewer waits:** the shell no longer waits for the housemate list (the figures stream in), the admin page no longer makes a second call for the email schedule, and "Accept all" decides claims together instead of one after another.
+- **2. Show the page first:** points, deed buttons, inbox, award, housemates and catalog first; chores, reports, history, invite links and the email schedule stream in behind grey placeholders.
+- **1. Instant answers:** tapping a deed, Accept, Reject and Accept all answer before the server does (`useOptimistic`); a refused claim takes the confirmation back. Tests hold the server for 3 s and assert the answer comes within 1 s (`web/e2e/speed.spec.ts`).
+- **Not done:** the schedule page still waits 3 times in a row. SQL decides the week and must generate it before it can be read; removing a wait needs a new database function (a migration, and hosted push only with your OK). A new claim also does not appear in History until the server replies.
+- **Skills used:** tdd, diagnosing-bugs, apple-design, emil-design-eng, pr.
 
 ### Order
 S1 (test, then phone fixes), S2 (extend the test, then tablet fixes), L1 (report, wait), L2. S1 and S2 each stop for UI approval.

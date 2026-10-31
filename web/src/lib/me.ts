@@ -23,6 +23,13 @@ export const getMe = cache(async (): Promise<{ signedIn: boolean; me: Me | null;
   return { signedIn: true, me: { userId: user.id, role: view, alsoHousemate: m.role === "admin" && m.also_housemate, name: m.display_name, household: household?.name ?? "Household" } };
 });
 
+// The household's time zone, fetched once per request however many sections ask for it.
+export const getTimeZone = cache(async () => {
+  const supabase = await createClient();
+  const { data } = await supabase.from("household").select("timezone").single();
+  return data?.timezone ?? "Asia/Manila";
+});
+
 // Housemates for the shell's figures and the schedule columns. Pages start it early so it runs beside their other calls; cache() makes the shell reuse it.
 export const getHousemates = cache(async () => {
   const supabase = await createClient();
