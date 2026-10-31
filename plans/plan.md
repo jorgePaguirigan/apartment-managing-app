@@ -11,7 +11,7 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 | S1 | Phones (320 to 430 wide, portrait and landscape) fit and work; screen-check test; screenshots | `fit-phones` | 🔵 PR open, waiting for your UI approval | [64](https://github.com/jorgePaguirigan/apartment-managing-app/pull/64) |
 | S2 | Tablets (744 to 1366 wide, portrait and landscape) fit and work; same test extended; screenshots | `fit-tablets` | ⚪ not started | |
 | L1 | Diagnose the 15 s and 20 s page loads; report causes and fixes; **stop and wait for your pick** | none (report only) | ✅ reported; you picked fixes 1, 2 and 3 | |
-| L2 | Implement the fixes you pick | `faster-page-loads` | 🔵 PR open, waiting for your UI approval | PRLINK |
+| L2 | Implement the fixes you pick | `faster-page-loads` | 🔵 PR open, waiting for your UI approval | [66](https://github.com/jorgePaguirigan/apartment-managing-app/pull/66) |
 
 ### Decisions made
 - Feature 1 is split into phones then tablets so each PR stays small and reviewable.
