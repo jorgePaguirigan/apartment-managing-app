@@ -82,7 +82,10 @@ body {
   font-family: var(--font-sans);
   min-height: 100dvh;
   text-rendering: optimizeLegibility;
+  overflow-wrap: anywhere; /* a long unbroken name or link wraps instead of stretching the page */
 }
+/* ...but a button label is never cut mid-word; its row gives way instead. */
+button, summary, [role="button"] { overflow-wrap: normal; }
 
 /* Background grid. Two fixed layers behind all content (z-index -1, never over cards): a faint grid that fades out toward the
    bottom, and a lime-tinted copy revealed only around the pointer (--mx/--my, set by GridGlow). Phones get a slow drift instead. */
@@ -134,6 +137,11 @@ input, select, textarea { font-size: 16px; }
     column-gap: 4.5rem;
     align-content: center;
   }
+}
+
+/* Touch screens: every control is at least 44x44 (Apple's guideline). A link inside a paragraph keeps its text height. */
+@media (pointer: coarse) {
+  :is(button, summary, select, [role="button"], a[href]:not(p a)) { min-width: 44px; min-height: 44px; }
 }
 
 /* Respect the notch and rounded corners. */

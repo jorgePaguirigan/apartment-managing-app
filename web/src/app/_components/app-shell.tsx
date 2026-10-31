@@ -34,9 +34,9 @@ export async function AppShell({ me, active, children }: { me: Me; active: Tab; 
           <div className="flex items-center gap-2.5">
             <FiguresToggle />
             <ThemeToggle />
-            <span className="hidden items-center gap-2 sm:flex">
+            <span className="hidden min-w-0 items-center gap-2 lg:flex">
               <Avatar name={me.name} className="size-8" />
-              <span className="text-sm font-medium">{me.name}</span>
+              <span className="max-w-40 truncate text-sm font-medium">{me.name}</span>
               <Chip tone={me.role === "admin" ? "points" : "muted"}>{me.role}</Chip>
             </span>
             <form action={signOut}>
@@ -48,7 +48,7 @@ export async function AppShell({ me, active, children }: { me: Me; active: Tab; 
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 px-4 py-6 pb-32 sm:px-6 sm:py-8 md:pb-10">
+      <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 px-4 pt-6 pb-32 sm:px-6 sm:pt-8 md:pb-10">
         {me.alsoHousemate && <div className="rise"><ViewSwitch view={me.role} tall /></div>}
         {children}
       </main>

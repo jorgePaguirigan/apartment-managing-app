@@ -1,6 +1,66 @@
 # Feature batch plan
 
-## Current batch: Catalog See more count (started 2026-10-31)
+## Current batch: all phone and tablet sizes, slow page loads (started 2026-10-31)
+
+Plan written 2026-10-31, waiting for approval. One branch and PR per milestone, each branched from an up-to-date `main` (not from `see-more-hidden-count`, whose PR is still open). A UI milestone stops for your approval of the screenshots. No hosted `supabase db push` or deploy without your OK.
+
+Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
+
+| # | Milestone | Branch | Status | PR |
+|---|---|---|---|---|
+| S1 | Phones (320 to 430 wide, portrait and landscape) fit and work; screen-check test; screenshots | `fit-phones` | 🔵 PR open, waiting for your UI approval | [64](https://github.com/jorgePaguirigan/apartment-managing-app/pull/64) |
+| S2 | Tablets (744 to 1366 wide, portrait and landscape) fit and work; same test extended; screenshots | `fit-tablets` | ⚪ not started | |
+| L1 | Diagnose the 15 s and 20 s page loads; report causes and fixes; **stop and wait for your pick** | none (report only) | ⚪ not started | |
+| L2 | Implement the fixes you pick | `faster-page-loads` | ⚪ not started | |
+
+### Decisions made
+- Feature 1 is split into phones then tablets so each PR stays small and reviewable.
+- Feature 2 is diagnosed only after feature 1 is done. L2 does not start until you answer L1.
+- No PRD or GLOSSARY change: nothing here changes a rule or a role.
+
+### Device list (viewport in CSS pixels, width x height)
+- **Phones, portrait:** 320x568 (iPhone SE 1st gen, smallest), 360x800 (Android), 375x667 (iPhone SE 2/3), 375x812 (iPhone mini), 390x844 (iPhone 14/15/16), 430x932 (iPhone Pro Max).
+- **Phones, landscape:** 667x375, 844x390, 932x430.
+- **Tablets, portrait:** 744x1133 (iPad mini), 768x1024 (iPad 9.7), 820x1180 (iPad 10.9), 834x1194 (iPad Pro 11), 800x1280 (Android tablet), 1024x1366 (iPad Pro 12.9).
+- **Tablets, landscape:** 1133x744, 1180x820, 1194x834, 1366x1024.
+- **Screens per device:** `/login`, landing `/`, housemate home, admin home, `/schedule`, `/budget`, `/leaderboard`, `/decide/[token]`, `/join/[code]`, plus the open modals (catalog See more, claim form, housemate edit).
+
+### S1 and S2: fit every size
+- **Found:** the base is mobile-first (`viewportFit: cover`, `100dvh`, `.pad-safe`, a bottom dock under 768px, tabs in the top bar from 768px). But there is one content column (`max-w-4xl`) and almost no tablet layout: only `sm:` utilities, one `md:`, and a single custom breakpoint (900px, landing grid). The 640 to 1100px range was never designed, and phone landscape (about 850x390) is untested.
+- **Backend:** none.
+- **Test first:** new `web/e2e/screens.spec.ts` runs the device list against the seeded local app and asserts, per screen: no horizontal scroll, nothing visible cut off at the edges, the fixed dock never hides the last item, buttons and links are at least 44px, modals fit the viewport and scroll inside it, no console errors. It also saves a screenshot per device and screen. It fails on today's `main` wherever something is broken, which is the first result reported.
+- **UI:** fix what the test finds. Fluid `clamp()` type and spacing, container queries for cards, 2-column grids on tablets, nav tier per width, `dvh` for modals and bars. Motion untouched except that every hover stays behind `(hover: hover)`, presses stay `scale(0.96 to 0.98)` at 150 to 220 ms, reduced motion respected.
+- **Screenshots:** one contact sheet per device (all its screens in light), plus individual files; dark mode for the worst screens. Output stays out of git unless you say to commit it.
+- **Files:** `web/e2e/screens.spec.ts` (new), `web/src/app/globals.css`, `app-shell.tsx`, `pill-nav.tsx`, `landing.tsx`, `catalog.tsx`, `see-more.tsx`, `admin-view.tsx`, `housemate-view.tsx`, `schedule/*`, `budget/page.tsx`, `leaderboard/*`, `decide/[token]`, `join/[code]`; final list comes from the audit.
+
+### L1 and L2: slow loads
+- **L1 (diagnose, report only):** measure first, on the two slow pages, in a production build (`next build` and `start`) and in dev, against local and hosted Supabase. Time each request (server render, each Supabase call, fonts, JS size). Candidates to confirm or rule out: sequential Supabase calls (`getMe` then `getHousemates` in `app-shell.tsx` run one after the other, and each page adds its own); one slow query or missing index; dev-server first-compile cost; Google font fetch at build or in dev; client round-trip distance to the hosted database; whole page blocked on its slowest query with no streaming (`loading.tsx` is only a route-level skeleton); `LiveRefresh` causing refetch storms; large client bundle. I report each real cause with its evidence and the fix for it, then wait.
+- **L2 (after your input):** only the fixes you pick. A fix that is a query or index change goes in a migration with a pgTAP test where it adds a rule, and the hosted push waits for your OK. A page-level fix (parallel fetches, Suspense streaming, caching) gets a Playwright check plus a before and after timing.
+- **Next.js note:** this Next.js has breaking changes, so I read `node_modules/next/dist/docs/` before touching caching or streaming.
+
+### S1 result (phones)
+- **Test:** `web/e2e/screens.spec.ts` (9 phone sizes, 13 screens each, light and dark with `SCREENS_DARK=1`); shared sign-in helpers moved to `web/e2e/helpers.ts`. Screenshots go to `web/screens-out/` (git-ignored), one contact sheet per device in `sheets-screens` and `sheets-screens-dark`.
+- **Bugs it found and fixed:**
+  - The admin home was about 720px wide on every portrait phone: a one-column grid could not shrink below the invite link or a long name. `grid-cols-1` on the admin grid, and `overflow-wrap: anywhere` on `body` so any long name or link wraps.
+  - Under the dock: `sm:py-8` reset the bottom padding between 640 and 767px (landscape phones), so the dock covered the last content. Now `sm:pt-8` only.
+  - Header: on landscape phones the signed-in name had no limit and pushed Sign out off screen. The name and role chip now show from 1024px, and the name truncates.
+  - Tap targets: on touch screens every control is at least 44x44 (one `pointer: coarse` rule). The theme switch shows one button that cycles under 640px so the household name keeps room at 320px.
+  - Button labels never break mid-word.
+- **Skills used:** mobile-native, tdd, emil-design-eng, apple-design, ui-ux-pro-max, pr.
+- **Not run:** break-ui, blast-radius, code-review skills (I reviewed the diff by hand; it is 6 source files).
+- **Decision to confirm:** 44px targets make some list rows taller on touch screens (catalog rows with "Edit" about 90px in landscape).
+
+### Order
+S1 (test, then phone fixes), S2 (extend the test, then tablet fixes), L1 (report, wait), L2. S1 and S2 each stop for UI approval.
+
+### Not checked
+- No physical devices: sizes are emulated in a desktop browser (Chromium via Playwright). Real iOS Safari quirks (address-bar collapse, notch insets, keyboard) are only partly covered; the iOS Simulator can check Safari on request.
+- Live updates, email and hosted cron do not run locally.
+- Load times on the hosted backend can only be measured from this machine's network, not from yours.
+
+---
+
+## Previous batch: Catalog See more count (started 2026-10-31)
 
 Plan approved 2026-10-31. One branch and PR per milestone. No migration, so no hosted `supabase db push`.
 
