@@ -35,11 +35,13 @@ export function ThemeToggle() {
     setTimeout(() => root.classList.remove("theming"), 200);
   }
 
+  // Under 640px only the current choice shows, and tapping it moves to the next, so the header keeps room for the household name.
+  const next = () => OPTIONS[(OPTIONS.findIndex((o) => o.key === theme) + 1) % OPTIONS.length].key;
   return (
     <div role="group" aria-label="Theme" className="flex gap-0.5 rounded-full bg-surface-2 p-0.5">
       {OPTIONS.map((o) => (
-        <button key={o.key} type="button" aria-label={o.label} title={o.label} aria-pressed={theme === o.key} onClick={() => pick(o.key)}
-          className={`grid size-8 place-items-center rounded-full transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.92] ${theme === o.key ? "bg-ink text-bg" : "text-muted hover:text-ink"}`}>
+        <button key={o.key} type="button" aria-label={o.label} title={o.label} aria-pressed={theme === o.key} onClick={() => pick(matchMedia("(min-width: 640px)").matches ? o.key : next())}
+          className={`${theme === o.key ? "grid" : "hidden sm:grid"} size-8 place-items-center rounded-full transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.92] ${theme === o.key ? "bg-ink text-bg" : "text-muted hover:text-ink"}`}>
           <Icon name={o.icon} className="size-4" />
         </button>
       ))}

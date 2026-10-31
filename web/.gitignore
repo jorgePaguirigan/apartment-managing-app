@@ -42,3 +42,6 @@ yarn-error.log*
 next-env.d.ts
 
 !.env.example
+
+# screenshots from e2e/screens.spec.ts
+/screens-out/

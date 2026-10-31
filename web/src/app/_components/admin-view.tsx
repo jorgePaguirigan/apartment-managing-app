@@ -91,7 +91,7 @@ export async function AdminView() {
   const acceptable = pending.filter((c) => c.deed).length;
 
   return (
-    <div className="grid items-start gap-6 lg:grid-cols-2">
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
       <Shortcuts keys={{ a: "accept-all", r: "reject-first" }} />
       <div className="space-y-6">
         <Section title="Inbox" count={pending.length}>
