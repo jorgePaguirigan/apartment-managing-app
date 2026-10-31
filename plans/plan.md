@@ -8,8 +8,8 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| W1 | One Sunday-week rule in SQL for scores: leaderboard, history, medals, emails; docs; pgTAP | `sunday-weeks-scores` | 🔵 PR open | [67](https://github.com/jorgePaguirigan/apartment-managing-app/pull/67) |
-| W2 | Chore schedule on Sunday weeks: columns Sun to Sat, hand-out at week start, existing instances shifted; screenshots | `sunday-weeks-schedule` | 🔵 PR open, waiting for your UI approval (stacked on W1) | [68](https://github.com/jorgePaguirigan/apartment-managing-app/pull/68) |
+| W1 | One Sunday-week rule in SQL for scores: leaderboard, history, medals, emails; docs; pgTAP | `sunday-weeks-scores` | ✅ merged | [67](https://github.com/jorgePaguirigan/apartment-managing-app/pull/67) |
+| W2 | Chore schedule on Sunday weeks: columns Sun to Sat, hand-out at week start, existing instances shifted; screenshots | `sunday-weeks-schedule` | ✅ merged | [68](https://github.com/jorgePaguirigan/apartment-managing-app/pull/68) |
 
 ### Decisions made
 - Everything moves, not only scores (your answer): leaderboard, medals, history, emails, and the chore schedule.
@@ -36,7 +36,14 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 - **Test:** pgTAP for the new boundaries (the existing `scheduling.test.sql` dates move to Sundays); a Playwright run on the local app asserting column order and that today's column is highlighted.
 - **Files:** one migration, `supabase/tests/scheduling.test.sql`, `web/src/app/schedule/page.tsx`, `board.tsx`, `housemate-view.tsx` if it assumes Monday.
 
-### Skills I will use
+### Result (2026-11-01)
+- Both migrations are applied to hosted (`supabase db push`, your OK) and both PRs are merged.
+- **Skills used:** W1: domain-modeling, tdd, pr. W2: emil-design-eng, apple-design, ui-ux-pro-max, pr.
+- **Not run:** blast-radius, code-review, diagnosing-bugs. I read the live function bodies instead.
+- **Not checked:** `ios/`; the other Playwright specs; the hosted schedule after the one-day shift (not looked at by eye).
+- **Decisions you may want to change:** the admin's chore list below the board still sorts Monday first; hosted old Sunday-weekday chores moved to the start of their shifted week.
+
+### Skills I planned to use
 - **domain-modeling:** update the PRD and glossary first.
 - **tdd:** pgTAP red first for each rule.
 - **blast-radius:** check every caller of the week functions, and iOS.
