@@ -38,7 +38,7 @@ export function PillNav({ id, items, active, className, linkClass, activeClass, 
     <div ref={nav} className={`relative ${className}`}>
       {items.map((t) => (
         <Link key={t.key} href={t.href} aria-current={t.key === active ? "page" : undefined}
-          className={`relative isolate ${linkClass} ${t.key === active ? activeClass : idleClass}`}>
+          className={`relative isolate whitespace-nowrap ${linkClass} ${t.key === active ? activeClass : idleClass}`}>
           {t.key === active && <span ref={thumb} aria-hidden style={{ transformOrigin: "left" }} className={`absolute inset-0 -z-10 ${thumbClass}`} />}
           {t.icon && <Icon name={t.icon} />}
           <span className={t.key === active ? "" : idleLabelClass}>{t.label}</span>

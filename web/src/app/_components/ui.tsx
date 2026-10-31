@@ -81,7 +81,7 @@ const TONES = {
 };
 
 export function Chip({ tone = "muted", className = "text-xs px-2.5 py-0.5", children }: { tone?: keyof typeof TONES; className?: string; children: ReactNode }) {
-  return <span className={`inline-flex items-center gap-1 rounded-full font-semibold tabular-nums ${className} ${TONES[tone]}`}>{children}</span>;
+  return <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full font-semibold tabular-nums ${className} ${TONES[tone]}`}>{children}</span>;
 }
 
 // Initial in a pastel circle; the hue comes from the name so it stays the same everywhere.
