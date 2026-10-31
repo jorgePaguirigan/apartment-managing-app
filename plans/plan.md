@@ -8,7 +8,7 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| W1 | One Sunday-week rule in SQL for scores: leaderboard, history, medals, emails; docs; pgTAP | `sunday-weeks-scores` | 🔵 PR open | PR_W1 |
+| W1 | One Sunday-week rule in SQL for scores: leaderboard, history, medals, emails; docs; pgTAP | `sunday-weeks-scores` | 🔵 PR open | [67](https://github.com/jorgePaguirigan/apartment-managing-app/pull/67) |
 | W2 | Chore schedule on Sunday weeks: columns Sun to Sat, hand-out at week start, existing instances shifted; screenshots | `sunday-weeks-schedule` | ⚪ not started | |
 
 ### Decisions made
