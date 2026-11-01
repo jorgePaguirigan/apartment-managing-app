@@ -27,6 +27,10 @@ test("the admin can move a card on today's row and it stays after a reload", asy
   await admin.page.reload();
   await expect(today.locator("td").last().getByText(name, { exact: true })).toBeVisible();
 
+  // Housemates mark chores done through the catalog deed, not from the board.
+  await mate.page.goto("/schedule");
+  await expect(mate.page.getByRole("button", { name: "I did it" })).toHaveCount(0);
+
   // Rows before today are locked: their cards cannot be dragged (there are none on a Sunday).
   for (let r = 0; r < row; r++) {
     const locked = admin.page.locator("tbody tr").nth(r);
