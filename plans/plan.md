@@ -1,6 +1,57 @@
 # Feature batch plan
 
-## Current batch: weeks start on Sunday (started 2026-11-01)
+## Current batch: admin edits the schedule from today on (started 2026-11-01)
+
+Plan written 2026-11-01, waiting for approval. Each milestone branches from an up-to-date `main`. E2 is UI and stops for your approval of the screenshots. No hosted `supabase db push` without your OK.
+
+Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
+
+| # | Milestone | Branch | Status | PR |
+|---|---|---|---|---|
+| E1 | Edit rule by day: today and later can be moved, yesterday and before cannot; a card can also move to another day of its week; PRD, glossary, pgTAP | `edit-schedule-from-today` | 🔵 PR open | |
+| E2 | Board: locked past days, drag and drop motion, hover and press feedback, no extra load time; screenshots | `schedule-board-motion` | ⚪ not started | |
+
+### Decisions made (defaults, change any)
+- The line is the day, not the week: a card on a day before today (household time zone) is locked; today and later are editable, in this week and next.
+- A card stays on its own weekday; only who does it changes (as now). Moving it to another day is not asked for, so not built.
+- A card already marked done (claim filed) stays locked, even today (as now).
+- Moving today's card changes the housemate's schedule at once; no new notification (not asked).
+
+### Answer received during E1
+- Snap-back: you dropped on another person on the same day and on other days. Same-day drop on another person works on the local database (Playwright run), so that part is not reproduced; dropping on another day snapped back by design (a card could only change person). E1 adds the day move. If a same-day drop still fails on hosted, I need the red error banner text.
+- New: `chore_instance.weekday` is a per-week day override; `assign_chore` takes `p_weekday`; `available_chores` shows the moved day.
+
+### Found in the code
+- `assign_chore` (SQL) blocks by week only: it refuses once `week_start + 7` has passed. So SQL already lets the current week through; the snap-back is not explained by that rule. Cause not reproduced yet; E1 reproduces it first (diagnosing-bugs), in the local app.
+- The board's `movable` is per week (`phase !== "past"`), and the page only ever knows "this week" or "next week". No per-day lock exists.
+- Business rules live in SQL; the board must not decide "today" itself.
+
+### E1: rule and bug
+- **Docs first:** PRD 5.2/5.3 ("the schedule is final for the week apart from admin moves"): admin moves allowed from today, locked before. GLOSSARY entry.
+- **Backend:** `assign_chore` refuses when the chore's day (`week_start + weekday % 7`) is before today in the household zone. New small SQL function `schedule_today()` returns today's date in that zone so the page can mark locked days without redoing time math in the client.
+- **Test first (pgTAP):** moving yesterday's card fails; today's and tomorrow's work, in the current week; a done card still fails. Red before the migration.
+- **Bug:** reproduce the snap-back with a scripted browser on a second dev server on the local database; fix its root cause (could be a server error swallowed after the optimistic update, a stale page, or data).
+- **Files:** `PRD.md`, `GLOSSARY.md`, one migration, `supabase/tests/scheduling.test.sql`, `web/src/app/actions.ts`, `web/src/app/schedule/page.tsx`.
+
+### E2: board
+- **UI:** rows for days before today dim and show a small lock, cards there are not draggable and have no menu. Editable cards: hover lift (translateY -1px, shadow), grab cursor, press scale(.98); lifted card while dragging; drop column tint with a 150 ms fade; the dropped card settles with a short transform/opacity ease-out. Hover gated by `@media (hover: hover)`, reduced motion respected, `transform` and `opacity` only, phone width and dark mode checked.
+- **No lag:** cards grouped once per render (not 7 x columns filters), `today` comes with the page data (no extra round trip), no new client library, no animation on keyboard or menu changes.
+- **Test:** Playwright on the local app: a yesterday card is not draggable, today's card moves to another housemate and stays after reload, the housemate sees it. A timing check beside `speed.spec.ts`.
+- **Files:** `web/src/app/schedule/board.tsx`, `page.tsx`, `web/e2e/schedule-edit.spec.ts`.
+
+### Skills I plan to use
+- **domain-modeling:** PRD and glossary wording (E1).
+- **tdd:** pgTAP red first (E1).
+- **diagnosing-bugs:** reproduce and fix the snap-back (E1).
+- **blast-radius:** callers of `assign_chore`; what a new "today" check breaks at midnight and on the hosted shifted data (E1).
+- **emil-design-eng, animate, apple-design, ui-ux-pro-max, animation-performance:** the board motion, drag feel and no-lag check (E2).
+- **run, code-review, pr:** local check, review, PR text.
+
+### Order and not checked
+1. E1 then merge, 2. E2 then merge. E1 needs a hosted migration; I ask before `supabase db push`.
+- Not checked yet: `ios/` (no schedule screen), the real cause of the snap-back, a page left open across midnight (the server refuses, the board shows the error banner).
+
+## Previous batch: weeks start on Sunday (started 2026-11-01)
 
 Plan written 2026-11-01, waiting for approval. Each milestone branches from an up-to-date `main`. W2 is UI and stops for your approval of the screenshots. No hosted `supabase db push` without your OK.
 

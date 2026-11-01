@@ -337,10 +337,10 @@ export async function completeChore(formData: FormData) {
   doneSchedule(error);
 }
 
-// Called by the board when the admin drops a card on a housemate. null means back to unassigned.
-export async function assignChore(instance: string, member: string | null) {
+// Called by the board when the admin drops a card on a housemate and a day. null means back to unassigned.
+export async function assignChore(instance: string, member: string | null, weekday: number) {
   const supabase = await createClient();
-  const { error } = await supabase.rpc("assign_chore", { p_instance: instance, p_member: member });
+  const { error } = await supabase.rpc("assign_chore", { p_instance: instance, p_member: member, p_weekday: weekday });
   doneSchedule(error);
 }
 
