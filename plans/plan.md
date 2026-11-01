@@ -13,7 +13,7 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 ### Decisions (defaults I proposed; you re-sent the request without changing them, so I treat them as accepted; change any)
 - The catalog is the deed catalog (good, active deeds). A catalog deed is a candidate chore; its points are the chore's points.
 - Add puts the deed on the schedule on one day, picked on its lower card (Sun to Sat, default today's weekday). The upper list shows one card per scheduled chore (deed + day).
-- A deed leaves the lower list once any of its days is scheduled (lower = catalog minus schedule). Another day is added from the board's day menu is not possible for a new day, so remove and re-add.
+- A deed leaves the lower list once any of its days is scheduled (lower = catalog minus schedule). To put a deed on another day, remove it and add it again; the board's day menu moves a card within its week only.
 - The area is the deed's catalog group name (none if ungrouped). Nothing is typed.
 - Remove deactivates the chore: it leaves the upper list and the board, back in the lower list. History and scores are untouched. Re-adding the same deed on the same day reactivates the old chore, so its round-robin queue history is kept.
 - Chores with no deed can no longer be created; old ones show with 0 points and Remove.
