@@ -8,7 +8,7 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| C1 | Chores card: no input fields; upper part = scheduled chores with Remove; lower part = catalog deeds not on the schedule with Add; PRD, glossary, pgTAP | `chores-from-catalog` | 🔵 PR open | |
+| C1 | Chores card: no input fields; upper part = scheduled chores with Remove; lower part = catalog deeds not on the schedule with Add; PRD, glossary, pgTAP | `chores-from-catalog` | 🔵 PR open | [74](https://github.com/jorgePaguirigan/apartment-managing-app/pull/74) |
 
 ### Decisions (defaults I proposed; you re-sent the request without changing them, so I treat them as accepted; change any)
 - The catalog is the deed catalog (good, active deeds). A catalog deed is a candidate chore; its points are the chore's points.
