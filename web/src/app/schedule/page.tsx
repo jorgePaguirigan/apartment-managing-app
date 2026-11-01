@@ -8,7 +8,7 @@ import { SubmitButton } from "../_components/submit-button";
 import { saveChore } from "../actions";
 import { Board, type Card, type Housemate } from "./board";
 
-type ChoreRow = { id: string; name: string; area: string | null; weekday: number; weight: number; deed_id: string | null };
+type ChoreRow = { id: string; name: string; area: string | null; weekday: number; deed_id: string | null; deed: { points: number } | null };
 type InstanceRow = { id: string; chore_id: string; weekday: number | null; assignee: string | null; source: string | null; claim_id: string | null };
 type MedalRow = { member_id: string; label: string };
 type DoerRow = { deed_name: string; member_id: string; display_name: string; times: number };
@@ -32,7 +32,7 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
 
   // Only the instances read must wait for generate_week; everything else runs beside it.
   const [{ data: chores }, { data: instances }, members, { data: medals }, { data: doers }, { data: phase }, { data: today }, { data: claims }, { data: deeds }] = await Promise.all([
-    supabase.from("chore").select("id, name, area, weekday, weight, deed_id").eq("active", true).order("weekday").order("name"),
+    supabase.from("chore").select("id, name, area, weekday, deed_id, deed(points)").eq("active", true).order("weekday").order("name"),
     supabase.rpc("generate_week", { p_week_start: weekStart }).then(() =>
       supabase.from("chore_instance").select("id, chore_id, weekday, assignee, source, claim_id").eq("week_start", weekStart)),
     housemateRows,
@@ -41,15 +41,15 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
     supabase.rpc("week_phase", { p_week_start: weekStart }),
     supabase.rpc("schedule_today"),
     supabase.from("claim").select("id, status"), // an admin sees every claim, a housemate only their own
-    me.role === "admin" ? supabase.from("deed").select("id, name").eq("kind", "good").eq("active", true).order("name") : Promise.resolve({ data: [] }),
+    me.role === "admin" ? supabase.from("deed").select("id, name, points").eq("kind", "good").eq("active", true).order("name") : Promise.resolve({ data: [] }),
   ]);
 
   const housemates: Housemate[] = members.map((m) => ({ id: m.user_id, name: m.display_name }));
-  const choreById = new Map(((chores ?? []) as ChoreRow[]).map((c) => [c.id, c]));
+  const choreById = new Map(((chores ?? []) as unknown as ChoreRow[]).map((c) => [c.id, c]));
   const claimStatus = new Map((claims ?? []).map((c) => [c.id, c.status as string]));
   const cards: Card[] = ((instances ?? []) as InstanceRow[]).flatMap((i) => {
     const c = choreById.get(i.chore_id);
-    return c ? [{ id: i.id, name: c.name, area: c.area, weight: c.weight, weekday: i.weekday ?? c.weekday, assignee: i.assignee, source: i.source,
+    return c ? [{ id: i.id, name: c.name, area: c.area, points: c.deed?.points ?? 0, weekday: i.weekday ?? c.weekday, assignee: i.assignee, source: i.source,
       claimed: i.claim_id !== null, status: claimStatus.get(i.claim_id ?? "") ?? null }] : [];
   });
   // A housemate sees only their own chores, plus unclaimed ones they can still claim. Others' cards are never sent to the browser.
@@ -107,13 +107,13 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
 
       {me.role === "admin" && (
         <Section title="Chores">
-          <ChoreForm deeds={(deeds ?? []) as { id: string; name: string }[]} />
+          <ChoreForm deeds={(deeds ?? []) as { id: string; name: string; points: number }[]} />
           <ul className="divide-y divide-line">
             {Array.from(choreById.values()).map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                <span className="min-w-0 truncate"><b>{c.name}</b> <span className="text-muted">{c.area} · {DAY_NAMES[c.weekday - 1]} · weight {c.weight}{c.deed_id ? "" : " · no deed"}</span></span>
+                <span className="min-w-0 truncate"><b>{c.name}</b> <span className="text-muted">{c.area} · {DAY_NAMES[c.weekday - 1]} · {c.deed ? `${c.deed.points} pts` : "no deed · 0 pts"}</span></span>
                 <form action={saveChore}>
-                  {Object.entries({ id: c.id, name: c.name, area: c.area ?? "", weekday: c.weekday, weight: c.weight, deed: c.deed_id ?? "", active: "0" })
+                  {Object.entries({ id: c.id, name: c.name, area: c.area ?? "", weekday: c.weekday, deed: c.deed_id ?? "", active: "0" })
                     .map(([k, v]) => <input key={k} type="hidden" name={k} value={String(v)} />)}
                   <SubmitButton className={ghost}>Remove</SubmitButton>
                 </form>
@@ -129,16 +129,15 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
 const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 // A chore is linked to a deed so that "I did it" files a normal claim for that deed.
-function ChoreForm({ deeds }: { deeds: { id: string; name: string }[] }) {
+function ChoreForm({ deeds }: { deeds: { id: string; name: string; points: number }[] }) {
   return (
     <form action={saveChore} className="grid gap-2 sm:grid-cols-2">
       <input name="name" required placeholder="Chore, e.g. Sweep the floor" aria-label="Chore name" className={input} />
       <input name="area" placeholder="Area, e.g. Living room" aria-label="Area" className={input} />
       <select name="weekday" aria-label="Weekday" className={input}>{[7, 1, 2, 3, 4, 5, 6].map((v) => <option key={v} value={v}>{DAY_NAMES[v - 1]}</option>)}</select>
-      <select name="weight" aria-label="Weight" className={input}>{[1, 2, 3].map((w) => <option key={w} value={w}>Weight {w}</option>)}</select>
       <select name="deed" aria-label="Deed claimed when done" className={`${input} sm:col-span-2`}>
-        <option value="">No deed (cannot be claimed)</option>
-        {deeds.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+        <option value="">No deed (0 points, cannot be claimed)</option>
+        {deeds.map((d) => <option key={d.id} value={d.id}>{d.name} · {d.points} pts</option>)}
       </select>
       <SubmitButton className={`${button} sm:col-span-2`}>Add chore</SubmitButton>
     </form>

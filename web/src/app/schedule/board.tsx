@@ -6,7 +6,7 @@ import { Avatar, Chip, Icon, ghost } from "../_components/ui";
 import { SubmitButton } from "../_components/submit-button";
 
 export type Card = {
-  id: string; name: string; area: string | null; weight: number; weekday: number;
+  id: string; name: string; area: string | null; points: number; weekday: number;
   assignee: string | null; source: string | null; claimed: boolean; status: string | null;
 };
 export type Housemate = { id: string; name: string };
@@ -93,7 +93,7 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
                           <span className="truncate">{k.area ?? " "}</span>
                           <span className="flex gap-1">
                             {k.source === "dibs" && <Chip tone="muted">Dibs</Chip>}
-                            <Chip tone="muted">{"●".repeat(k.weight)}</Chip>
+                            {k.points > 0 && <Chip tone="muted">{k.points} pts</Chip>}
                           </span>
                         </p>
                         {k.status && <p className="mt-1.5"><Chip tone={k.status === "accepted" ? "ok" : k.status === "pending" ? "warn" : "bad"}>{k.status === "accepted" ? "Done" : k.status === "pending" ? "Waiting for admin" : "Rejected"}</Chip></p>}

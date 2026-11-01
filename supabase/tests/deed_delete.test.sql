@@ -21,8 +21,8 @@ select public.create_household('Other', 'Olga');
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000e1","role":"authenticated"}';
 select public.award('00000000-0000-0000-0000-0000000000e2', current_setting('t.deed')::uuid);
 reset role;
-insert into public.chore (id, household_id, name, weekday, weight, deed_id)
-  values ('00000000-0000-0000-0000-00000000c501', current_setting('t.hh')::uuid, 'Cook', 1, 1, current_setting('t.deed')::uuid);
+insert into public.chore (id, household_id, name, weekday, deed_id)
+  values ('00000000-0000-0000-0000-00000000c501', current_setting('t.hh')::uuid, 'Cook', 1, current_setting('t.deed')::uuid);
 set local role authenticated;
 select set_config('t.before', (select points::text from public.leaderboard('this_week') where display_name = 'Ana'), true);
 

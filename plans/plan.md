@@ -1,6 +1,63 @@
 # Feature batch plan
 
-## Current batch: admin edits the schedule from today on (started 2026-11-01)
+## Current batch: Chores card built from the catalog (started 2026-11-01)
+
+Plan written 2026-11-01, waiting for approval. Branch `chores-from-catalog`, stacked on `chore-points` (PR 72), which is stacked on `schedule-board-motion` (PR 71). Both PRs stay open until you say merge. UI milestone: stops for your approval of the screenshots. No hosted `supabase db push` without your OK.
+
+Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
+
+| # | Milestone | Branch | Status | PR |
+|---|---|---|---|---|
+| C1 | Chores card: no input fields; upper part = scheduled chores with Remove; lower part = catalog deeds not on the schedule with Add; PRD, glossary, pgTAP | `chores-from-catalog` | ⚪ not started | |
+
+### Decisions (defaults I proposed; you re-sent the request without changing them, so I treat them as accepted; change any)
+- The catalog is the deed catalog (good, active deeds). A catalog deed is a candidate chore; its points are the chore's points.
+- Add puts the deed on the schedule on one day, picked on its lower card (Sun to Sat, default today's weekday). The upper list shows one card per scheduled chore (deed + day).
+- A deed leaves the lower list once any of its days is scheduled (lower = catalog minus schedule). To put a deed on another day, remove it and add it again; the board's day menu moves a card within its week only.
+- The area is the deed's catalog group name (none if ungrouped). Nothing is typed.
+- Remove deactivates the chore: it leaves the upper list and the board, back in the lower list. History and scores are untouched. Re-adding the same deed on the same day reactivates the old chore, so its round-robin queue history is kept.
+- Chores with no deed can no longer be created; old ones show with 0 points and Remove.
+
+### Found in the code
+- The Chores card (`web/src/app/schedule/page.tsx`) has a form with inputs (name, area, weekday, deed) and a list with Remove; saving goes through `upsert_chore`.
+- Remove already deactivates a chore; the board only shows instances of active chores, so removal reaches the kanban board. Add has no catalog link yet.
+
+### C1 plan
+- **Docs first:** PRD 5.1 (chores come from the catalog, add and remove) and GLOSSARY.
+- **Backend:** `add_chore_from_deed(p_deed, p_weekday)`: admin only, deed must be an active good deed of the household, name from the deed, area from its group, reactivates an inactive chore of the same deed and day, refuses a day already scheduled. `remove_chore(p_chore)`: admin only, sets inactive. `upsert_chore` stays for compatibility until nothing calls it, then is dropped in the same migration.
+- **Test first (pgTAP):** add creates a chore with the deed's name, area and points; adding the same deed and day twice is refused; remove then add reactivates the same chore (same id); a housemate cannot call either; an inactive or penalty deed cannot be added.
+- **UI:** Chores card with two parts, "On the schedule" (cards with Remove) and "From the catalog" (cards with a day picker and Add). Icons (plus, minus/x, calendar). A card that moves between the parts slides and fades (transform and opacity, 200 ms, strong ease-out, using the existing `FlipList`/`rise` helpers where they fit); hover lift, press scale(0.97), unhover eases back; hover gated by `(hover: hover)`, reduced motion respected; empty states for both parts; dark mode and phone width; long names and zero deeds checked (break-ui).
+- **Test (UI):** Playwright on the local app: add a catalog deed, it appears in the upper part and on the board; remove it, it leaves both and returns to the lower part; no input fields in the card.
+- **Files:** `PRD.md`, `GLOSSARY.md`, one migration, `supabase/tests/chores_catalog.test.sql`, `web/src/app/schedule/page.tsx` (new `chores-card.tsx`), `web/src/app/actions.ts`, `web/src/app/globals.css`, `web/e2e/chores-card.spec.ts`.
+
+### Skills I plan to use
+- **grilling, domain-modeling:** the rules above and the wording in the PRD and glossary.
+- **tdd, blast-radius:** pgTAP red first; callers of `upsert_chore`, the board and the Home list.
+- **emil-design-eng, animate, apple-design, find-animation-opportunities, animation-performance:** the move between the two parts, hover and unhover, no lag.
+- **ui-ux-pro-max, better-icons, mobile-native, break-ui:** card layout, icons, phone width, worst-case data.
+- **run, code-review, pr:** local check, review, PR text.
+
+### Order and not checked
+1. Wait for PR 71 and PR 72 to merge (or build on top of them), 2. C1 then screenshots, then your approval, then merge.
+- Not checked yet: `ios/`; hosted data (no migration is pushed without your OK; this one needs the earlier two first).
+
+## Previous batch: chore points instead of weights (started 2026-11-01)
+
+Branch `chore-points`, stacked on `schedule-board-motion` (PR 71, approved, not merged yet; both touch `board.tsx`). No merge until you say so.
+
+| # | Milestone | Branch | Status | PR |
+|---|---|---|---|---|
+| P1 | Remove chore weight; a chore's points are its deed's points; fair share, allocation and cards use points; PRD, glossary, pgTAP | `chore-points` | 🟡 in progress | |
+
+### Decisions made (your answers)
+- Points are taken from the linked deed, no number of their own. A chore without a deed is worth 0 points.
+- Old weights are not copied: chores already linked to a deed take its points. Chores with no deed become 0 points (your "default 5 for those" answer cannot be stored without a number of their own; say if you want a points field after all).
+- Also fixed: `pg_temp.patch` was created twice in a fresh `supabase db reset` (E1 migration); both new migrations use `create or replace`.
+
+### Not checked
+- `ios/`; the claim-email edge function (no weight in it); hosted data.
+
+## Previous batch: admin edits the schedule from today on (started 2026-11-01)
 
 Plan written 2026-11-01, waiting for approval. Each milestone branches from an up-to-date `main`. E2 is UI and stops for your approval of the screenshots. No hosted `supabase db push` without your OK.
 

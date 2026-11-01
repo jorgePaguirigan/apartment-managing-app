@@ -19,9 +19,9 @@ Use these words exactly. They match the PRD and the database.
 - **Leaderboard**: housemates ranked by points for a period. Ties share a rank. A housemate's card opens to their entries for that period only.
 - **Period**: this week, previous week, this month, previous month, in the household time zone. Weeks start Sunday.
 - **Locked day**: a day before today in the household time zone. The admin cannot move a chore card from or to a locked day; today and later days can still be edited.
-- **Chore**: a recurring task with a name, area, weekday, weight (1 to 3) and an optional deed claimed when it is done.
+- **Chore**: a recurring task with a name, area, weekday and an optional deed claimed when it is done. A chore's **points** are its deed's points (0 without a deed).
 - **Schedule**: the week's chore instances and who has each one. A new one is generated every week.
-- **Dibs**: a housemate taking an unclaimed chore, any time until its week ends, up to a fair share of the weight. Open chores are listed under Available chores on Home. An admin who moves a chore to Unassigned keeps it unassigned for that week; it is not handed out again.
+- **Dibs**: a housemate taking an unclaimed chore, any time until its week ends, up to a fair share of the points. Open chores are listed under Available chores on Home. An admin who moves a chore to Unassigned keeps it unassigned for that week; it is not handed out again.
 - **Queue**: the order of housemates for one chore, worked out from history: oldest completion first, then longest without it. Never stored.
 - **Medal**: a badge worked out from score entries when read (champion, MVP of the month, streak). Never stored.
 - **Scored member**: an admin or housemate who is on the leaderboard: every housemate, and an admin who opted in as a housemate.

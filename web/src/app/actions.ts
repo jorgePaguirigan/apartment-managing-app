@@ -351,7 +351,6 @@ export async function saveChore(formData: FormData) {
     p_name: str(formData, "name"),
     p_area: str(formData, "area") || null,
     p_weekday: Number(str(formData, "weekday")),
-    p_weight: Number(str(formData, "weight")),
     p_deed: str(formData, "deed") || null,
     p_active: str(formData, "active") !== "0",
   });

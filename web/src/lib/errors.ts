@@ -27,7 +27,7 @@ const TEXT: Record<string, string> = {
   "chore-has-no-deed-to-claim": "That chore has no deed to claim yet. Ask the admin to link one.",
   "week-has-not-started": "That week has not started yet.",
   "already-submitted": "You already submitted that chore.",
-  "invalid-chore": "Give the chore a name, a weekday and a weight from 1 to 3.",
+  "invalid-chore": "Give the chore a name, and a weekday.",
   "invalid-email": "Enter a valid email address.",
   "invalid-category": "Give the category a name (up to 40 characters) and an amount of 0 or more.",
   "category-name-taken": "A category with that name already exists.",

@@ -1,7 +1,7 @@
 -- pgTAP tests for scheduling. Run with `supabase test db`.
 -- Week starts (Sunday, Manila): 27 Sep, 4 Oct, 11 Oct, 18 Oct, 25 Oct 2026.
 begin;
-select plan(41);
+select plan(42);
 
 create function pg_temp.act(u uuid) returns void language sql as $$
   select set_config('request.jwt.claims', json_build_object('sub', u, 'role', 'authenticated')::text, true),
@@ -30,12 +30,13 @@ insert into public.member (user_id, household_id, role, display_name) values
   ('00000000-0000-0000-0000-000000000004', 'aaaaaaaa-0000-0000-0000-000000000000', 'housemate', 'Dee'),
   ('00000000-0000-0000-0000-0000000000b1', 'bbbbbbbb-0000-0000-0000-000000000000', 'housemate', 'Bea');
 insert into public.deed (id, household_id, name, points, kind) values
-  ('dddddddd-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000000', 'Swept the floor', 2, 'good'),
-  ('dddddddd-0000-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000000', 'Cooked dinner', 4, 'good');
-insert into public.chore (id, household_id, name, weekday, weight, deed_id) values
-  ('cccccccc-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000000', 'Sweep', 2, 1, 'dddddddd-0000-0000-0000-000000000001'),
-  ('cccccccc-0000-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000000', 'Trash', 4, 2, null),
-  ('cccccccc-0000-0000-0000-000000000003', 'aaaaaaaa-0000-0000-0000-000000000000', 'Mop', 3, 1, 'dddddddd-0000-0000-0000-000000000001');
+  ('dddddddd-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000000', 'Swept the floor', 1, 'good'),
+  ('dddddddd-0000-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000000', 'Cooked dinner', 4, 'good'),
+  ('dddddddd-0000-0000-0000-000000000003', 'aaaaaaaa-0000-0000-0000-000000000000', 'Took out the trash', 2, 'good');
+insert into public.chore (id, household_id, name, weekday, deed_id) values
+  ('cccccccc-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000000', 'Sweep', 2, 'dddddddd-0000-0000-0000-000000000001'),
+  ('cccccccc-0000-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000000', 'Trash', 4, 'dddddddd-0000-0000-0000-000000000003'),
+  ('cccccccc-0000-0000-0000-000000000003', 'aaaaaaaa-0000-0000-0000-000000000000', 'Mop', 3, 'dddddddd-0000-0000-0000-000000000001');
 
 -- History for Sweep: Ana did it the week of 27 Sep, Ben on 4 Oct, Cy was assigned on 11 Oct but never did it, Dee never had it.
 insert into public.claim (id, household_id, member_id, deed_id, status, decided_by, decided_at) values
@@ -66,7 +67,7 @@ select pg_temp.act('00000000-0000-0000-0000-000000000001');
 select is(pg_temp.q('cccccccc-0000-0000-0000-000000000001', '2026-10-18'), 'Dee,Cy,Ana,Ben',
   'queue: never done first (longest unassigned first), then oldest completion');
 
--- Week of 19 Oct: 3 chores of total weight 4 for 4 housemates, so a fair share is 1.
+-- Week of 19 Oct: 3 chores worth 1 + 2 + 1 = 4 points (their deeds' points) for 4 housemates, so a fair share is 1 point.
 select public.generate_week('2026-10-18', '2026-10-13 12:00+08');
 select is((select count(*) from public.chore_instance where week_start = '2026-10-18'), 3::bigint, 'generate_week creates one instance per active chore');
 select throws_ok($$select public.dib_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000003', '2026-10-18'), '2026-10-26 00:00+08')$$,
@@ -113,7 +114,7 @@ select is((select array_agg(public.week_phase('2026-10-18', t) order by t) from 
 
 select throws_ok($$insert into public.chore_instance (household_id, chore_id, week_start) values ('aaaaaaaa-0000-0000-0000-000000000000', 'cccccccc-0000-0000-0000-000000000001', '2026-12-06')$$,
   '42501', null, 'a housemate cannot write instances directly');
-select throws_ok($$select public.upsert_chore(null, 'Dust', null, 1, 1)$$, '42501', 'admin only', 'a housemate cannot add chores');
+select throws_ok($$select public.upsert_chore(null, 'Dust', null, 1)$$, '42501', 'admin only', 'a housemate cannot add chores');
 
 select pg_temp.act('00000000-0000-0000-0000-00000000000a');
 select throws_ok($$select public.assign_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000002', '2026-10-18'), '00000000-0000-0000-0000-00000000000a', '2026-10-18 12:00+08')$$,
@@ -143,7 +144,9 @@ select is((select a.display_name from public.chore_instance i join public.member
 select is((select a.display_name from public.chore_instance i join public.member a on a.user_id = i.assignee
            where i.chore_id = 'cccccccc-0000-0000-0000-000000000003' and i.week_start = '2026-10-25'), 'Ben', 'Mop skips Ana (already loaded) and Cy and Ben tie, name decides');
 
--- Completion goes through the claim flow.
+-- Completion goes through the claim flow. Trash loses its deed here: no deed, no points, nothing to claim.
+reset role;
+update public.chore set deed_id = null where id = 'cccccccc-0000-0000-0000-000000000002';
 select pg_temp.act('00000000-0000-0000-0000-000000000003');
 select throws_ok($$select public.complete_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000002', '2026-10-18'), null, '2026-10-20 12:00+08')$$,
   '22023', 'chore has no deed to claim', 'a chore without a deed cannot be claimed');
@@ -180,6 +183,10 @@ select is((select weekday::int from public.chore_instance where chore_id = 'cccc
 select is((select weekday::int from public.chore_instance where chore_id = 'cccccccc-0000-0000-0000-000000000002' and week_start = '2026-10-18'),
   null, 'only that week''s card moved: other cards and the chore keep their weekday');
 select is((select weekday::int from public.chore where id = 'cccccccc-0000-0000-0000-000000000003'), 3, 'the chore itself keeps its weekday');
+
+-- A chore's points are its deed's points: there is no weight of its own.
+select is((select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'chore' and column_name = 'weight'),
+  0::bigint, 'a chore has no weight column');
 
 -- Another household sees nothing of this one.
 select pg_temp.act('00000000-0000-0000-0000-0000000000b1');
