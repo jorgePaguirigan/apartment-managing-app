@@ -1,6 +1,22 @@
 # Feature batch plan
 
-## Current batch: admin edits the schedule from today on (started 2026-11-01)
+## Current batch: chore points instead of weights (started 2026-11-01)
+
+Branch `chore-points`, stacked on `schedule-board-motion` (PR 71, approved, not merged yet; both touch `board.tsx`). No merge until you say so.
+
+| # | Milestone | Branch | Status | PR |
+|---|---|---|---|---|
+| P1 | Remove chore weight; a chore's points are its deed's points; fair share, allocation and cards use points; PRD, glossary, pgTAP | `chore-points` | 🟡 in progress | |
+
+### Decisions made (your answers)
+- Points are taken from the linked deed, no number of their own. A chore without a deed is worth 0 points.
+- Old weights are not copied: chores already linked to a deed take its points. Chores with no deed become 0 points (your "default 5 for those" answer cannot be stored without a number of their own; say if you want a points field after all).
+- Also fixed: `pg_temp.patch` was created twice in a fresh `supabase db reset` (E1 migration); both new migrations use `create or replace`.
+
+### Not checked
+- `ios/`; the claim-email edge function (no weight in it); hosted data.
+
+## Previous batch: admin edits the schedule from today on (started 2026-11-01)
 
 Plan written 2026-11-01, waiting for approval. Each milestone branches from an up-to-date `main`. E2 is UI and stops for your approval of the screenshots. No hosted `supabase db push` without your OK.
 

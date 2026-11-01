@@ -37,7 +37,7 @@ begin
 end $$;
 
 -- The Home list shows each chore on the day it was moved to.
-create function pg_temp.patch(p_name text, p_from text, p_to text) returns void language plpgsql as $$
+create or replace function pg_temp.patch(p_name text, p_from text, p_to text) returns void language plpgsql as $$
 declare v_oid oid; v_def text;
 begin
   select p.oid into strict v_oid from pg_proc p where p.pronamespace = 'public'::regnamespace and p.proname = p_name;

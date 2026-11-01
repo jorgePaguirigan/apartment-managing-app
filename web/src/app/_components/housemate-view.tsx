@@ -13,7 +13,7 @@ import { dibChore } from "../actions";
 
 type ClaimRow = { id: string; created_at: string; title: string | null; status: "pending" | "accepted" | "rejected"; note: string | null; deed: { name: string; points: number } | null };
 type BoardRow = { member_id: string; points: number; rank: number };
-type OpenChore = { instance_id: string; day: string; name: string; area: string | null; weight: number };
+type OpenChore = { instance_id: string; day: string; name: string; area: string | null; points: number };
 
 // "2026-10-28" as "Wed, Oct 28". A plain date, so UTC keeps it from shifting.
 const dayText = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
@@ -103,7 +103,7 @@ async function Chores() {
               <span className="block truncate font-semibold">{c.name}</span>
               <span className="block truncate text-xs text-muted">{dayText.format(new Date(`${c.day}T00:00:00Z`))}{c.area ? ` · ${c.area}` : ""}</span>
             </span>
-            <Chip tone="muted">{"●".repeat(c.weight)}</Chip>
+            {c.points > 0 && <Chip tone="muted">{c.points} pts</Chip>}
             <form action={dibChore}>
               <input type="hidden" name="instance" value={c.instance_id} />
               <input type="hidden" name="from" value="/" />
