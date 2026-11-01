@@ -296,3 +296,24 @@ html[data-figures="off"] [data-roamers] { opacity: 0; translate: 0 12px; visibil
   --warn: #7a4a00;
 }
 .on-accent > * { --accent: rgb(255 255 255 / 0.55); } /* accent-filled chips need to stay visible on the accent itself */
+
+/* Schedule board: cards the admin can move lift on hover, press in, and settle where they land. Days before today are locked. */
+.board-card { transition: transform 180ms var(--ease-out-strong), opacity 180ms var(--ease-out-strong), border-color 150ms ease; }
+.board-card[draggable="true"] { cursor: grab; }
+.board-card[draggable="true"]:active { transform: scale(0.98); cursor: grabbing; }
+.board-card[data-lifted] { opacity: 0.45; transform: scale(0.97); }
+.board-cell { transition: background-color 150ms ease; }
+.board-cell[data-drop] { outline: 2px dashed color-mix(in oklab, var(--ink) 30%, transparent); outline-offset: -2px; background-color: color-mix(in oklab, var(--accent) 22%, transparent); }
+.board-cell[data-drop="over"] { background-color: color-mix(in oklab, var(--accent) 50%, transparent); outline-style: solid; }
+tr[data-locked] > td, tr[data-locked] > th > span { opacity: 0.5; }
+@media (hover: hover) {
+  .board-card[draggable="true"]:hover { transform: translateY(-1px); border-color: color-mix(in oklab, var(--ink) 35%, var(--line)); }
+  .board-card[draggable="true"]:active { transform: scale(0.98); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .board-card[data-landed] { animation: card-land 220ms var(--ease-out-strong) both; }
+  @keyframes card-land { from { transform: scale(0.94); opacity: 0.5; } }
+}
+@media (prefers-reduced-motion: reduce) {
+  .board-card, .board-card:hover, .board-card:active, .board-card[data-lifted] { transform: none !important; }
+}
