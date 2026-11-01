@@ -331,12 +331,6 @@ export async function undibChore(formData: FormData) {
   doneSchedule(error);
 }
 
-export async function completeChore(formData: FormData) {
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("complete_chore", { p_instance: str(formData, "instance") });
-  doneSchedule(error);
-}
-
 // Called by the board when the admin drops a card on a housemate and a day. null means back to unassigned.
 export async function assignChore(instance: string, member: string | null, weekday: number) {
   const supabase = await createClient();

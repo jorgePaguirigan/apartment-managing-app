@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useMemo, useOptimistic, useState } from "react";
-import { assignChore, completeChore, dibChore, undibChore } from "../actions";
+import { assignChore, dibChore, undibChore } from "../actions";
 import { Avatar, Chip, Icon, ghost } from "../_components/ui";
 import { SubmitButton } from "../_components/submit-button";
 
@@ -115,9 +115,6 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
                         )}
                         {!isAdmin && (phase === "early" || phase === "dibs") && k.assignee === meId && k.source === "dibs" && !k.claimed && (
                           <form action={undibChore} className="mt-2"><Hidden id={k.id} /><SubmitButton className={small}>Release</SubmitButton></form>
-                        )}
-                        {k.assignee === meId && (phase === "current" || phase === "past") && (!k.claimed || k.status === "rejected") && (
-                          <form action={completeChore} className="mt-2"><Hidden id={k.id} /><SubmitButton className={small}>I did it</SubmitButton></form>
                         )}
                       </div>
                     ))}

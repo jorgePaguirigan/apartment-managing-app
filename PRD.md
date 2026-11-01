@@ -110,7 +110,7 @@ Allocation, at the start of the week (Sunday 00:00):
 - Dibs are respected even if the queue would have chosen someone else.
 
 ### 5.4 Completion and swaps
-- A housemate marks an assigned chore done. That goes through the same claim flow as 4.2, using the chore's catalog deed if it has one.
+- A housemate gets credit for a chore by claiming its deed from the catalog (4.2). The schedule board has no "I did it" button, and a chore card is not marked done by itself.
 - A chore not marked done by the end of its day shows as missed. The admin may enter a penalty by hand. No automatic penalty. **[Default]**
 - Swaps are not in v2. Admin can reassign a chore by hand, from today on (5.3).
 
