@@ -9,7 +9,7 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
 | E1 | Edit rule by day: today and later can be moved, yesterday and before cannot; a card can also move to another day of its week; PRD, glossary, pgTAP | `edit-schedule-from-today` | ✅ merged | [70](https://github.com/jorgePaguirigan/apartment-managing-app/pull/70) |
-| E2 | Board: locked past days, drag and drop motion, hover and press feedback, no extra load time; screenshots | `schedule-board-motion` | 🔵 PR open | |
+| E2 | Board: locked past days, drag and drop motion, hover and press feedback, no extra load time; screenshots | `schedule-board-motion` | 🔵 PR open | [71](https://github.com/jorgePaguirigan/apartment-managing-app/pull/71) |
 
 ### Decisions made (defaults, change any)
 - The line is the day, not the week: a card on a day before today (household time zone) is locked; today and later are editable, in this week and next.
