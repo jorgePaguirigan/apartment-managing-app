@@ -14,6 +14,8 @@ export type Housemate = { id: string; name: string };
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 // The week starts on Sunday, but a chore's weekday stays 1 = Monday to 7 = Sunday.
 const weekdayOf = (row: number) => (row === 0 ? 7 : row);
+// Rows are Sunday to Saturday, so a row's date is the week start plus its index. ISO dates compare as text.
+const rowDate = (weekStart: string, row: number) => new Date(Date.parse(`${weekStart}T00:00:00Z`) + row * 86_400_000).toISOString().slice(0, 10);
 const small = `${ghost} min-h-8 px-2.5 py-1 text-xs`;
 
 // "2026-10-18" (a Sunday) plus n days, as a day number. Plain date arithmetic, no time zone involved.
@@ -26,15 +28,17 @@ function Hidden({ id }: { id: string }) {
 
 // Columns are housemates (plus Unassigned), rows are the days of the week.
 // The admin drags cards between columns. The menu on a card is for touch screens and keyboards, so it only shows there.
-// A card stays on its own weekday: only who does it changes.
-export function Board({ weekStart, phase, housemates, cards, meId, isAdmin, showUnassigned }: {
-  weekStart: string; phase: string; housemates: Housemate[]; cards: Card[]; meId: string; isAdmin: boolean; showUnassigned: boolean;
+// The admin edits from today on (the database says which day today is): a card on an earlier day is locked, and a card
+// can move to another person and to another day of its week, today or later.
+export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmin, showUnassigned }: {
+  weekStart: string; today: string; phase: string; housemates: Housemate[]; cards: Card[]; meId: string; isAdmin: boolean; showUnassigned: boolean;
 }) {
-  const [view, move] = useOptimistic(cards, (cs, m: { id: string; to: string | null }) => cs.map((c) => (c.id === m.id ? { ...c, assignee: m.to } : c)));
+  const [view, move] = useOptimistic(cards, (cs, m: { id: string; to: string | null; weekday: number }) => cs.map((c) => (c.id === m.id ? { ...c, assignee: m.to, weekday: m.weekday } : c)));
   const [drag, setDrag] = useState<Card | null>(null);
   const columns: { id: string | null; name: string }[] = [...housemates, ...(showUnassigned ? [{ id: null, name: "Unassigned" }] : [])];
-  const movable = (c: Card) => isAdmin && !c.claimed && phase !== "past";
-  const assign = (id: string, to: string | null) => startTransition(async () => { move({ id, to }); await assignChore(id, to); });
+  const locked = (row: number) => rowDate(weekStart, row) < today;
+  const movable = (c: Card) => isAdmin && !c.claimed && !locked(c.weekday % 7);
+  const assign = (id: string, to: string | null, weekday: number) => startTransition(async () => { move({ id, to, weekday }); await assignChore(id, to, weekday); });
 
   return (
     <div className="overflow-x-auto rounded-3xl border border-line bg-surface-2">
@@ -61,10 +65,10 @@ export function Board({ weekStart, phase, housemates, cards, meId, isAdmin, show
                 <span className="display text-lg font-bold tabular-nums">{dayLabel(weekStart, i)}</span>
               </th>
               {columns.map((c) => {
-                const target = drag !== null && drag.weekday === weekdayOf(i) && drag.assignee !== c.id;
+                const target = drag !== null && !locked(i) && (drag.weekday !== weekdayOf(i) || drag.assignee !== c.id);
                 return (
                   <td key={c.id ?? "none"} onDragOver={target ? (e) => e.preventDefault() : undefined}
-                    onDrop={target ? (e) => { e.preventDefault(); assign(drag.id, c.id); setDrag(null); } : undefined}
+                    onDrop={target ? (e) => { e.preventDefault(); assign(drag.id, c.id, weekdayOf(i)); setDrag(null); } : undefined}
                     className={`space-y-1.5 p-1.5 align-top transition-colors duration-150 ${target ? "bg-accent/30 outline-2 -outline-offset-2 outline-dashed outline-ink/40" : ""}`}>
                     {view.filter((k) => k.weekday === weekdayOf(i) && k.assignee === c.id).map((k) => (
                       <div key={k.id} draggable={movable(k)} onDragStart={() => setDrag(k)} onDragEnd={() => setDrag(null)}
@@ -79,7 +83,7 @@ export function Board({ weekStart, phase, housemates, cards, meId, isAdmin, show
                         </p>
                         {k.status && <p className="mt-1.5"><Chip tone={k.status === "accepted" ? "ok" : k.status === "pending" ? "warn" : "bad"}>{k.status === "accepted" ? "Done" : k.status === "pending" ? "Waiting for admin" : "Rejected"}</Chip></p>}
                         {movable(k) && (
-                          <select aria-label={`Assign ${k.name}`} value={k.assignee ?? ""} onChange={(e) => assign(k.id, e.target.value || null)}
+                          <select aria-label={`Assign ${k.name}`} value={k.assignee ?? ""} onChange={(e) => assign(k.id, e.target.value || null, k.weekday)}
                             className="mt-2 w-full rounded-lg border border-line bg-surface-2 px-2 py-1 text-xs sr-only focus:not-sr-only [@media(hover:none)]:not-sr-only">
                             <option value="">Unassigned</option>
                             {housemates.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}

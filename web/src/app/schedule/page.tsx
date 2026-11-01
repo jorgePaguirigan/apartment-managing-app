@@ -9,7 +9,7 @@ import { saveChore } from "../actions";
 import { Board, type Card, type Housemate } from "./board";
 
 type ChoreRow = { id: string; name: string; area: string | null; weekday: number; weight: number; deed_id: string | null };
-type InstanceRow = { id: string; chore_id: string; assignee: string | null; source: string | null; claim_id: string | null };
+type InstanceRow = { id: string; chore_id: string; weekday: number | null; assignee: string | null; source: string | null; claim_id: string | null };
 type MedalRow = { member_id: string; label: string };
 type DoerRow = { deed_name: string; member_id: string; display_name: string; times: number };
 
@@ -31,14 +31,15 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
   if (!me || typeof weekStart !== "string") redirect("/");
 
   // Only the instances read must wait for generate_week; everything else runs beside it.
-  const [{ data: chores }, { data: instances }, members, { data: medals }, { data: doers }, { data: phase }, { data: claims }, { data: deeds }] = await Promise.all([
+  const [{ data: chores }, { data: instances }, members, { data: medals }, { data: doers }, { data: phase }, { data: today }, { data: claims }, { data: deeds }] = await Promise.all([
     supabase.from("chore").select("id, name, area, weekday, weight, deed_id").eq("active", true).order("weekday").order("name"),
     supabase.rpc("generate_week", { p_week_start: weekStart }).then(() =>
-      supabase.from("chore_instance").select("id, chore_id, assignee, source, claim_id").eq("week_start", weekStart)),
+      supabase.from("chore_instance").select("id, chore_id, weekday, assignee, source, claim_id").eq("week_start", weekStart)),
     housemateRows,
     supabase.rpc("medals"),
     supabase.rpc("top_doers"),
     supabase.rpc("week_phase", { p_week_start: weekStart }),
+    supabase.rpc("schedule_today"),
     supabase.from("claim").select("id, status"), // an admin sees every claim, a housemate only their own
     me.role === "admin" ? supabase.from("deed").select("id, name").eq("kind", "good").eq("active", true).order("name") : Promise.resolve({ data: [] }),
   ]);
@@ -48,7 +49,7 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
   const claimStatus = new Map((claims ?? []).map((c) => [c.id, c.status as string]));
   const cards: Card[] = ((instances ?? []) as InstanceRow[]).flatMap((i) => {
     const c = choreById.get(i.chore_id);
-    return c ? [{ id: i.id, name: c.name, area: c.area, weight: c.weight, weekday: c.weekday, assignee: i.assignee, source: i.source,
+    return c ? [{ id: i.id, name: c.name, area: c.area, weight: c.weight, weekday: i.weekday ?? c.weekday, assignee: i.assignee, source: i.source,
       claimed: i.claim_id !== null, status: claimStatus.get(i.claim_id ?? "") ?? null }] : [];
   });
   // A housemate sees only their own chores, plus unclaimed ones they can still claim. Others' cards are never sent to the browser.
@@ -100,7 +101,7 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
           {housemates.length === 0 ? "No housemates yet. Invite them from the Home tab." : isAdmin ? "No chores yet." : "Nothing assigned to you this week."}
         </p>
       ) : (
-        <Board weekStart={weekStart} phase={phase as string} housemates={columns} cards={visible} meId={me.userId}
+        <Board weekStart={weekStart} today={typeof today === "string" ? today : weekStart} phase={phase as string} housemates={columns} cards={visible} meId={me.userId}
           isAdmin={isAdmin} showUnassigned={isAdmin || visible.some((c) => c.assignee === null)} />
       )}
 

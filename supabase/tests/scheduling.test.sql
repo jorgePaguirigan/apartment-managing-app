@@ -1,7 +1,7 @@
 -- pgTAP tests for scheduling. Run with `supabase test db`.
 -- Week starts (Sunday, Manila): 27 Sep, 4 Oct, 11 Oct, 18 Oct, 25 Oct 2026.
 begin;
-select plan(34);
+select plan(41);
 
 create function pg_temp.act(u uuid) returns void language sql as $$
   select set_config('request.jwt.claims', json_build_object('sub', u, 'role', 'authenticated')::text, true),
@@ -163,6 +163,23 @@ select is(pg_temp.q('cccccccc-0000-0000-0000-000000000001', '2026-10-25'), 'Dee,
 select public.delete_entry((select s.id from public.score_entry s join public.chore_instance i on i.claim_id = s.claim_id
                             where i.chore_id = 'cccccccc-0000-0000-0000-000000000001' and i.week_start = '2026-10-18'));
 select is(pg_temp.q('cccccccc-0000-0000-0000-000000000001', '2026-10-25'), 'Dee,Cy,Ana,Ben', 'deleting the entry puts the queue back (it is derived, not stored)');
+
+-- The admin may edit from today on: a card on an earlier day is locked, today's and later days can move.
+-- Mop falls on Wednesday 21 Oct (weekday 3) in the week of 18 Oct.
+select is(public.schedule_today('2026-10-21 00:30+08'), '2026-10-21'::date, 'today is the household-zone date');
+select throws_ok($$select public.assign_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000003', '2026-10-18'), '00000000-0000-0000-0000-000000000001', '2026-10-22 12:00+08')$$,
+  '55000', 'this chore can no longer move', 'a card on yesterday is locked');
+select public.assign_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000003', '2026-10-18'), '00000000-0000-0000-0000-000000000001', '2026-10-21 12:00+08');
+select is((select assignee from public.chore_instance where chore_id = 'cccccccc-0000-0000-0000-000000000003' and week_start = '2026-10-18'),
+  '00000000-0000-0000-0000-000000000001'::uuid, 'a card on today can still move to another housemate');
+select throws_ok($$select public.assign_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000003', '2026-10-18'), '00000000-0000-0000-0000-000000000001', '2026-10-21 12:00+08', 2)$$,
+  '22023', 'cannot move to a day that has passed', 'a card cannot move onto a day that has passed');
+select public.assign_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000003', '2026-10-18'), '00000000-0000-0000-0000-000000000002', '2026-10-21 12:00+08', 5);
+select is((select weekday::int from public.chore_instance where chore_id = 'cccccccc-0000-0000-0000-000000000003' and week_start = '2026-10-18'),
+  5, 'a card moves to a later day of the same week');
+select is((select weekday::int from public.chore_instance where chore_id = 'cccccccc-0000-0000-0000-000000000002' and week_start = '2026-10-18'),
+  null, 'only that week''s card moved: other cards and the chore keep their weekday');
+select is((select weekday::int from public.chore where id = 'cccccccc-0000-0000-0000-000000000003'), 3, 'the chore itself keeps its weekday');
 
 -- Another household sees nothing of this one.
 select pg_temp.act('00000000-0000-0000-0000-0000000000b1');

@@ -89,7 +89,7 @@ Nothing is ever reset. All views are queries over entries by date range (Q10).
 |---|---|
 | Any time until the week ends | Dibs. A housemate may dib any unclaimed chore of this week or next, first come first served, from the Available chores list on Home or the schedule. |
 | Cap | A housemate may dib up to their fair share: `ceil(total weight / number of housemates)`. |
-| Sunday 00:00, the week starts | Unclaimed chores of that week are allocated (5.3). The schedule is final for the week apart from admin moves and dibs. |
+| Sunday 00:00, the week starts | Unclaimed chores of that week are allocated (5.3). The schedule is final for the week apart from admin moves (5.3) and dibs. |
 | Release | A housemate may release a chore they dibbed until its week starts (Sunday 00:00), and not once it is marked done. |
 
 ### 5.3 Allocation of unclaimed chores
@@ -97,6 +97,7 @@ Each chore has a **queue**, worked out from history each time it is read, never 
 - Queue order, front first: (1) the housemate whose last **completed** instance of that chore is oldest, never completed counting as oldest; (2) tie: the oldest last assignment, so whoever sat out longest goes first (the round robin); (3) tie: name, then id.
 - Completed means the chore's claim was accepted and its score entry still stands. Being assigned and missing it does not move anyone back. Only weeks before the one being built count.
 - An admin moving a card (drag and drop) changes that week's schedule only. It never counts as completing.
+- **Admin edits run from today on.** In this week and next, the admin may move a card to another housemate (or to Unassigned) and to another day of its own week, as long as the card's day and the day it lands on are today or later in the household time zone. A card on yesterday or any earlier day is locked, and so is a card already marked done. A move to today takes effect at once for the housemate. The chore itself keeps its weekday; only that week's card moves. This is for sudden changes and schedule conflicts.
 - A card the admin moves to Unassigned stays unassigned for the rest of that week: the allocation does not hand it out again. Housemates can still dib it.
 
 Allocation, at the start of the week (Sunday 00:00):
@@ -110,7 +111,7 @@ Allocation, at the start of the week (Sunday 00:00):
 ### 5.4 Completion and swaps
 - A housemate marks an assigned chore done. That goes through the same claim flow as 4.2, using the chore's catalog deed if it has one.
 - A chore not marked done by the end of its day shows as missed. The admin may enter a penalty by hand. No automatic penalty. **[Default]**
-- Swaps are not in v2. Admin can reassign a chore by hand.
+- Swaps are not in v2. Admin can reassign a chore by hand, from today on (5.3).
 
 ## 6. Feature 3: Budget (v3)
 
