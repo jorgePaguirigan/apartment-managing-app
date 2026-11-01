@@ -14,7 +14,7 @@ reset role;
 update public.chore set active = false where household_id = current_setting('t.hh')::uuid; -- drop the preset chores
 update public.deed set points = 1 where name = 'Cleaned toilet'; -- one chore worth one point: a fair share for two housemates
 set local role authenticated;
-select set_config('t.mop', public.upsert_chore(null, 'Mop', 'Kitchen', 3, (select id from public.deed where name = 'Cleaned toilet'))::text, true);
+select set_config('t.mop', public.add_chore_from_deed((select id from public.deed where name = 'Cleaned toilet'), 3)::text, true);
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a2","role":"authenticated"}';
 select public.join_household(current_setting('t.code'), 'Ana');
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a3","role":"authenticated"}';
@@ -23,7 +23,7 @@ select public.join_household(current_setting('t.code'), 'Ben');
 -- Tuesday 20 Oct: this week (19 Oct) is already handed out, next week (26 Oct) is still open.
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a2","role":"authenticated"}';
 select is((select string_agg(day::text || ' ' || name, ',') from public.available_chores('2026-10-20 10:00+08')),
-  '2026-10-28 Mop', 'lists next week''s unassigned chore with its date');
+  '2026-10-28 Cleaned toilet', 'lists next week''s unassigned chore with its date');
 select is((select points from public.available_chores('2026-10-20 10:00+08')), (select points from public.deed where name = 'Cleaned toilet'),
   'an open chore shows its deed''s points');
 

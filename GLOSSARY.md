@@ -18,6 +18,7 @@ Use these words exactly. They match the PRD and the database.
 - **Award**: an admin creating a score entry directly, without a claim.
 - **Leaderboard**: housemates ranked by points for a period. Ties share a rank. A housemate's card opens to their entries for that period only.
 - **Period**: this week, previous week, this month, previous month, in the household time zone. Weeks start Sunday.
+- **Schedule (Chores card)**: the chores an admin has added from the deed catalog, one per deed and day. Removing one returns its deed to the catalog list.
 - **Locked day**: a day before today in the household time zone. The admin cannot move a chore card from or to a locked day; today and later days can still be edited.
 - **Chore**: a recurring task with a name, area, weekday and an optional deed claimed when it is done. A chore's **points** are its deed's points (0 without a deed).
 - **Schedule**: the week's chore instances and who has each one. A new one is generated every week.

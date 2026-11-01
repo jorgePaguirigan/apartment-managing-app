@@ -344,16 +344,16 @@ export async function assignChore(instance: string, member: string | null, weekd
   doneSchedule(error);
 }
 
-export async function saveChore(formData: FormData) {
+// The Chores card: a catalog deed goes on the schedule on a day, or comes off it again.
+export async function addChore(deed: string, weekday: number) {
   const supabase = await createClient();
-  const { error } = await supabase.rpc("upsert_chore", {
-    p_id: str(formData, "id") || null,
-    p_name: str(formData, "name"),
-    p_area: str(formData, "area") || null,
-    p_weekday: Number(str(formData, "weekday")),
-    p_deed: str(formData, "deed") || null,
-    p_active: str(formData, "active") !== "0",
-  });
+  const { error } = await supabase.rpc("add_chore_from_deed", { p_deed: deed, p_weekday: weekday });
+  doneSchedule(error);
+}
+
+export async function removeChore(chore: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("remove_chore", { p_chore: chore });
   doneSchedule(error);
 }
 
