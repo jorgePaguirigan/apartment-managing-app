@@ -23,8 +23,8 @@ select public.create_household('Other', 'Olga');
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000d1","role":"authenticated"}';
 select public.award('00000000-0000-0000-0000-0000000000d2', (select id from public.deed where name = 'Cleaned toilet'));
 reset role;
-insert into public.chore (id, household_id, name, weekday, weight)
-  values ('00000000-0000-0000-0000-00000000c401', current_setting('t.hh')::uuid, 'Sweep', 1, 1);
+insert into public.chore (id, household_id, name, weekday)
+  values ('00000000-0000-0000-0000-00000000c401', current_setting('t.hh')::uuid, 'Sweep', 1);
 -- Ana was last month's top scorer, so she holds that month's MVP.
 insert into public.score_entry (household_id, member_id, title, points, source, approved_by, created_at)
   values (current_setting('t.hh')::uuid, '00000000-0000-0000-0000-0000000000d2', 'Big clean', 9, 'admin',

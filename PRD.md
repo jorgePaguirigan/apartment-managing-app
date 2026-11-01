@@ -81,14 +81,14 @@ Nothing is ever reset. All views are queries over entries by date range (Q10).
 
 ### 5.1 Setup (admin)
 - **Washing machine**: each weekday maps to one housemate or none.
-- **Chores**: `name`, `area` (e.g. CR, living room), `weekday(s)`, `weight` 1 to 3 (effort).
+- **Chores**: `name`, `area` (e.g. CR, living room), `weekday(s)`, and an optional `deed`. A chore's **points** are its deed's points, so editing the deed changes its chores; a chore with no deed is worth 0 points and cannot be claimed. A chore has no weight of its own.
 - A chore instance exists per chore per week.
 
 ### 5.2 Weekly cycle **[Default]**
 | When (household time zone) | What happens |
 |---|---|
 | Any time until the week ends | Dibs. A housemate may dib any unclaimed chore of this week or next, first come first served, from the Available chores list on Home or the schedule. |
-| Cap | A housemate may dib up to their fair share: `ceil(total weight / number of housemates)`. |
+| Cap | A housemate may dib up to their fair share: `ceil(total points / number of housemates)`, counting the points of each chore this week. |
 | Sunday 00:00, the week starts | Unclaimed chores of that week are allocated (5.3). The schedule is final for the week apart from admin moves (5.3) and dibs. |
 | Release | A housemate may release a chore they dibbed until its week starts (Sunday 00:00), and not once it is marked done. |
 
@@ -102,8 +102,8 @@ Each chore has a **queue**, worked out from history each time it is read, never 
 
 Allocation, at the start of the week (Sunday 00:00):
 1. Dibs stay as taken.
-2. Take unclaimed chores, heaviest first.
-3. Give each chore to the housemate with the lowest current load (dibbed weight plus already allocated).
+2. Take unclaimed chores, most points first.
+3. Give each chore to the housemate with the lowest current load (points of dibbed chores plus points already allocated).
 4. Tie on load: the housemate nearest the front of that chore's queue.
 - No housemates: chores stay unassigned. Admins are never assigned a chore.
 - Dibs are respected even if the queue would have chosen someone else.
