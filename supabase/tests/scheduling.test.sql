@@ -114,7 +114,7 @@ select is((select array_agg(public.week_phase('2026-10-18', t) order by t) from 
 
 select throws_ok($$insert into public.chore_instance (household_id, chore_id, week_start) values ('aaaaaaaa-0000-0000-0000-000000000000', 'cccccccc-0000-0000-0000-000000000001', '2026-12-06')$$,
   '42501', null, 'a housemate cannot write instances directly');
-select throws_ok($$select public.upsert_chore(null, 'Dust', null, 1)$$, '42501', 'admin only', 'a housemate cannot add chores');
+select throws_ok($$select public.add_chore_from_deed('dddddddd-0000-0000-0000-000000000001', 1)$$, '42501', 'admin only', 'a housemate cannot add chores');
 
 select pg_temp.act('00000000-0000-0000-0000-00000000000a');
 select throws_ok($$select public.assign_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000002', '2026-10-18'), '00000000-0000-0000-0000-00000000000a', '2026-10-18 12:00+08')$$,

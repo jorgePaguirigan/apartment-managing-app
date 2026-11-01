@@ -82,6 +82,7 @@ Nothing is ever reset. All views are queries over entries by date range (Q10).
 ### 5.1 Setup (admin)
 - **Washing machine**: each weekday maps to one housemate or none.
 - **Chores**: `name`, `area` (e.g. CR, living room), `weekday(s)`, and an optional `deed`. A chore's **points** are its deed's points, so editing the deed changes its chores; a chore with no deed is worth 0 points and cannot be claimed. A chore has no weight of its own.
+- **The Chores card builds the schedule from the deed catalog.** It has two parts and no input fields. *On the schedule* lists the chores that are scheduled, one card per chore and day, each with a Remove button. *From the catalog* lists the active good deeds that are not on the schedule, each with a day and an Add button. Add puts the deed on the schedule on that day; the chore takes the deed's name, its group as the area, and its points. Remove takes the chore off the schedule and off the board and puts the deed back in the catalog list; history and scores are untouched, and adding the same deed on the same day again brings back the same chore, so who did it last is remembered. Penalties cannot be scheduled. A deed deleted from the catalog cannot be added.
 - A chore instance exists per chore per week.
 
 ### 5.2 Weekly cycle **[Default]**

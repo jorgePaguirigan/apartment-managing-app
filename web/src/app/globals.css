@@ -317,3 +317,27 @@ tr[data-locked] > td, tr[data-locked] > th > span { opacity: 0.5; }
 @media (prefers-reduced-motion: reduce) {
   .board-card, .board-card:hover, .board-card:active, .board-card[data-lifted] { transform: none !important; }
 }
+
+/* Chores card: a card folds away as it leaves its part (grid rows, no height animation) and rises in where it lands. */
+.chore-slot { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 180ms var(--ease-out-strong), opacity 150ms var(--ease-out-strong); }
+.chore-slot[data-leaving] { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
+.chore-fold { min-height: 0; overflow: hidden; padding: 2px; margin: -2px; } /* room for the lift and focus ring */
+.chore-card { transition: transform 180ms var(--ease-out-strong), border-color 150ms ease; }
+.chore-slot[data-leaving] .chore-card { transform: scale(0.97); }
+.chore-act { transition: transform 150ms var(--ease-out-strong), filter 150ms ease, background-color 150ms ease; }
+.chore-act:active { transform: scale(0.96); }
+.chore-add .lucide, .chore-add svg { transition: transform 200ms var(--ease-out-strong); }
+@media (hover: hover) {
+  .chore-card:hover { transform: translateY(-1px); border-color: color-mix(in oklab, var(--ink) 30%, var(--line)); }
+  .chore-add:hover { filter: brightness(0.95); }
+  .chore-add:hover svg { transform: rotate(90deg); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .chore-slot[data-fresh] { animation: chore-in 220ms var(--ease-out-strong) both; }
+  @keyframes chore-in { from { opacity: 0; transform: translateY(-6px) scale(0.97); } }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chore-slot { transition: opacity 150ms ease; }
+  .chore-slot[data-leaving] { grid-template-rows: 1fr; }
+  .chore-card, .chore-card:hover, .chore-slot[data-leaving] .chore-card, .chore-act:active { transform: none; }
+}

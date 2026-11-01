@@ -3,10 +3,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getHousemates, getMe } from "@/lib/me";
 import { AppShell } from "../_components/app-shell";
-import { Avatar, Banner, Icon, Section, button, ghost, input } from "../_components/ui";
-import { SubmitButton } from "../_components/submit-button";
-import { saveChore } from "../actions";
+import { Avatar, Banner, Icon, Section } from "../_components/ui";
 import { Board, type Card, type Housemate } from "./board";
+import { ChoresCard, type CatalogDeed, type Scheduled } from "./chores-card";
 
 type ChoreRow = { id: string; name: string; area: string | null; weekday: number; deed_id: string | null; deed: { points: number } | null };
 type InstanceRow = { id: string; chore_id: string; weekday: number | null; assignee: string | null; source: string | null; claim_id: string | null };
@@ -41,7 +40,7 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
     supabase.rpc("week_phase", { p_week_start: weekStart }),
     supabase.rpc("schedule_today"),
     supabase.from("claim").select("id, status"), // an admin sees every claim, a housemate only their own
-    me.role === "admin" ? supabase.from("deed").select("id, name, points").eq("kind", "good").eq("active", true).order("name") : Promise.resolve({ data: [] }),
+    me.role === "admin" ? supabase.from("deed").select("id, name, points, group:deed_group(name)").eq("kind", "good").eq("active", true).order("name") : Promise.resolve({ data: [] }),
   ]);
 
   const housemates: Housemate[] = members.map((m) => ({ id: m.user_id, name: m.display_name }));
@@ -56,6 +55,12 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
   const isAdmin = me.role === "admin";
   const visible = isAdmin ? cards : cards.filter((c) => c.assignee === me.userId || (phase !== "past" && c.assignee === null));
   const columns = isAdmin ? housemates : housemates.filter((h) => h.id === me.userId);
+  // The catalog (good deeds) minus what is on the schedule; both lists are only for the admin's Chores card.
+  type DeedRow = { id: string; name: string; points: number; group: { name: string } | { name: string }[] | null };
+  const onSchedule = new Set(Array.from(choreById.values()).map((c) => c.deed_id));
+  const areaOf = (g: DeedRow["group"]) => (Array.isArray(g) ? g[0]?.name : g?.name) ?? null;
+  const catalog: CatalogDeed[] = ((deeds ?? []) as unknown as DeedRow[]).filter((d) => !onSchedule.has(d.id)).map((d) => ({ id: d.id, name: d.name, area: areaOf(d.group), points: d.points }));
+  const scheduled: Scheduled[] = Array.from(choreById.values()).map((c) => ({ id: c.id, deedId: c.deed_id, name: c.name, area: c.area, weekday: c.weekday, points: c.deed?.points ?? 0 }));
   const nameOf = new Map(housemates.map((h) => [h.id, h.name]));
 
   const highlights = [
@@ -107,39 +112,9 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
 
       {me.role === "admin" && (
         <Section title="Chores">
-          <ChoreForm deeds={(deeds ?? []) as { id: string; name: string; points: number }[]} />
-          <ul className="divide-y divide-line">
-            {Array.from(choreById.values()).map((c) => (
-              <li key={c.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                <span className="min-w-0 truncate"><b>{c.name}</b> <span className="text-muted">{c.area} · {DAY_NAMES[c.weekday - 1]} · {c.deed ? `${c.deed.points} pts` : "no deed · 0 pts"}</span></span>
-                <form action={saveChore}>
-                  {Object.entries({ id: c.id, name: c.name, area: c.area ?? "", weekday: c.weekday, deed: c.deed_id ?? "", active: "0" })
-                    .map(([k, v]) => <input key={k} type="hidden" name={k} value={String(v)} />)}
-                  <SubmitButton className={ghost}>Remove</SubmitButton>
-                </form>
-              </li>
-            ))}
-          </ul>
+          <ChoresCard scheduled={scheduled} catalog={catalog} todayWeekday={new Date(`${typeof today === "string" ? today : weekStart}T00:00:00Z`).getUTCDay() || 7} />
         </Section>
       )}
     </AppShell>
-  );
-}
-
-const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-
-// A chore is linked to a deed so that "I did it" files a normal claim for that deed.
-function ChoreForm({ deeds }: { deeds: { id: string; name: string; points: number }[] }) {
-  return (
-    <form action={saveChore} className="grid gap-2 sm:grid-cols-2">
-      <input name="name" required placeholder="Chore, e.g. Sweep the floor" aria-label="Chore name" className={input} />
-      <input name="area" placeholder="Area, e.g. Living room" aria-label="Area" className={input} />
-      <select name="weekday" aria-label="Weekday" className={input}>{[7, 1, 2, 3, 4, 5, 6].map((v) => <option key={v} value={v}>{DAY_NAMES[v - 1]}</option>)}</select>
-      <select name="deed" aria-label="Deed claimed when done" className={`${input} sm:col-span-2`}>
-        <option value="">No deed (0 points, cannot be claimed)</option>
-        {deeds.map((d) => <option key={d.id} value={d.id}>{d.name} · {d.points} pts</option>)}
-      </select>
-      <SubmitButton className={`${button} sm:col-span-2`}>Add chore</SubmitButton>
-    </form>
   );
 }

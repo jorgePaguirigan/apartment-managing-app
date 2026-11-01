@@ -2,13 +2,13 @@
 
 ## Current batch: Chores card built from the catalog (started 2026-11-01)
 
-Plan written 2026-11-01, waiting for approval. Branch `chores-from-catalog`, stacked on `chore-points` (PR 72), which is stacked on `schedule-board-motion` (PR 71). Both PRs stay open until you say merge. UI milestone: stops for your approval of the screenshots. No hosted `supabase db push` without your OK.
+Plan written 2026-11-01, waiting for approval. Branch `chores-from-catalog`, from main (PRs 71 to 73 merged; the three migrations are on hosted since 2026-11-01). UI milestone: stops for your approval of the screenshots. No hosted `supabase db push` without your OK.
 
 Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| C1 | Chores card: no input fields; upper part = scheduled chores with Remove; lower part = catalog deeds not on the schedule with Add; PRD, glossary, pgTAP | `chores-from-catalog` | ⚪ not started | |
+| C1 | Chores card: no input fields; upper part = scheduled chores with Remove; lower part = catalog deeds not on the schedule with Add; PRD, glossary, pgTAP | `chores-from-catalog` | 🔵 PR open | |
 
 ### Decisions (defaults I proposed; you re-sent the request without changing them, so I treat them as accepted; change any)
 - The catalog is the deed catalog (good, active deeds). A catalog deed is a candidate chore; its points are the chore's points.
