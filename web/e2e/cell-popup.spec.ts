@@ -72,6 +72,12 @@ test("pressing a cell opens the chore popup and ticking a chore puts it in that 
   await expect(dialog).toHaveAccessibleName(/Unassigned/);
   await page.keyboard.press("Escape");
 
+  // Keyboard: the add buttons are one tab stop, and the arrow keys move between cells.
+  await expect(page.locator('.cell-add[tabindex="0"]')).toHaveCount(1);
+  await press(`cp-mate${stamp}`).focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(press("Unassigned")).toBeFocused();
+
   // Days before today are locked: no popup there.
   for (let c = 0; c < col; c++) await expect(page.locator("tbody tr").first().locator("td").nth(c).getByRole("button")).toHaveCount(0);
 

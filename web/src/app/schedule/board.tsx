@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useMemo, useOptimistic, useState } from "react";
+import { startTransition, useMemo, useOptimistic, useRef, useState } from "react";
 import { addChoreToCell, assignChore, dibChore, undibChore } from "../actions";
 import { Avatar, Chip, Icon, ghost } from "../_components/ui";
 import { SubmitButton } from "../_components/submit-button";
@@ -36,6 +36,7 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
 }) {
   type Move = { id: string; to: string | null; weekday: number } | { add: Card };
   const [view, move] = useOptimistic(cards, (cs, m: Move) => "add" in m ? [...cs, m.add] : cs.map((c) => (c.id === m.id ? { ...c, assignee: m.to, weekday: m.weekday } : c)));
+  const [tab, setTab] = useState<string | null>(null); // the one add button in the tab order; arrow keys move between the others
   const [pop, setPop] = useState<{ col: number; member: string | null; name: string; rect: DOMRect; trigger: HTMLElement } | null>(null); // the open chore popup
   const [drag, setDrag] = useState<Card | null>(null);
   const [over, setOver] = useState<string | null>(null); // the cell under the dragged card
@@ -51,22 +52,26 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
   const movable = (c: Card) => isAdmin && !c.claimed && !locked(c.weekday % 7);
   const endDrag = () => { setDrag(null); setOver(null); };
   const assign = (id: string, to: string | null, weekday: number) => startTransition(async () => { move({ id, to, weekday }); await assignChore(id, to, weekday); });
+  const byDeedDay = useMemo(() => new Map(view.flatMap((k) => (k.deedId ? [[`${k.deedId}|${k.choreDay}`, k] as const] : []))), [view]);
   const nameOf = (id: string | null) => housemates.find((h) => h.id === id)?.name ?? "Unassigned";
   // The popup's list for the open cell: a deed is on a day once (by its chore's day), so one held in another cell is not offered.
   const items = (): Item[] => pop === null ? [] : catalog.map((deed) => {
     const day = weekdayOf(pop.col);
-    const held = view.find((k) => k.deedId === deed.id && k.choreDay === day);
+    const held = byDeedDay.get(`${deed.id}|${day}`);
     if (!held) return { deed, state: "free" };
     if (held.weekday === day && held.assignee === pop.member) return { deed, state: "here" };
     return { deed, state: "taken", by: `${nameOf(held.assignee)}${held.weekday === day ? "" : ` on ${DAYS[held.weekday % 7]}`}` };
   });
+  const sending = useRef(new Set<string>()); // a second press before the card shows must not send the same add twice
   const pick = (deed: CatalogDeed) => {
     if (pop === null) return;
     const weekday = weekdayOf(pop.col), member = pop.member, id = `new-${deed.id}-${weekday}`;
+    if (sending.current.has(id)) return;
+    sending.current.add(id);
     setLanded(id);
     startTransition(async () => {
       move({ add: { id, deedId: deed.id, choreDay: weekday, name: deed.name, area: deed.area, points: deed.points, weekday, assignee: member, source: member ? "admin" : null, claimed: false, status: null } });
-      await addChoreToCell(deed.id, weekday, member, weekStart);
+      try { await addChoreToCell(deed.id, weekday, member, weekStart); } finally { sending.current.delete(id); }
     });
   };
 
@@ -89,7 +94,7 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
           </tr>
         </thead>
         <tbody>
-          {columns.map((c) => (
+          {columns.map((c, r) => (
             <tr key={c.id ?? "none"} className="border-t border-line">
               <th scope="row" className="sticky left-0 z-10 bg-bg p-2 text-left align-top">
                 <span className="flex items-center gap-2 text-sm font-semibold">
@@ -143,6 +148,13 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
                     {isAdmin && !locked(i) && (
                       <button type="button" aria-haspopup="dialog" aria-expanded={pop?.col === i && pop.member === c.id} aria-label={`Add a chore for ${c.name} on ${d} ${dayLabel(weekStart, i)}`}
                         onClick={(e) => setPop({ col: i, member: c.id, name: `${c.name} · ${d} ${dayLabel(weekStart, i)}`, rect: e.currentTarget.closest("td")!.getBoundingClientRect(), trigger: e.currentTarget })}
+                        data-cell={`${r}|${i}`} tabIndex={(tab ?? `0|${DAYS.findIndex((_, n) => !locked(n))}`) === `${r}|${i}` ? 0 : -1} onFocus={() => setTab(`${r}|${i}`)}
+                        onKeyDown={(e) => {
+                          const [dr, dc] = ({ ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] } as Record<string, number[]>)[e.key] ?? [];
+                          if (dr === undefined) return;
+                          e.preventDefault();
+                          e.currentTarget.closest("table")?.querySelector<HTMLElement>(`[data-cell="${r + dr}|${i + dc}"]`)?.focus(); // a locked day has no button: stay put
+                        }}
                         className="cell-add"><Icon name="plus" className="size-4" /></button>
                     )}
                     </div>
