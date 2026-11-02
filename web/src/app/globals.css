@@ -305,7 +305,7 @@ html[data-figures="off"] [data-roamers] { opacity: 0; translate: 0 12px; visibil
 .board-cell { transition: background-color 150ms ease; }
 .board-cell[data-drop] { outline: 2px dashed color-mix(in oklab, var(--ink) 30%, transparent); outline-offset: -2px; background-color: color-mix(in oklab, var(--accent) 22%, transparent); }
 .board-cell[data-drop="over"] { background-color: color-mix(in oklab, var(--accent) 50%, transparent); outline-style: solid; }
-tr[data-locked] > td, tr[data-locked] > th > span { opacity: 0.5; }
+td[data-locked], th[data-locked] > * { opacity: 0.5; }
 @media (hover: hover) {
   .board-card[draggable="true"]:hover { transform: translateY(-1px); border-color: color-mix(in oklab, var(--ink) 35%, var(--line)); }
   .board-card[draggable="true"]:active { transform: scale(0.98); }
