@@ -11,8 +11,8 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 | S1 | Page can no longer scroll sideways past the UI (screenshot 3) | `fix-page-overscroll` | ✅ merged | [76](https://github.com/jorgePaguirigan/apartment-managing-app/pull/76) |
 | S2 | Board flipped: columns = days, rows = housemates | `board-days-as-columns` | ✅ merged | [77](https://github.com/jorgePaguirigan/apartment-managing-app/pull/77) |
 | S3 | Chores table removed; pressing a cell opens a checkbox popup of catalog chores; card text row gone with the table | `cell-chore-popup` | 🔵 PR open | [78](https://github.com/jorgePaguirigan/apartment-managing-app/pull/78) |
-| S4 | Board polish: no rubber-band scroll past Saturday; Today chip at the right of its day cell | `board-no-overscroll` | 🟡 in progress | |
-| S5 | Housemates get the Unassigned row and can drag to take (Dibs) or give back (Release) | `board-no-overscroll` (same branch) | 🟡 in progress | |
+| S4 | Board polish: no rubber-band scroll past Saturday; Today chip at the right of its day cell | `board-no-overscroll` | 🔵 PR open | |
+| S5 | Housemates get the Unassigned row and can drag to take (Dibs) or give back (Release) | `board-no-overscroll` (same branch) | 🔵 PR open | |
 
 ### Added 2026-11-03 (after S3 merged)
 - S4: `overscroll-x-none` on the board scroller (elastic bounce showed blank space past Saturday; headless Chromium cannot show the bounce, so the test asserts the property and the clamp). The Today chip moved to the right of its cell.
