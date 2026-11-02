@@ -21,7 +21,8 @@ test("the schedule board has the days as columns and the housemates as rows", as
   const head = admin.page.locator("thead th[scope=col]", { has: admin.page.getByText("Today") });
   await expect(head).toBeVisible();
   const [h, c] = await Promise.all([head.boundingBox(), head.getByText("Today").boundingBox()]);
-  expect(h!.x + h!.width - (c!.x + c!.width)).toBeLessThan(16);
+  const pad = await head.evaluate((th) => parseFloat(getComputedStyle(th).paddingRight));
+  expect(Math.abs(h!.x + h!.width - (c!.x + c!.width) - pad)).toBeLessThanOrEqual(1); // flush with the cell padding
   if (process.env.SHOT_DIR) { await admin.page.emulateMedia({ colorScheme: "dark" }); await admin.page.locator("table").screenshot({ path: `${process.env.SHOT_DIR}/chip-dark.png` }); }
   const rows = admin.page.locator("tbody th[scope=row]");
   await expect(rows).toHaveCount(2); // the one housemate and Unassigned

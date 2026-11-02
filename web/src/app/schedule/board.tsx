@@ -35,7 +35,7 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
   weekStart: string; today: string; phase: string; housemates: Housemate[]; cards: Card[]; meId: string; isAdmin: boolean; catalog: CatalogDeed[];
 }) {
   type Move = { id: string; to: string | null; weekday: number } | { add: Card };
-  const [view, move] = useOptimistic(cards, (cs, m: Move) => "add" in m ? [...cs, m.add] : cs.map((c) => (c.id === m.id ? { ...c, assignee: m.to, weekday: m.weekday, source: m.to === null ? null : isAdmin ? "admin" : "dibs" } : c)));
+  const [view, move] = useOptimistic(cards, (cs, m: Move) => "add" in m ? [...cs, m.add] : cs.map((c) => (c.id === m.id ? { ...c, assignee: m.to, weekday: m.weekday, source: m.to === null ? null : "admin" } : c)));
   const [tab, setTab] = useState<string | null>(null); // the one add button in the tab order; arrow keys move between the others
   const [pop, setPop] = useState<{ col: number; member: string | null; name: string; rect: DOMRect; trigger: HTMLElement } | null>(null); // the open chore popup
   const [drag, setDrag] = useState<Card | null>(null);
@@ -51,9 +51,9 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
   const locked = (col: number) => rowDate(weekStart, col) < today;
   const movable = (c: Card) => isAdmin && !c.claimed && !locked(c.weekday % 7);
   // A housemate's drag is the Dibs and Release buttons: take an unassigned card, or give back one they dibbed while Release is open.
-  const mine = (c: Card) => !isAdmin && !c.claimed && phase !== "past" && (c.assignee === null || (c.assignee === meId && c.source === "dibs" && (phase === "early" || phase === "dibs")));
+  const mine = (c: Card) => !isAdmin && !c.claimed && phase !== "past" && !locked(c.weekday % 7) && (c.assignee === null || (c.assignee === meId && c.source === "dibs" && (phase === "early" || phase === "dibs")));
+  // No optimistic move: a dib can be refused (cap, someone was first), so the card moves only when the server says yes.
   const dib = (c: Card, to: string | null) => startTransition(async () => {
-    move({ id: c.id, to, weekday: c.weekday });
     const f = new FormData();
     f.set("instance", c.id);
     await (to ? dibChore : undibChore)(f);
@@ -115,7 +115,7 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
               </th>
               {DAYS.map((d, i) => {
                 const target = drag !== null && (isAdmin ? !locked(i) && (drag.weekday !== weekdayOf(i) || drag.assignee !== c.id)
-                  : drag.weekday === weekdayOf(i) && (drag.assignee === null ? c.id === meId : c.id === null)); // a housemate moves between their row and Unassigned, same day
+                  : !locked(i) && drag.weekday === weekdayOf(i) && (drag.assignee === null ? c.id === meId : c.id === null)); // a housemate moves between their row and Unassigned, same day
                 const cell = `${i}|${c.id}`;
                 return (
                   <td key={d} data-locked={locked(i) || undefined} onDragOver={target ? (e) => { e.preventDefault(); if (over !== cell) setOver(cell); } : undefined}
