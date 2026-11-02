@@ -9,8 +9,8 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
 | S1 | Page can no longer scroll sideways past the UI (screenshot 3) | `fix-page-overscroll` | ✅ merged | [76](https://github.com/jorgePaguirigan/apartment-managing-app/pull/76) |
-| S2 | Board flipped: columns = days, rows = housemates | `board-days-as-columns` | 🟡 in progress | |
-| S3 | Chores table removed; pressing a cell opens a checkbox popup of catalog chores; card text row gone with the table | `cell-chore-popup` | ⚪ not started | |
+| S2 | Board flipped: columns = days, rows = housemates | `board-days-as-columns` | ✅ merged | [77](https://github.com/jorgePaguirigan/apartment-managing-app/pull/77) |
+| S3 | Chores table removed; pressing a cell opens a checkbox popup of catalog chores; card text row gone with the table | `cell-chore-popup` | 🟡 in progress | |
 
 ### Found in the code
 - Item 1 (the line under the chore title, e.g. "Thursday · Laundry area") exists only in the Chores table (`chores-card.tsx`). Item 2 removes that table, so item 1 is done by S3 and needs no separate change.

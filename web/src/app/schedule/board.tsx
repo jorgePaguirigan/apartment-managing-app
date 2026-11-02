@@ -1,12 +1,13 @@
 "use client";
 
 import { startTransition, useMemo, useOptimistic, useState } from "react";
-import { assignChore, dibChore, undibChore } from "../actions";
+import { addChoreToCell, assignChore, dibChore, undibChore } from "../actions";
 import { Avatar, Chip, Icon, ghost } from "../_components/ui";
 import { SubmitButton } from "../_components/submit-button";
+import { CellPopup, type CatalogDeed, type Item } from "./cell-popup";
 
 export type Card = {
-  id: string; name: string; area: string | null; points: number; weekday: number;
+  id: string; deedId: string | null; choreDay: number; name: string; area: string | null; points: number; weekday: number;
   assignee: string | null; source: string | null; claimed: boolean; status: string | null;
 };
 export type Housemate = { id: string; name: string };
@@ -30,10 +31,12 @@ function Hidden({ id }: { id: string }) {
 // The admin drags cards between columns. The menu on a card is for touch screens and keyboards, so it only shows there.
 // The admin edits from today on (the database says which day today is): a card on an earlier day is locked, and a card
 // can move to another person and to another day of its week, today or later.
-export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmin, showUnassigned }: {
-  weekStart: string; today: string; phase: string; housemates: Housemate[]; cards: Card[]; meId: string; isAdmin: boolean; showUnassigned: boolean;
+export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmin, catalog, showUnassigned }: {
+  weekStart: string; today: string; phase: string; housemates: Housemate[]; cards: Card[]; meId: string; isAdmin: boolean; catalog: CatalogDeed[]; showUnassigned: boolean;
 }) {
-  const [view, move] = useOptimistic(cards, (cs, m: { id: string; to: string | null; weekday: number }) => cs.map((c) => (c.id === m.id ? { ...c, assignee: m.to, weekday: m.weekday } : c)));
+  type Move = { id: string; to: string | null; weekday: number } | { add: Card };
+  const [view, move] = useOptimistic(cards, (cs, m: Move) => "add" in m ? [...cs, m.add] : cs.map((c) => (c.id === m.id ? { ...c, assignee: m.to, weekday: m.weekday } : c)));
+  const [pop, setPop] = useState<{ col: number; member: string | null; name: string; rect: DOMRect; trigger: HTMLElement } | null>(null); // the open chore popup
   const [drag, setDrag] = useState<Card | null>(null);
   const [over, setOver] = useState<string | null>(null); // the cell under the dragged card
   const [landed, setLanded] = useState<string | null>(null); // the card just dropped: it settles in once, keyboard changes do not animate
@@ -48,6 +51,24 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
   const movable = (c: Card) => isAdmin && !c.claimed && !locked(c.weekday % 7);
   const endDrag = () => { setDrag(null); setOver(null); };
   const assign = (id: string, to: string | null, weekday: number) => startTransition(async () => { move({ id, to, weekday }); await assignChore(id, to, weekday); });
+  const nameOf = (id: string | null) => housemates.find((h) => h.id === id)?.name ?? "Unassigned";
+  // The popup's list for the open cell: a deed is on a day once (by its chore's day), so one held in another cell is not offered.
+  const items = (): Item[] => pop === null ? [] : catalog.map((deed) => {
+    const day = weekdayOf(pop.col);
+    const held = view.find((k) => k.deedId === deed.id && k.choreDay === day);
+    if (!held) return { deed, state: "free" };
+    if (held.weekday === day && held.assignee === pop.member) return { deed, state: "here" };
+    return { deed, state: "taken", by: `${nameOf(held.assignee)}${held.weekday === day ? "" : ` on ${DAYS[held.weekday % 7]}`}` };
+  });
+  const pick = (deed: CatalogDeed) => {
+    if (pop === null) return;
+    const weekday = weekdayOf(pop.col), member = pop.member, id = `new-${deed.id}-${weekday}`;
+    setLanded(id);
+    startTransition(async () => {
+      move({ add: { id, deedId: deed.id, choreDay: weekday, name: deed.name, area: deed.area, points: deed.points, weekday, assignee: member, source: member ? "admin" : null, claimed: false, status: null } });
+      await addChoreToCell(deed.id, weekday, member, weekStart);
+    });
+  };
 
   return (
     <div className="relative overflow-x-auto rounded-3xl border border-line bg-surface-2">
@@ -83,7 +104,8 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
                 return (
                   <td key={d} data-locked={locked(i) || undefined} onDragOver={target ? (e) => { e.preventDefault(); if (over !== cell) setOver(cell); } : undefined}
                     onDrop={target ? (e) => { e.preventDefault(); setLanded(drag.id); assign(drag.id, c.id, weekdayOf(i)); endDrag(); } : undefined}
-                    data-drop={target ? (over === cell ? "over" : "ready") : undefined} className="board-cell space-y-1.5 p-1.5 align-top">
+                    data-drop={target ? (over === cell ? "over" : "ready") : undefined} className="board-cell p-1.5 align-top">
+                    <div className="flex min-h-24 flex-col gap-1.5">
                     {(byCell.get(`${weekdayOf(i)}|${c.id}`) ?? []).map((k) => (
                       <div key={k.id} draggable={movable(k)} onDragStart={() => setDrag(k)} onDragEnd={endDrag}
                         data-lifted={drag?.id === k.id || undefined} data-landed={landed === k.id || undefined}
@@ -118,6 +140,12 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
                         )}
                       </div>
                     ))}
+                    {isAdmin && !locked(i) && (
+                      <button type="button" aria-haspopup="dialog" aria-expanded={pop?.col === i && pop.member === c.id} aria-label={`Add a chore for ${c.name} on ${d} ${dayLabel(weekStart, i)}`}
+                        onClick={(e) => setPop({ col: i, member: c.id, name: `${c.name} · ${d} ${dayLabel(weekStart, i)}`, rect: e.currentTarget.closest("td")!.getBoundingClientRect(), trigger: e.currentTarget })}
+                        className="cell-add"><Icon name="plus" className="size-4" /></button>
+                    )}
+                    </div>
                   </td>
                 );
               })}
@@ -125,6 +153,7 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
           ))}
         </tbody>
       </table>
+      {pop && <CellPopup key={`${pop.col}|${pop.member}`} rect={pop.rect} title={pop.name} items={items()} onPick={pick} onClose={() => setPop((p) => (p === pop ? null : p))} trigger={pop.trigger} />}
     </div>
   );
 }
