@@ -137,14 +137,14 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
                         {k.status && <p className="mt-1.5"><Chip tone={k.status === "accepted" ? "ok" : k.status === "pending" ? "warn" : "bad"}>{k.status === "accepted" ? "Done" : k.status === "pending" ? "Waiting for admin" : "Rejected"}</Chip></p>}
                         {movable(k) && (
                           <select aria-label={`Assign ${k.name}`} value={k.assignee ?? ""} onChange={(e) => assign(k.id, e.target.value || null, k.weekday)}
-                            className="mt-2 w-full rounded-lg border border-line bg-surface-2 px-2 py-1 text-xs sr-only focus:not-sr-only [@media(hover:none)]:not-sr-only">
+                            className="mt-2 rounded-lg border border-line bg-surface-2 px-2 py-1 text-xs sr-only focus:not-sr-only focus:w-full [@media(hover:none)]:not-sr-only [@media(hover:none)]:w-full">
                             <option value="">Unassigned</option>
                             {housemates.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
                           </select>
                         )}
                         {movable(k) && (
                           <select aria-label={`Day for ${k.name}`} value={k.weekday} onChange={(e) => assign(k.id, k.assignee, Number(e.target.value))}
-                            className="mt-1.5 w-full rounded-lg border border-line bg-surface-2 px-2 py-1 text-xs sr-only focus:not-sr-only [@media(hover:none)]:not-sr-only">
+                            className="mt-1.5 rounded-lg border border-line bg-surface-2 px-2 py-1 text-xs sr-only focus:not-sr-only focus:w-full [@media(hover:none)]:not-sr-only [@media(hover:none)]:w-full">
                             {DAYS.map((n, r) => !locked(r) && <option key={n} value={weekdayOf(r)}>{n}</option>)}
                           </select>
                         )}

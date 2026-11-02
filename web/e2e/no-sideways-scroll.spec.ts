@@ -28,6 +28,9 @@ test("the schedule page never scrolls sideways past the UI", async ({ browser })
     // The board scrolls inside itself and stops at Saturday. The rubber-band itself needs a real trackpad (headless Chromium has none), so this asserts the property that turns it off.
     const board = await admin.page.locator("table").evaluate((t) => { const b = t.parentElement!; b.scrollLeft = 99999; return { left: b.scrollLeft, max: b.scrollWidth - b.clientWidth, over: getComputedStyle(b).overscrollBehaviorX }; });
     expect(board.left).toBe(board.max);
+    // The scroll area ends where the table ends: nothing (the hidden selects on cards) may stretch it past Saturday.
+    const ends = await admin.page.locator("table").evaluate((t) => ({ scroll: t.parentElement!.scrollWidth, table: Math.ceil(t.getBoundingClientRect().width) }));
+    expect(ends.scroll, `board scroll width at ${w}px`).toBeLessThanOrEqual(ends.table);
     expect(board.over, `board overscroll at ${w}px`).toBe("none");
   }
 });

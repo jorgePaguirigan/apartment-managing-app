@@ -13,6 +13,7 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 | S3 | Chores table removed; pressing a cell opens a checkbox popup of catalog chores; card text row gone with the table | `cell-chore-popup` | 🔵 PR open | [78](https://github.com/jorgePaguirigan/apartment-managing-app/pull/78) |
 | S4 | Board polish: no rubber-band scroll past Saturday; Today chip at the right of its day cell | `board-no-overscroll` | 🔵 PR open | |
 | S5 | Housemates get the Unassigned row and can drag to take (Dibs) or give back (Release) | `board-no-overscroll` (same branch) | 🔵 PR open | |
+| S6 | Board scroll area ends at Saturday (hidden card selects were stretching it) | `board-scroll-ends-at-saturday` | 🟡 in progress | |
 
 ### Added 2026-11-03 (after S3 merged)
 - S4: `overscroll-x-none` on the board scroller (elastic bounce showed blank space past Saturday; headless Chromium cannot show the bounce, so the test asserts the property and the clamp). The Today chip moved to the right of its cell.
