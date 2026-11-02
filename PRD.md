@@ -92,6 +92,7 @@ Nothing is ever reset. All views are queries over entries by date range (Q10).
 | Cap | A housemate may dib up to their fair share: `ceil(total points / number of housemates)`, counting the points of each chore this week. |
 | Sunday 00:00, the week starts | Unclaimed chores of that week are allocated (5.3). The schedule is final for the week apart from admin moves (5.3) and dibs. |
 | Release | A housemate may release a chore they dibbed until its week starts (Sunday 00:00), and not once it is marked done. |
+- **Dibs and Release by dragging.** A housemate's board has their own row and an Unassigned row. Dragging an unassigned card onto their own row, on the same day, is Dibs (same cap and window); dragging a card they dibbed back to Unassigned is Release (same limits). It does not work on a day that has already passed, and the card moves only once the server accepts it. Housemates cannot move a card to another day or touch anyone else's card; the admin's board updates live.
 
 ### 5.3 Allocation of unclaimed chores
 Each chore has a **queue**, worked out from history each time it is read, never stored. Points are not used.

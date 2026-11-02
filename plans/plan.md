@@ -11,6 +11,12 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 | S1 | Page can no longer scroll sideways past the UI (screenshot 3) | `fix-page-overscroll` | ✅ merged | [76](https://github.com/jorgePaguirigan/apartment-managing-app/pull/76) |
 | S2 | Board flipped: columns = days, rows = housemates | `board-days-as-columns` | ✅ merged | [77](https://github.com/jorgePaguirigan/apartment-managing-app/pull/77) |
 | S3 | Chores table removed; pressing a cell opens a checkbox popup of catalog chores; card text row gone with the table | `cell-chore-popup` | 🔵 PR open | [78](https://github.com/jorgePaguirigan/apartment-managing-app/pull/78) |
+| S4 | Board polish: no rubber-band scroll past Saturday; Today chip at the right of its day cell | `board-no-overscroll` | 🔵 PR open | |
+| S5 | Housemates get the Unassigned row and can drag to take (Dibs) or give back (Release) | `board-no-overscroll` (same branch) | 🔵 PR open | |
+
+### Added 2026-11-03 (after S3 merged)
+- S4: `overscroll-x-none` on the board scroller (elastic bounce showed blank space past Saturday; headless Chromium cannot show the bounce, so the test asserts the property and the clamp). The Today chip moved to the right of its cell.
+- S5 decisions (your answers): drag = Dibs rules (cap, window); dragging a dibbed card back = Release rules. No new SQL; reuses `dib_chore` / `undib_chore`. Skills: grilling-style questions, tdd, diagnosing-bugs, mobile-native, code-review pending.
 
 ### Found in the code
 - Item 1 (the line under the chore title, e.g. "Thursday · Laundry area") exists only in the Chores table (`chores-card.tsx`). Item 2 removes that table, so item 1 is done by S3 and needs no separate change.
