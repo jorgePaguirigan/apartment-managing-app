@@ -50,7 +50,7 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
   const assign = (id: string, to: string | null, weekday: number) => startTransition(async () => { move({ id, to, weekday }); await assignChore(id, to, weekday); });
 
   return (
-    <div className="overflow-x-auto rounded-3xl border border-line bg-surface-2">
+    <div className="relative overflow-x-auto rounded-3xl border border-line bg-surface-2">
       <table className="w-full min-w-max border-collapse text-left">
         <thead>
           <tr>

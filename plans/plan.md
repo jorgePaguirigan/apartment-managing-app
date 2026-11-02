@@ -1,6 +1,59 @@
 # Feature batch plan
 
-## Current batch: Chores card built from the catalog (started 2026-11-01)
+## Current batch: calendar-style schedule (started 2026-11-02)
+
+Plan written 2026-11-02, waiting for approval. One branch per milestone, from an up-to-date main (PR 74 is merged). Each UI milestone stops for your approval of the screenshots. No hosted `supabase db push` without your OK.
+
+Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
+
+| # | Milestone | Branch | Status | PR |
+|---|---|---|---|---|
+| S1 | Page can no longer scroll sideways past the UI (screenshot 3) | `fix-page-overscroll` | 🟡 in progress | |
+| S2 | Board flipped: columns = days, rows = housemates | `board-days-as-columns` | ⚪ not started | |
+| S3 | Chores table removed; pressing a cell opens a checkbox popup of catalog chores; card text row gone with the table | `cell-chore-popup` | ⚪ not started | |
+
+### Found in the code
+- Item 1 (the line under the chore title, e.g. "Thursday · Laundry area") exists only in the Chores table (`chores-card.tsx`). Item 2 removes that table, so item 1 is done by S3 and needs no separate change.
+- The board (`schedule/board.tsx`) has housemates as columns and Sun to Sat as rows, drag and drop already works per cell (`onDrop` -> `assign_chore`).
+- A chore is recurring (one deed + one weekday); a card is that chore's instance for one week. Today the only way to add a chore is `add_chore_from_deed(deed, weekday)` from the Chores card; it does not pick a person.
+
+### Decisions (defaults I propose; change any)
+- Popup list = active good deeds of the catalog, one column, checkbox on the left, name and points.
+- Pressing an unchecked deed adds it on that cell's day and assigns this week's card to that cell's housemate (Unassigned row: left unassigned). The popup stays open so several can be ticked; Esc, outside click or Done closes it.
+- Your answers: the popup always lists every catalog chore and never removes one. A chore already in this cell shows ticked and does nothing when pressed. A chore already on that day in another cell is shown disabled with who holds it (a deed is on a day once).
+- Your answers: the chore recurs weekly; only the viewed week's card goes to the person you picked. A points-based allocation (least points gets most chores, champions counted) is a later batch; not built here.
+- Consequence to know: with the Chores table gone, nothing in the app removes a chore from the schedule any more (cards can be dragged, not deleted). Say if you want a remove control later; I did not add one.
+- Past days and locked cards: cell does not open the popup (same rule as drag).
+- Not scored: admin who is not a housemate has no row.
+
+### S1 plan
+- Reproduce in the browser first (page gets wider than the viewport); find the element that overflows; fix the cause, not `overflow-x: hidden` on body unless that is the cause. Check phone width.
+- Test: scripted Playwright check that `document.documentElement.scrollWidth <= innerWidth` on /schedule at phone and desktop width. Files: `globals.css` or the culprit, `web/e2e/`.
+
+### S2 plan
+- Transpose `board.tsx`: header = day (Sun 18 + Today chip + lock), row header = housemate (avatar, You chip). Drag, drop, locked days, menus unchanged. Horizontal scroll stays inside the board with a sticky first column.
+- Test: Playwright asserts the headers are days and the rows are housemates, and a drop still moves a card.
+
+### S3 plan
+- **Docs first:** PRD 5.1 (the Chores card is replaced by the cell popup) and GLOSSARY.
+- **Backend:** `add_chore_to_cell(p_deed, p_weekday, p_member, p_week_start)`: admin only; adds or reactivates the chore (same rules as `add_chore_from_deed`), makes sure this week's card exists, assigns it from today on (same rule as `assign_chore`, so no scored admin rule is broken). `add_chore_from_deed` is dropped if nothing else calls it.
+- **Test first (pgTAP):** adding to a cell creates the chore and the card assigned to that person; a past day is refused; a housemate cannot call it; a deed already on that day is refused; an admin who is not a housemate cannot be the assignee.
+- **UI:** a `<dialog>`-style popover anchored to the cell (Google Calendar feel): scale+fade from the cell (transform-origin at the cell), 180 ms strong ease-out, exit faster; rows with a custom checkbox (check draws in), hover tint, press scale(0.98), focus ring, arrow keys and Space, Esc to close, focus returns to the cell; on a phone it becomes a bottom sheet. Hover behind `(hover: hover)`, reduced motion respected, dark and light checked. `ChoresCard` and its CSS deleted.
+- **Test (UI):** Playwright on the local app: click a cell, tick a deed, the card shows in that cell; untick, it goes; drag still works; no Chores table.
+- Files: `PRD.md`, `GLOSSARY.md`, one migration, `supabase/tests/cell_chore.test.sql`, `schedule/board.tsx`, new `schedule/cell-popup.tsx`, delete `chores-card.tsx`, `page.tsx`, `actions.ts`, `globals.css`, `web/e2e/cell-popup.spec.ts`.
+
+### Skills I plan to use
+- **grilling, domain-modeling:** the two rule questions and PRD wording (S3).
+- **tdd, blast-radius:** pgTAP red first; callers of `add_chore_from_deed`, the board and Home list.
+- **diagnosing-bugs:** S1, reproduce first.
+- **emil-design-eng, animate, apple-design, animation-performance, find-animation-opportunities:** popover open/close, checkbox, hover and press.
+- **ui-ux-pro-max, mobile-native, break-ui, better-icons:** popup layout, bottom sheet on phones, long names and zero deeds.
+- **run, code-review (you asked for it after implementation), pr:** local check, review, PR text.
+
+### Order and not checked
+1. S1, 2. S2, 3. S3, then code-review over the three. Not checked yet: `ios/`; hosted data (S3 needs a migration pushed to hosted only with your OK).
+
+## Previous batch: Chores card built from the catalog (started 2026-11-01)
 
 Plan written 2026-11-01, waiting for approval. Branch `chores-from-catalog`, from main (PRs 71 to 73 merged; the three migrations are on hosted since 2026-11-01). UI milestone: stops for your approval of the screenshots. No hosted `supabase db push` without your OK.
 
