@@ -16,17 +16,17 @@ test("the schedule week runs Sunday to Saturday and a chore sits on its own day"
   await expect(mate.page.getByText(`Hi, wk-mate${stamp}`)).toBeVisible();
 
   await admin.page.goto("/schedule");
-  const days = admin.page.locator("tbody th[scope=row] .eyebrow");
+  const days = admin.page.locator("thead th[scope=col] .eyebrow");
   await expect(days).toHaveText(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]);
   // The first row is the Sunday that starts the week, in the household time zone.
   const sunday = psql("select public.period_start('week', now() at time zone 'Asia/Manila')::date");
-  await expect(admin.page.locator("tbody th[scope=row] .display").first()).toHaveText(String(Number(sunday.slice(8))));
+  await expect(admin.page.locator("thead th[scope=col] .display").first()).toHaveText(String(Number(sunday.slice(8))));
 
-  // A chore on Sunday (weekday 7) is the first row, one on Monday (weekday 1) the second.
+  // A chore on Sunday (weekday 7) is the first column, one on Monday (weekday 1) the second.
   for (const [weekday, row] of [[7, 0], [1, 1]]) {
     const name = psql(`select c.name from public.chore c join public.household h on h.id = c.household_id
       where h.name = 'Week House' and c.weekday = ${weekday} and c.active limit 1`);
     expect(name).not.toBe("");
-    await expect(admin.page.locator("tbody tr").nth(row).getByText(name, { exact: true }).first()).toBeVisible();
+    await expect(admin.page.locator(`tbody tr td:nth-child(${row + 2})`).getByText(name, { exact: true }).first()).toBeVisible();
   }
 });

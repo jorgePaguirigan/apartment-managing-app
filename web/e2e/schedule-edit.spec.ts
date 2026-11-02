@@ -19,13 +19,16 @@ test("the admin can move a card on today's row and it stays after a reload", asy
   psql(`update public.household set timezone = '${tz}' where name = 'Edit House'`);
   await admin.page.goto("/schedule");
   const row = Number(psql(`select extract(dow from now() at time zone '${tz}')::int`)); // 0 = Sunday = first row
-  const today = admin.page.locator("tbody tr").nth(row);
-  const card = today.locator("[draggable=true]").first();
+  // Columns are the days (Sunday first), rows are the housemates; Unassigned is the last row.
+  const day = (d: number) => admin.page.locator(`tbody tr td:nth-child(${d + 2})`);
+  const unassigned = (d: number) => admin.page.locator("tbody tr").last().locator("td").nth(d);
+  const todayHead = admin.page.locator("thead th[scope=col]").nth(row);
+  const card = day(row).locator("[draggable=true]").first();
   const name = await card.locator("p.font-semibold").innerText();
-  await card.dragTo(today.locator("td").last()); // the Unassigned column
-  await expect(today.locator("td").last().getByText(name, { exact: true })).toBeVisible();
+  await card.dragTo(unassigned(row));
+  await expect(unassigned(row).getByText(name, { exact: true })).toBeVisible();
   await admin.page.reload();
-  await expect(today.locator("td").last().getByText(name, { exact: true })).toBeVisible();
+  await expect(unassigned(row).getByText(name, { exact: true })).toBeVisible();
 
   // Housemates mark chores done through the catalog deed, not from the board.
   await mate.page.goto("/schedule");
@@ -33,12 +36,11 @@ test("the admin can move a card on today's row and it stays after a reload", asy
 
   // Rows before today are locked: their cards cannot be dragged (there are none on a Sunday).
   for (let r = 0; r < row; r++) {
-    const locked = admin.page.locator("tbody tr").nth(r);
-    await expect(locked.locator("[draggable=true]")).toHaveCount(0);
-    await expect(locked).toHaveAttribute("data-locked", "true");
+    await expect(day(r).locator("[draggable=true]")).toHaveCount(0);
+    await expect(admin.page.locator("thead th[scope=col]").nth(r)).toHaveAttribute("data-locked", "true");
   }
-  await expect(today.locator("th").getByText("Today")).toBeVisible();
-  await expect(today).not.toHaveAttribute("data-locked");
+  await expect(todayHead.getByText("Today")).toBeVisible();
+  await expect(todayHead).not.toHaveAttribute("data-locked");
   if (process.env.SHOT_DIR) await admin.page.screenshot({ path: `${process.env.SHOT_DIR}/board.png`, fullPage: true });
   if (process.env.SHOT_DIR) {
     await admin.page.emulateMedia({ colorScheme: "dark" });
@@ -56,11 +58,11 @@ test("the admin can move a card on today's row and it stays after a reload", asy
       if (route.request().method() === "POST" && route.request().headers()["next-action"]) await new Promise((r) => setTimeout(r, 3000));
       await route.continue();
     });
-    const tomorrow = admin.page.locator("tbody tr").nth(row + 1).locator("td").last();
-    await today.locator("td").last().locator("[draggable=true]", { hasText: name }).dragTo(tomorrow);
+    const tomorrow = unassigned(row + 1);
+    await unassigned(row).locator("[draggable=true]", { hasText: name }).dragTo(tomorrow);
     await expect(tomorrow.getByText(name, { exact: true })).toBeVisible({ timeout: 1000 });
     await admin.page.unrouteAll({ behavior: "wait" });
     await admin.page.reload();
-    await expect(admin.page.locator("tbody tr").nth(row + 1).locator("td").last().getByText(name, { exact: true })).toBeVisible();
+    await expect(unassigned(row + 1).getByText(name, { exact: true })).toBeVisible();
   }
 });

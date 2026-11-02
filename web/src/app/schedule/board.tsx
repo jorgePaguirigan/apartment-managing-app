@@ -13,9 +13,9 @@ export type Housemate = { id: string; name: string };
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 // The week starts on Sunday, but a chore's weekday stays 1 = Monday to 7 = Sunday.
-const weekdayOf = (row: number) => (row === 0 ? 7 : row);
-// Rows are Sunday to Saturday, so a row's date is the week start plus its index. ISO dates compare as text.
-const rowDate = (weekStart: string, row: number) => new Date(Date.parse(`${weekStart}T00:00:00Z`) + row * 86_400_000).toISOString().slice(0, 10);
+const weekdayOf = (col: number) => (col === 0 ? 7 : col);
+// Columns are Sunday to Saturday, so a column's date is the week start plus its index. ISO dates compare as text.
+const rowDate = (weekStart: string, col: number) => new Date(Date.parse(`${weekStart}T00:00:00Z`) + col * 86_400_000).toISOString().slice(0, 10);
 const small = `${ghost} min-h-8 px-2.5 py-1 text-xs`;
 
 // "2026-10-18" (a Sunday) plus n days, as a day number. Plain date arithmetic, no time zone involved.
@@ -26,7 +26,7 @@ function Hidden({ id }: { id: string }) {
   return <input type="hidden" name="instance" value={id} />;
 }
 
-// Columns are housemates (plus Unassigned), rows are the days of the week.
+// Columns are the days of the week, rows are housemates (plus Unassigned).
 // The admin drags cards between columns. The menu on a card is for touch screens and keyboards, so it only shows there.
 // The admin edits from today on (the database says which day today is): a card on an earlier day is locked, and a card
 // can move to another person and to another day of its week, today or later.
@@ -44,7 +44,7 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
     return m;
   }, [view]);
   const columns: { id: string | null; name: string }[] = [...housemates, ...(showUnassigned ? [{ id: null, name: "Unassigned" }] : [])];
-  const locked = (row: number) => rowDate(weekStart, row) < today;
+  const locked = (col: number) => rowDate(weekStart, col) < today;
   const movable = (c: Card) => isAdmin && !c.claimed && !locked(c.weekday % 7);
   const endDrag = () => { setDrag(null); setOver(null); };
   const assign = (id: string, to: string | null, weekday: number) => startTransition(async () => { move({ id, to, weekday }); await assignChore(id, to, weekday); });
@@ -54,22 +54,9 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
       <table className="w-full min-w-max border-collapse text-left">
         <thead>
           <tr>
-            <th className="sticky left-0 z-10 w-16 bg-bg p-2" />
-            {columns.map((c) => (
-              <th key={c.id ?? "none"} scope="col" className="min-w-44 p-2 align-bottom">
-                <span className="flex items-center gap-2 text-sm font-semibold">
-                  {c.id ? <Avatar name={c.name} className="size-7" /> : null}
-                  <span className="truncate">{c.name}</span>
-                  {c.id === meId && <Chip tone="points">You</Chip>}
-                </span>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {DAYS.map((d, i) => (
-            <tr key={d} data-locked={locked(i) || undefined} className="border-t border-line">
-              <th scope="row" className="sticky left-0 z-10 bg-bg p-2 text-left align-top">
+            <th className="sticky left-0 z-10 w-36 bg-bg p-2" />
+            {DAYS.map((d, i) => (
+              <th key={d} scope="col" data-locked={locked(i) || undefined} className="min-w-44 p-2 align-bottom">
                 <span className="eyebrow flex items-center gap-1">
                   {d}
                   {locked(i) && <Icon name="lock" className="size-3" />}
@@ -77,11 +64,24 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
                 <span className="display text-lg font-bold tabular-nums">{dayLabel(weekStart, i)}</span>
                 {rowDate(weekStart, i) === today && <Chip tone="points">Today</Chip>}
               </th>
-              {columns.map((c) => {
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {columns.map((c) => (
+            <tr key={c.id ?? "none"} className="border-t border-line">
+              <th scope="row" className="sticky left-0 z-10 bg-bg p-2 text-left align-top">
+                <span className="flex items-center gap-2 text-sm font-semibold">
+                  {c.id ? <Avatar name={c.name} className="size-7" /> : null}
+                  <span className="truncate">{c.name}</span>
+                  {c.id === meId && <Chip tone="points">You</Chip>}
+                </span>
+              </th>
+              {DAYS.map((d, i) => {
                 const target = drag !== null && !locked(i) && (drag.weekday !== weekdayOf(i) || drag.assignee !== c.id);
                 const cell = `${i}|${c.id}`;
                 return (
-                  <td key={c.id ?? "none"} onDragOver={target ? (e) => { e.preventDefault(); if (over !== cell) setOver(cell); } : undefined}
+                  <td key={d} data-locked={locked(i) || undefined} onDragOver={target ? (e) => { e.preventDefault(); if (over !== cell) setOver(cell); } : undefined}
                     onDrop={target ? (e) => { e.preventDefault(); setLanded(drag.id); assign(drag.id, c.id, weekdayOf(i)); endDrag(); } : undefined}
                     data-drop={target ? (over === cell ? "over" : "ready") : undefined} className="board-cell space-y-1.5 p-1.5 align-top">
                     {(byCell.get(`${weekdayOf(i)}|${c.id}`) ?? []).map((k) => (
