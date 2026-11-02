@@ -31,11 +31,11 @@ function Hidden({ id }: { id: string }) {
 // The admin drags cards between columns. The menu on a card is for touch screens and keyboards, so it only shows there.
 // The admin edits from today on (the database says which day today is): a card on an earlier day is locked, and a card
 // can move to another person and to another day of its week, today or later.
-export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmin, catalog, showUnassigned }: {
-  weekStart: string; today: string; phase: string; housemates: Housemate[]; cards: Card[]; meId: string; isAdmin: boolean; catalog: CatalogDeed[]; showUnassigned: boolean;
+export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmin, catalog }: {
+  weekStart: string; today: string; phase: string; housemates: Housemate[]; cards: Card[]; meId: string; isAdmin: boolean; catalog: CatalogDeed[];
 }) {
   type Move = { id: string; to: string | null; weekday: number } | { add: Card };
-  const [view, move] = useOptimistic(cards, (cs, m: Move) => "add" in m ? [...cs, m.add] : cs.map((c) => (c.id === m.id ? { ...c, assignee: m.to, weekday: m.weekday } : c)));
+  const [view, move] = useOptimistic(cards, (cs, m: Move) => "add" in m ? [...cs, m.add] : cs.map((c) => (c.id === m.id ? { ...c, assignee: m.to, weekday: m.weekday, source: m.to === null ? null : isAdmin ? "admin" : "dibs" } : c)));
   const [tab, setTab] = useState<string | null>(null); // the one add button in the tab order; arrow keys move between the others
   const [pop, setPop] = useState<{ col: number; member: string | null; name: string; rect: DOMRect; trigger: HTMLElement } | null>(null); // the open chore popup
   const [drag, setDrag] = useState<Card | null>(null);
@@ -47,9 +47,17 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
     for (const k of view) { const key = `${k.weekday}|${k.assignee}`; m.set(key, [...(m.get(key) ?? []), k]); }
     return m;
   }, [view]);
-  const columns: { id: string | null; name: string }[] = [...housemates, ...(showUnassigned ? [{ id: null, name: "Unassigned" }] : [])];
+  const columns: { id: string | null; name: string }[] = [...housemates, { id: null, name: "Unassigned" }];
   const locked = (col: number) => rowDate(weekStart, col) < today;
   const movable = (c: Card) => isAdmin && !c.claimed && !locked(c.weekday % 7);
+  // A housemate's drag is the Dibs and Release buttons: take an unassigned card, or give back one they dibbed while Release is open.
+  const mine = (c: Card) => !isAdmin && !c.claimed && phase !== "past" && (c.assignee === null || (c.assignee === meId && c.source === "dibs" && (phase === "early" || phase === "dibs")));
+  const dib = (c: Card, to: string | null) => startTransition(async () => {
+    move({ id: c.id, to, weekday: c.weekday });
+    const f = new FormData();
+    f.set("instance", c.id);
+    await (to ? dibChore : undibChore)(f);
+  });
   const endDrag = () => { setDrag(null); setOver(null); };
   const assign = (id: string, to: string | null, weekday: number) => startTransition(async () => { move({ id, to, weekday }); await assignChore(id, to, weekday); });
   const byDeedDay = useMemo(() => new Map(view.flatMap((k) => (k.deedId ? [[`${k.deedId}|${k.choreDay}`, k] as const] : []))), [view]);
@@ -106,15 +114,16 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
                 </span>
               </th>
               {DAYS.map((d, i) => {
-                const target = drag !== null && !locked(i) && (drag.weekday !== weekdayOf(i) || drag.assignee !== c.id);
+                const target = drag !== null && (isAdmin ? !locked(i) && (drag.weekday !== weekdayOf(i) || drag.assignee !== c.id)
+                  : drag.weekday === weekdayOf(i) && (drag.assignee === null ? c.id === meId : c.id === null)); // a housemate moves between their row and Unassigned, same day
                 const cell = `${i}|${c.id}`;
                 return (
                   <td key={d} data-locked={locked(i) || undefined} onDragOver={target ? (e) => { e.preventDefault(); if (over !== cell) setOver(cell); } : undefined}
-                    onDrop={target ? (e) => { e.preventDefault(); setLanded(drag.id); assign(drag.id, c.id, weekdayOf(i)); endDrag(); } : undefined}
+                    onDrop={target ? (e) => { e.preventDefault(); setLanded(drag.id); if (isAdmin) assign(drag.id, c.id, weekdayOf(i)); else dib(drag, c.id); endDrag(); } : undefined}
                     data-drop={target ? (over === cell ? "over" : "ready") : undefined} className="board-cell p-1.5 align-top">
                     <div className="flex min-h-24 flex-col gap-1.5">
                     {(byCell.get(`${weekdayOf(i)}|${c.id}`) ?? []).map((k) => (
-                      <div key={k.id} draggable={movable(k)} onDragStart={() => setDrag(k)} onDragEnd={endDrag}
+                      <div key={k.id} draggable={movable(k) || mine(k)} onDragStart={() => setDrag(k)} onDragEnd={endDrag}
                         data-lifted={drag?.id === k.id || undefined} data-landed={landed === k.id || undefined}
                         className="board-card rounded-2xl border border-line bg-surface p-2.5 text-sm">
                         <p className="font-semibold leading-tight">{k.name}</p>

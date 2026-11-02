@@ -88,7 +88,7 @@ Nothing is ever reset. All views are queries over entries by date range (Q10).
 ### 5.2 Weekly cycle **[Default]**
 | When (household time zone) | What happens |
 |---|---|
-| Any time until the week ends | Dibs. A housemate may dib any unclaimed chore of this week or next, first come first served, from the Available chores list on Home or the schedule. |
+| Any time until the week ends | Dibs. A housemate may dib any unclaimed chore of this week or next, first come first served, from the Available chores list on Home or the schedule. On the schedule a housemate's board has their own row and an Unassigned row: dragging an unassigned card onto their own row, on the same day, is Dibs (same cap and window), and dragging a card they dibbed back to Unassigned is Release (same limits). Housemates cannot move a card to another day or touch anyone else's card; the admin's board updates live. |
 | Cap | A housemate may dib up to their fair share: `ceil(total points / number of housemates)`, counting the points of each chore this week. |
 | Sunday 00:00, the week starts | Unclaimed chores of that week are allocated (5.3). The schedule is final for the week apart from admin moves (5.3) and dibs. |
 | Release | A housemate may release a chore they dibbed until its week starts (Sunday 00:00), and not once it is marked done. |

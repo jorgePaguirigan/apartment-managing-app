@@ -99,13 +99,13 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
         </nav>
       </div>
 
-      {housemates.length === 0 || (!isAdmin && visible.length === 0) ? ( // an admin always gets the board: its cells are how chores are added
+      {housemates.length === 0 ? ( // everyone gets the board: an admin adds from its cells, a housemate takes from its Unassigned row
         <p className="rounded-3xl border border-dashed border-line p-6 text-center text-muted">
-          {housemates.length === 0 ? "No housemates yet. Invite them from the Home tab." : "Nothing assigned to you this week."}
+          No housemates yet. Invite them from the Home tab.
         </p>
       ) : (
         <Board weekStart={weekStart} today={typeof today === "string" ? today : weekStart} phase={phase as string} housemates={columns} cards={visible} meId={me.userId}
-          isAdmin={isAdmin} catalog={catalog} showUnassigned={isAdmin || visible.some((c) => c.assignee === null)} />
+          isAdmin={isAdmin} catalog={catalog} />
       )}
 
     </AppShell>
