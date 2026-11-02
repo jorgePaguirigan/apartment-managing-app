@@ -36,7 +36,7 @@ export function CellPopup({ rect, title, items, onPick, onClose, trigger }: {
       if (!ref.current?.contains(t) && !(t as Element).closest?.(".cell-add")) closeRef.current(false); // a cell button reopens itself
     };
     const key = (e: KeyboardEvent) => { if (e.key === "Escape") closeRef.current(true); };
-    const away = (e: Event) => { if (!ref.current?.contains(e.target as Node)) closeRef.current(false); }; // the cell moved: close
+    const away = (e: Event) => { if (!sheet && !ref.current?.contains(e.target as Node)) closeRef.current(false); }; // the cell moved: close (a phone sheet is not tied to the cell, and browser bars fire resize)
     document.addEventListener("pointerdown", down);
     document.addEventListener("keydown", key);
     addEventListener("scroll", away, { capture: true, passive: true });
@@ -47,7 +47,7 @@ export function CellPopup({ rect, title, items, onPick, onClose, trigger }: {
       removeEventListener("scroll", away, { capture: true });
       removeEventListener("resize", away);
     };
-  }, []);
+  }, [sheet]);
 
   const place = (() => {
     if (sheet) return {};
