@@ -76,7 +76,7 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
   };
 
   return (
-    <div className="relative overflow-x-auto rounded-3xl border border-line bg-surface-2">
+    <div className="relative overflow-x-auto overscroll-x-none rounded-3xl border border-line bg-surface-2">
       <table className="w-full min-w-max border-collapse text-left">
         <thead>
           <tr>
@@ -87,8 +87,10 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
                   {d}
                   {locked(i) && <Icon name="lock" className="size-3" />}
                 </span>
-                <span className="display text-lg font-bold tabular-nums">{dayLabel(weekStart, i)}</span>
-                {rowDate(weekStart, i) === today && <Chip tone="points">Today</Chip>}
+                <span className="flex items-center justify-between gap-2">
+                  <span className="display text-lg font-bold tabular-nums">{dayLabel(weekStart, i)}</span>
+                  {rowDate(weekStart, i) === today && <Chip tone="points">Today</Chip>}
+                </span>
               </th>
             ))}
           </tr>
