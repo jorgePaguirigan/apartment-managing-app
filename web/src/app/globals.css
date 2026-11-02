@@ -318,26 +318,43 @@ td[data-locked], th[data-locked] > * { opacity: 0.5; }
   .board-card, .board-card:hover, .board-card:active, .board-card[data-lifted] { transform: none !important; }
 }
 
-/* Chores card: a card folds away as it leaves its part (grid rows, no height animation) and rises in where it lands. */
-.chore-slot { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 180ms var(--ease-out-strong), opacity 150ms var(--ease-out-strong); }
-.chore-slot[data-leaving] { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
-.chore-fold { min-height: 0; overflow: hidden; padding: 2px; margin: -2px; } /* room for the lift and focus ring */
-.chore-card { transition: transform 180ms var(--ease-out-strong), border-color 150ms ease; }
-.chore-slot[data-leaving] .chore-card { transform: scale(0.97); }
-.chore-act { transition: transform 150ms var(--ease-out-strong), filter 150ms ease, background-color 150ms ease; }
-.chore-act:active { transform: scale(0.96); }
-.chore-add .lucide, .chore-add svg { transition: transform 200ms var(--ease-out-strong); }
+/* Cell popup: the free space under a cell's cards is the press target (the whole cell when it is empty); a small plus shows on hover or focus (always faintly on touch screens). */
+.cell-add { flex: 1 1 auto; min-height: 1.75rem; display: grid; place-items: end end; padding: 0.25rem; width: 100%; border-radius: 0.75rem; color: var(--muted); opacity: 0;
+  transition: opacity 150ms ease, background-color 150ms ease; }
+.cell-add:focus-visible, .cell-add[aria-expanded="true"] { opacity: 1; outline: 2px solid var(--ink); outline-offset: -2px; background-color: color-mix(in oklab, var(--accent) 14%, transparent); }
+@media (hover: hover) { .cell-add:hover { opacity: 1; background-color: color-mix(in oklab, var(--accent) 14%, transparent); } }
+@media (hover: none) { .cell-add { opacity: 0.45; } }
+.cell-pop { box-shadow: var(--shadow); transform-origin: var(--ox, 50%) var(--oy, 50%); animation: pop-in 180ms var(--ease-out-strong) both; }
+.cell-pop[data-closing] { animation: pop-out 120ms ease-out both; }
+.cell-pop[data-sheet] { transform-origin: bottom; animation: sheet-in 260ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+.cell-pop[data-sheet][data-closing] { animation: sheet-out 180ms ease-out both; }
+.cell-scrim { position: fixed; inset: 0; z-index: 40; pointer-events: none; background: rgb(0 0 0 / 0.4); animation: scrim-in 200ms ease-out both; }
+.cell-scrim[data-closing] { animation: scrim-out 120ms ease-out both; }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.96); } }
+@keyframes pop-out { to { opacity: 0; transform: scale(0.98); } }
+@keyframes sheet-in { from { transform: translateY(100%); } }
+@keyframes sheet-out { to { transform: translateY(100%); } }
+@keyframes scrim-in { from { opacity: 0; } }
+@keyframes scrim-out { to { opacity: 0; } }
+.cell-row { cursor: pointer; transition: background-color 120ms ease, transform 150ms var(--ease-out-strong); }
+.cell-row:active { transform: scale(0.98); }
+.cell-row[data-state="here"] { cursor: default; }
+.cell-row[data-state="here"]:active, .cell-row[data-state="taken"]:active { transform: none; }
+.cell-row[data-state="taken"] { cursor: not-allowed; opacity: 0.5; }
+.cell-x { transition: background-color 120ms ease, transform 150ms var(--ease-out-strong); }
+.cell-x:active { transform: scale(0.94); }
+.cell-box { transition: background-color 150ms ease, border-color 150ms ease; }
+.cell-box path { stroke-dasharray: 20; stroke-dashoffset: 20; transition: stroke-dashoffset 180ms var(--ease-out-strong) 40ms; }
+input:checked + .cell-box path { stroke-dashoffset: 0; }
 @media (hover: hover) {
-  .chore-card:hover { transform: translateY(-1px); border-color: color-mix(in oklab, var(--ink) 30%, var(--line)); }
-  .chore-add:hover { filter: brightness(0.95); }
-  .chore-add:hover svg { transform: rotate(90deg); }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .chore-slot[data-fresh] { animation: chore-in 220ms var(--ease-out-strong) both; }
-  @keyframes chore-in { from { opacity: 0; transform: translateY(-6px) scale(0.97); } }
+  .cell-row[data-state="free"]:hover, .cell-row[data-state="here"]:hover { background-color: var(--surface-2); }
+  .cell-x:hover { background-color: var(--surface-2); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .chore-slot { transition: opacity 150ms ease; }
-  .chore-slot[data-leaving] { grid-template-rows: 1fr; }
-  .chore-card, .chore-card:hover, .chore-slot[data-leaving] .chore-card, .chore-act:active { transform: none; }
+  .cell-pop, .cell-pop[data-sheet] { animation: fade-in 120ms ease both; }
+  .cell-pop[data-closing], .cell-pop[data-sheet][data-closing] { animation: fade-out 100ms ease both; }
+  @keyframes fade-in { from { opacity: 0; } }
+  @keyframes fade-out { to { opacity: 0; } }
+  .cell-row:active, .cell-x:active { transform: none; }
+  .cell-box path { transition: none; }
 }

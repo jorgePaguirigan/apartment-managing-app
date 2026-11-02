@@ -9,8 +9,8 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
 | S1 | Page can no longer scroll sideways past the UI (screenshot 3) | `fix-page-overscroll` | ✅ merged | [76](https://github.com/jorgePaguirigan/apartment-managing-app/pull/76) |
-| S2 | Board flipped: columns = days, rows = housemates | `board-days-as-columns` | 🟡 in progress | |
-| S3 | Chores table removed; pressing a cell opens a checkbox popup of catalog chores; card text row gone with the table | `cell-chore-popup` | ⚪ not started | |
+| S2 | Board flipped: columns = days, rows = housemates | `board-days-as-columns` | ✅ merged | [77](https://github.com/jorgePaguirigan/apartment-managing-app/pull/77) |
+| S3 | Chores table removed; pressing a cell opens a checkbox popup of catalog chores; card text row gone with the table | `cell-chore-popup` | 🔵 PR open | [78](https://github.com/jorgePaguirigan/apartment-managing-app/pull/78) |
 
 ### Found in the code
 - Item 1 (the line under the chore title, e.g. "Thursday · Laundry area") exists only in the Chores table (`chores-card.tsx`). Item 2 removes that table, so item 1 is done by S3 and needs no separate change.
@@ -49,6 +49,11 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 - **emil-design-eng, animate, apple-design, animation-performance, find-animation-opportunities:** popover open/close, checkbox, hover and press.
 - **ui-ux-pro-max, mobile-native, break-ui, better-icons:** popup layout, bottom sheet on phones, long names and zero deeds.
 - **run, code-review (you asked for it after implementation), pr:** local check, review, PR text.
+
+### Wrap-up (2026-11-02)
+- Skills used: S1 diagnosing-bugs, pr; S2 tdd, emil-design-eng, ui-ux-pro-max, pr; S3 tdd, blast-radius, animate, apple-design, mobile-native, emil-design-eng, code-review (8 findings, all handled), pr.
+- Decisions to know: `add_chore_from_deed` stays (tests and the new function use it); `add_chore_to_cell_at` (with a clock) is internal; the migration also retires chores with no deed; no remove control exists; an admin always sees the board.
+- Not verified: a real phone and Safari; `ios/`; hosted data (the S3 migration is not pushed to hosted). Two older pgTAP files fail only on my polluted local database.
 
 ### Order and not checked
 1. S1, 2. S2, 3. S3, then code-review over the three. Not checked yet: `ios/`; hosted data (S3 needs a migration pushed to hosted only with your OK).

@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getHousemates, getMe } from "@/lib/me";
 import { AppShell } from "../_components/app-shell";
-import { Avatar, Banner, Icon, Section } from "../_components/ui";
+import { Avatar, Banner, Icon } from "../_components/ui";
 import { Board, type Card, type Housemate } from "./board";
-import { ChoresCard, type CatalogDeed, type Scheduled } from "./chores-card";
+import type { CatalogDeed } from "./cell-popup";
 
 type ChoreRow = { id: string; name: string; area: string | null; weekday: number; deed_id: string | null; deed: { points: number } | null };
 type InstanceRow = { id: string; chore_id: string; weekday: number | null; assignee: string | null; source: string | null; claim_id: string | null };
@@ -48,19 +48,17 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
   const claimStatus = new Map((claims ?? []).map((c) => [c.id, c.status as string]));
   const cards: Card[] = ((instances ?? []) as InstanceRow[]).flatMap((i) => {
     const c = choreById.get(i.chore_id);
-    return c ? [{ id: i.id, name: c.name, area: c.area, points: c.deed?.points ?? 0, weekday: i.weekday ?? c.weekday, assignee: i.assignee, source: i.source,
+    return c ? [{ id: i.id, deedId: c.deed_id, choreDay: c.weekday, name: c.name, area: c.area, points: c.deed?.points ?? 0, weekday: i.weekday ?? c.weekday, assignee: i.assignee, source: i.source,
       claimed: i.claim_id !== null, status: claimStatus.get(i.claim_id ?? "") ?? null }] : [];
   });
   // A housemate sees only their own chores, plus unclaimed ones they can still claim. Others' cards are never sent to the browser.
   const isAdmin = me.role === "admin";
   const visible = isAdmin ? cards : cards.filter((c) => c.assignee === me.userId || (phase !== "past" && c.assignee === null));
   const columns = isAdmin ? housemates : housemates.filter((h) => h.id === me.userId);
-  // The catalog (good deeds) minus what is on the schedule; both lists are only for the admin's Chores card.
+  // The catalog (active good deeds) feeds the cell popup; only the admin sees it.
   type DeedRow = { id: string; name: string; points: number; group: { name: string } | { name: string }[] | null };
-  const onSchedule = new Set(Array.from(choreById.values()).map((c) => c.deed_id));
   const areaOf = (g: DeedRow["group"]) => (Array.isArray(g) ? g[0]?.name : g?.name) ?? null;
-  const catalog: CatalogDeed[] = ((deeds ?? []) as unknown as DeedRow[]).filter((d) => !onSchedule.has(d.id)).map((d) => ({ id: d.id, name: d.name, area: areaOf(d.group), points: d.points }));
-  const scheduled: Scheduled[] = Array.from(choreById.values()).map((c) => ({ id: c.id, deedId: c.deed_id, name: c.name, area: c.area, weekday: c.weekday, points: c.deed?.points ?? 0 }));
+  const catalog: CatalogDeed[] = ((deeds ?? []) as unknown as DeedRow[]).map((d) => ({ id: d.id, name: d.name, area: areaOf(d.group), points: d.points }));
   const nameOf = new Map(housemates.map((h) => [h.id, h.name]));
 
   const highlights = [
@@ -101,20 +99,15 @@ export default async function Schedule({ searchParams }: PageProps<"/schedule">)
         </nav>
       </div>
 
-      {housemates.length === 0 || visible.length === 0 ? (
+      {housemates.length === 0 || (!isAdmin && visible.length === 0) ? ( // an admin always gets the board: its cells are how chores are added
         <p className="rounded-3xl border border-dashed border-line p-6 text-center text-muted">
-          {housemates.length === 0 ? "No housemates yet. Invite them from the Home tab." : isAdmin ? "No chores yet." : "Nothing assigned to you this week."}
+          {housemates.length === 0 ? "No housemates yet. Invite them from the Home tab." : "Nothing assigned to you this week."}
         </p>
       ) : (
         <Board weekStart={weekStart} today={typeof today === "string" ? today : weekStart} phase={phase as string} housemates={columns} cards={visible} meId={me.userId}
-          isAdmin={isAdmin} showUnassigned={isAdmin || visible.some((c) => c.assignee === null)} />
+          isAdmin={isAdmin} catalog={catalog} showUnassigned={isAdmin || visible.some((c) => c.assignee === null)} />
       )}
 
-      {me.role === "admin" && (
-        <Section title="Chores">
-          <ChoresCard scheduled={scheduled} catalog={catalog} todayWeekday={new Date(`${typeof today === "string" ? today : weekStart}T00:00:00Z`).getUTCDay() || 7} />
-        </Section>
-      )}
     </AppShell>
   );
 }
