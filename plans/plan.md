@@ -1,6 +1,25 @@
 # Feature batch plan
 
-## Current batch: calendar-style schedule (started 2026-11-02)
+## Current batch: See more modal unreadable on the leader's card (started 2026-11-05)
+
+Plan approved 2026-11-05. Dark-mode screenshot approved.
+
+Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
+
+| # | Milestone | Branch | Status | PR |
+|---|---|---|---|---|
+| F1 | "See more" modal on the leader's leaderboard card reads dark on dark | `see-more-leader-card` | 🔵 PR open | |
+
+### F1 plan
+- **Found in the code:** the leader's card has `.on-accent` (`globals.css`), which resets `--ink`, `--muted`, `--surface-2`, `--line` to dark values so text reads on the lime. `SeeMore` (`_components/see-more.tsx`) renders its `<dialog>` inside the card's History list. A dialog sits in the top layer but still inherits CSS variables from its DOM parents, so it keeps the dark `--ink` on the dark `--surface` in dark mode (your screenshot). Other cards are unaffected. Not reproduced in a browser yet.
+- **Fix:** render the dialog through `createPortal` into `document.body`, so it inherits the page theme, not the card's. One component, fixes every `SeeMore` user (History, Catalog). Not chosen: re-declaring the theme tokens on `.modal`, which would duplicate light, dark and forced-theme values.
+- **Test (UI):** Playwright on the local app: open See more on the leader's card, assert the dialog's computed `color` equals the page's `--ink` color and is not `rgb(22, 23, 27)` in dark mode. Fails before the fix. Screenshot in light and dark.
+- **Skills:** diagnosing-bugs (reproduce first), tdd, emil-design-eng / apple-design (check the modal's open/close motion is unchanged), code-review, pr.
+- **Files:** `web/src/app/_components/see-more.tsx`, new `web/e2e/see-more-leader.spec.ts`.
+- **Done:** dialog portaled to `<body>` (guarded with `useSyncExternalStore` so it still server-renders). Test fails before and passes after; Esc still closes; 19 screen-fit specs, lint and tsc green. Skills used: diagnosing-bugs (reproduced first), tdd, pr.
+- **Not checked:** light-mode screenshot, focus return on close, scroll lock, the Catalog See more by hand.
+
+## Previous batch: calendar-style schedule (started 2026-11-02)
 
 Plan written 2026-11-02, waiting for approval. One branch per milestone, from an up-to-date main (PR 74 is merged). Each UI milestone stops for your approval of the screenshots. No hosted `supabase db push` without your OK.
 
