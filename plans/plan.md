@@ -1,6 +1,42 @@
 # Feature batch plan
 
-## Current batch: remove chore X, repeat claims (started 2026-11-08)
+## Current batch: who approved, when submitted (started 2026-11-08)
+
+Plan written 2026-11-08, waiting for approval. One branch per milestone, from an up-to-date main. No hosted `supabase db push` needed (no migration).
+
+Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
+
+| # | Milestone | Branch | Status | PR |
+|---|---|---|---|---|
+| S1 | Submitted date on the inbox card | `claim-submitted-date` | 🟡 in progress | |
+| S2 | History shows which admin approved | `history-approved-by` | ⚪ not started | |
+
+### Found in the code
+- `claim.created_at` (submit time) and `claim.decided_by` (the deciding admin) are already stored by every submit and decide function. No schema or rule change.
+- Admin Inbox card: `admin-view.tsx` fetches pending claims without `created_at`. Admin History: `admin-sections.tsx` + `history-list.tsx`; the row has `who` (claimer) but no approver. Admins can already read all household claims and members.
+
+### S1 plan
+- Skills: emil-design-eng + apple-design (small muted line, no new motion), mattpocock-skills:tdd, run (verify in app), pr.
+- Backend: none. Select `created_at` on the pending query.
+- UI: under the claim line on the Inbox card, "Submitted Sun, Nov 8, 3:42 PM" in the household time zone (same formatter as History). Muted text, no new interaction.
+- Test: Playwright in `flow.spec.ts`: housemate submits, admin Inbox card shows "Submitted" with the date. Screenshot light, dark, phone.
+- Files: `admin-view.tsx`, `web/e2e/flow.spec.ts`, PRD.md (inbox card shows submit time).
+
+### S2 plan
+- Skills: emil-design-eng, mattpocock-skills:tdd, break-ui (long admin names), run, pr.
+- Backend: none. Select `approver:member!claim_decided_by_fkey(display_name)` on decided claims.
+- UI: accepted claim rows in admin History get "Approved by Ana" under the time. Rejected, awards and dismissed reports unchanged (you asked for accepted only).
+- Test: Playwright: admin accepts a claim, History row reads "Approved by <admin>". Screenshot light, dark, phone, long name.
+- Files: `admin-sections.tsx`, `history-list.tsx` (new optional `by` field), `web/e2e/flow.spec.ts`, PRD.md.
+
+### Order
+S1 then S2 (both touch `flow.spec.ts`; separate PRs). Stop after each for your UI approval.
+
+### Not checked yet
+- Whether you also want the approver on rejected claims and admin awards, or the submit date on the housemate side (its History already shows the submit time).
+- iOS app (not in scope), hosted DB (nothing to push).
+
+## Previous batch: remove chore X, repeat claims (started 2026-11-08)
 
 Plan written 2026-11-08, waiting for approval. One branch per milestone, from an up-to-date main. No hosted `supabase db push` without your OK.
 
@@ -9,7 +45,7 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
 | R1 | Several claims of the same deed (and chore card) while one waits | `repeat-claims` | ✅ merged | [82](https://github.com/jorgePaguirigan/apartment-managing-app/pull/82) |
-| R2 | Red X on schedule cards removes the chore | `card-remove-x` | 🔵 PR open | |
+| R2 | Red X on schedule cards removes the chore | `card-remove-x` | ✅ merged | [83](https://github.com/jorgePaguirigan/apartment-managing-app/pull/83) |
 
 ### Decisions (your answers)
 - X removes **the chore for good** (existing `remove_chore`: it stops repeating, this week's card goes too).
