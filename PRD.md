@@ -37,13 +37,13 @@ A shared app for housemates to track who contributes to the apartment. Housemate
 - Seeded with examples: Cleaned toilet +5, Cooked dinner +4, Washed own dishes +1, Forgot to wash cup -1, Messy room -2. **[Default]** values; admin edits them.
 
 ### 4.2 Claims flow
-1. Housemate taps a `good` deed from the catalog: "I did X". One tap, optional note.
+1. Housemate taps a `good` deed from the catalog: "I did X". One tap, optional note. The same deed may be claimed again while an earlier claim waits (for example sweeping twice in one day); each claim is decided on its own, and there is no per-day limit.
 2. A pending claim reaches the admin inbox (push on iOS, in-app on web).
 3. Admin accepts or rejects. Accept creates a score entry with the catalog's points at that moment. Reject creates nothing and notifies the housemate.
 4. Penalties: housemates cannot claim them. An admin enters a penalty from the catalog directly against a housemate, which scores at once.
 - Reports: a housemate may report a housemate (themselves included) for a penalty from the catalog, or type a demerit that is not in the catalog (1 to 80 characters). The report waits in the admin inbox; the admin accepts or rejects. Accepting a catalog report scores that penalty's points; a typed demerit needs negative points from the admin. The reporter chooses whether the reported housemate sees "Reported by <name>" or "Reported anonymously" beside the entry; the admin always sees the reporter. The reported housemate cannot read the report itself. A reporter cannot have two identical reports waiting. Removing a housemate rejects their waiting reports, about them or from them. Housemates still never award points: only the admin's decision creates the entry.
 5. Admin may also add an award directly (no claim) and may delete any entry. Deleting is soft: the entry is hidden, kept for audit.
-- Custom claim: if a deed is not in the catalog, the housemate types a short description (1 to 80 characters) instead. The admin enters positive points when accepting; the entry stores that title and those points. Custom entries count for totals, MVP and streaks, never for Champion. A housemate cannot have two identical custom claims waiting.
+- Custom claim: if a deed is not in the catalog, the housemate types a short description (1 to 80 characters) instead. The admin enters positive points when accepting; the entry stores that title and those points. Custom entries count for totals, MVP and streaks, never for Champion. A housemate may have several identical custom claims waiting, as with catalog claims.
 - Contributors: a claim, catalog or custom, may name other scored members who did it with the claimer (the **Contributors** dropdown under "I did…"). The claimer is always counted. Everyone named must be a scored member of the household, listed once, so a claim never has more people than the household has housemates. Accepting scores the deed's full points once for each person (the points are not split); rejecting scores nobody. A contributor removed before the decision gets nothing. Each person's entry can be deleted on its own, and each contributor sees the claim in their own History as if they had claimed it. Chore-done claims do not take contributors.
 - Changing a catalog deed's points never changes past entries (the points are copied onto the entry).
 - An admin can delete a deed. It leaves the catalog and can no longer be claimed or awarded; past entries keep its name and points, waiting claims for it are rejected, and chores linked to it stop filing claims.
@@ -111,7 +111,7 @@ Allocation, at the start of the week (Sunday 00:00):
 - Dibs are respected even if the queue would have chosen someone else.
 
 ### 5.4 Completion and swaps
-- A housemate gets credit for a chore by claiming its deed from the catalog (4.2). The schedule board has no "I did it" button, and a chore card is not marked done by itself.
+- A housemate gets credit for a chore by claiming its deed from the catalog (4.2). A card may be claimed again; it keeps showing its first claim until that one is rejected. The schedule board has no "I did it" button, and a chore card is not marked done by itself.
 - A chore not marked done by the end of its day shows as missed. The admin may enter a penalty by hand. No automatic penalty. **[Default]**
 - Swaps are not in v2. Admin can reassign a chore by hand, from today on (5.3).
 

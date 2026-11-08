@@ -8,7 +8,7 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| R1 | Several claims of the same deed (and chore card) while one waits | `repeat-claims` | 🔵 PR open | [82](https://github.com/jorgePaguirigan/apartment-managing-app/pull/82) |
+| R1 | Several claims of the same deed (and chore card) while one waits | `repeat-claims` | ✅ merged | [82](https://github.com/jorgePaguirigan/apartment-managing-app/pull/82) |
 | R2 | Red X on schedule cards removes the chore | `card-remove-x` | 🔵 PR open | |
 
 ### Decisions (your answers)
