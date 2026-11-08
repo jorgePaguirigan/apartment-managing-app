@@ -8,8 +8,8 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| S1 | Submitted date on the inbox card | `claim-submitted-date` | 🔵 PR open, waiting for your UI approval | [84](https://github.com/jorgePaguirigan/apartment-managing-app/pull/84) |
-| S2 | History shows which admin approved | `history-approved-by` | ⚪ not started | |
+| S1 | Submitted date on the inbox card | `claim-submitted-date` | ✅ merged | [84](https://github.com/jorgePaguirigan/apartment-managing-app/pull/84) |
+| S2 | History shows which admin approved | `history-approved-by` | 🟡 in progress | |
 
 ### Found in the code
 - `claim.created_at` (submit time) and `claim.decided_by` (the deciding admin) are already stored by every submit and decide function. No schema or rule change.

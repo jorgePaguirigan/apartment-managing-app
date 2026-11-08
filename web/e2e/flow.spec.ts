@@ -33,6 +33,8 @@ test("claim, approve, leaderboard and budget across admin and housemate", async 
   await expect(admin.page.getByText(/^Submitted \w{3}, \w{3} \d{1,2}, \d{1,2}:\d{2} [AP]M$/)).toBeVisible();
   await admin.page.getByRole("button", { name: "Accept", exact: true }).click();
   await expect(admin.page.getByText("All caught up")).toBeVisible();
+  // Admin History says which admin approved it.
+  await expect(admin.page.getByText("Approved by Boss")).toBeVisible();
   await mate.page.goto("/leaderboard");
   await expect(mate.page.getByRole("listitem").filter({ hasText: mateName })).toContainText("4");
   // The admin is not a housemate: never ranked.
