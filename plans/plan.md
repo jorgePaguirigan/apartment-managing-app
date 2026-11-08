@@ -8,7 +8,7 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| S1 | Submitted date on the inbox card | `claim-submitted-date` | 🟡 in progress | |
+| S1 | Submitted date on the inbox card | `claim-submitted-date` | 🔵 PR open, waiting for your UI approval | [84](https://github.com/jorgePaguirigan/apartment-managing-app/pull/84) |
 | S2 | History shows which admin approved | `history-approved-by` | ⚪ not started | |
 
 ### Found in the code
