@@ -2,14 +2,14 @@
 
 ## Current batch: who approved, when submitted (started 2026-11-08)
 
-Plan written 2026-11-08, waiting for approval. One branch per milestone, from an up-to-date main. No hosted `supabase db push` needed (no migration).
+Plan approved and both milestones merged 2026-11-08. No hosted `supabase db push` needed (no migration).
 
 Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
 | S1 | Submitted date on the inbox card | `claim-submitted-date` | ✅ merged | [84](https://github.com/jorgePaguirigan/apartment-managing-app/pull/84) |
-| S2 | History shows which admin approved | `history-approved-by` | 🔵 PR open, waiting for your UI approval | [85](https://github.com/jorgePaguirigan/apartment-managing-app/pull/85) |
+| S2 | History shows which admin approved | `history-approved-by` | ✅ merged | [85](https://github.com/jorgePaguirigan/apartment-managing-app/pull/85) |
 
 ### Found in the code
 - `claim.created_at` (submit time) and `claim.decided_by` (the deciding admin) are already stored by every submit and decide function. No schema or rule change.
@@ -35,6 +35,11 @@ S1 then S2 (both touch `flow.spec.ts`; separate PRs). Stop after each for your U
 ### Not checked yet
 - Whether you also want the approver on rejected claims and admin awards, or the submit date on the housemate side (its History already shows the submit time).
 - iOS app (not in scope), hosted DB (nothing to push).
+
+### Done
+- S1: skills emil-design-eng, mattpocock-skills:pr. Playwright asserts the "Submitted …" line; screenshots light, dark, phone.
+- S2: skills emil-design-eng, break-ui (long-name check only, no toggle), mattpocock-skills:pr. Playwright asserts "Approved by Boss"; screenshots light, dark, phone with a 42-character name.
+- Not checked: iOS app, full-suite Playwright run, claims accepted through the email link, GitHub CI (billing-locked).
 
 ## Previous batch: remove chore X, repeat claims (started 2026-11-08)
 
