@@ -11,6 +11,7 @@ export type HistoryRow = {
   status: "pending" | "accepted" | "rejected" | "awarded";
   points: number | null; // null: a custom claim still waiting for points
   who?: string; // shown on the admin side
+  by?: string; // admin side: the admin who approved the claim
   deleted?: boolean; // an admin deleted the entry: shown, but it no longer counts
   entryId?: string; // admin side: the score entry behind the row, so it can be deleted
 };
@@ -45,6 +46,7 @@ function Rows({ rows, timeZone }: { rows: HistoryRow[]; timeZone: string }) {
             <span className="min-w-0 transition-opacity duration-200 group-data-[deleted]:opacity-50">
               <span className="block truncate font-semibold group-data-[deleted]:line-through">{c.who ? `${c.who} · ${c.title}` : c.title}</span>
               <time dateTime={c.at} className="block text-xs text-muted">{when.format(new Date(c.at))}</time>
+              {c.by && <span className="block truncate text-xs text-muted">Approved by {c.by}</span>}
               {c.note && <span className="block truncate text-sm text-muted">{c.note}</span>}
             </span>
             <span className="flex shrink-0 flex-col items-end gap-1">

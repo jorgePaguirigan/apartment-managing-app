@@ -12,7 +12,7 @@ import { Section, button, ghost } from "./ui";
 
 type Named = { display_name: string } | null;
 type Scored = { id: string; points: number; deleted_at: string | null; member: Named };
-type DecidedRow = { id: string; note: string | null; title: string | null; status: "accepted" | "rejected"; decided_at: string; member: Named; deed: { name: string } | null };
+type DecidedRow = { id: string; note: string | null; title: string | null; status: "accepted" | "rejected"; decided_at: string; member: Named; approver: Named; deed: { name: string } | null };
 type AwardRow = { id: string; points: number; report_note: string | null; deleted_at: string | null; title: string | null; created_at: string; member: Named; deed: { name: string } | null };
 type DismissedRow = { id: string; title: string | null; decided_at: string; reporter: Named; subject: Named; deed: { name: string } | null };
 
@@ -23,7 +23,7 @@ export async function AdminHistory() {
   const supabase = await createClient();
   const [{ data: decided }, { data: entries }, timeZone, { data: awards }, { data: dismissed }] = await Promise.all([
     supabase.from("claim")
-      .select("id, note, title, status, decided_at, member:member!claim_member_id_fkey(display_name), deed:deed_id(name)")
+      .select("id, note, title, status, decided_at, member:member!claim_member_id_fkey(display_name), approver:member!claim_decided_by_fkey(display_name), deed:deed_id(name)")
       .neq("status", "pending").order("decided_at", { ascending: false }).limit(HISTORY),
     // Points actually scored, copied onto the entry when accepted.
     supabase.from("score_entry").select("id, claim_id, points, deleted_at, member:member!score_entry_member_id_fkey(display_name)").eq("source", "claim"),
@@ -41,7 +41,7 @@ export async function AdminHistory() {
   for (const e of (entries ?? []) as unknown as (Scored & { claim_id: string })[]) scored.set(e.claim_id, [...(scored.get(e.claim_id) ?? []), e]);
   // An accepted claim with contributors is one History row per person, so each person's entry can be deleted on its own.
   const fromClaims: HistoryRow[] = ((decided ?? []) as unknown as DecidedRow[]).flatMap((c) => {
-    const base = { title: c.deed?.name ?? c.title ?? "", at: c.decided_at, note: c.note, status: c.status };
+    const base = { title: c.deed?.name ?? c.title ?? "", at: c.decided_at, note: c.note, status: c.status, by: c.status === "accepted" ? c.approver?.display_name : undefined };
     const mine = c.status === "accepted" ? scored.get(c.id) ?? [] : [];
     if (mine.length < 2) {
       const e = mine[0];
