@@ -345,6 +345,13 @@ export async function addChoreToCell(deed: string, weekday: number, member: stri
   doneSchedule(error);
 }
 
+// The red X on a board card: removes the chore for good (it stops repeating).
+export async function removeChoreCard(instance: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("remove_chore_card", { p_instance: instance });
+  doneSchedule(error);
+}
+
 function doneBudget(error: { message: string } | null) {
   if (error) fail(error.message, "/budget");
   revalidatePath("/budget");

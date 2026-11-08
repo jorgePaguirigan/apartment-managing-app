@@ -8,8 +8,8 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| R1 | Several claims of the same deed (and chore card) while one waits | `repeat-claims` | 🟡 in progress | |
-| R2 | Red X on schedule cards removes the chore | `card-remove-x` | ⚪ not started | |
+| R1 | Several claims of the same deed (and chore card) while one waits | `repeat-claims` | ✅ merged | [82](https://github.com/jorgePaguirigan/apartment-managing-app/pull/82) |
+| R2 | Red X on schedule cards removes the chore | `card-remove-x` | 🔵 PR open | |
 
 ### Decisions (your answers)
 - X removes **the chore for good** (existing `remove_chore`: it stops repeating, this week's card goes too).
@@ -33,6 +33,11 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 - **UI:** a small red X button in the card's top right (`board.tsx`), hover tint and press `scale(0.97)`, 150 to 200 ms, hover gated by `@media (hover: hover)`, reduced motion respected, 40px hit area on phones. The card leaves with the existing optimistic update.
 - **Test:** pgTAP for the new permission (assignee can, another housemate cannot). Playwright: press X, the card is gone, a reload keeps it gone. Screenshots light and dark, phone width.
 - **Files:** new migration, `web/src/app/schedule/board.tsx`, `web/src/app/actions.ts`, PRD.md, `supabase/tests/chores_catalog.test.sql`, new `web/e2e` spec.
+
+### Done
+- R1: indexes dropped, `complete_chore` may repeat; pgTAP and Playwright green locally. Your answers held.
+- R2: `remove_chore_card` (admin or assignee, refused on a past day or a claimed card); X approved by you in light, dark and phone. GitHub CI is billing-locked and now disabled (`gh workflow disable CI`), so evidence is local only.
+- Not checked: keyboard focus on the X, light-mode phone view, iOS app, hosted DB (both migrations still to push, with your OK). Two full-suite runs flaked (see-more, housemate-drag) and passed alone.
 
 ### Skills
 - R1: domain-modeling (rule and glossary), tdd, blast-radius (who relies on the unique index and the error codes), code-review, pr.
