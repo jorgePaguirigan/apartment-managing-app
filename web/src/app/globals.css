@@ -318,6 +318,14 @@ td[data-locked], th[data-locked] > * { opacity: 0.5; }
   .board-card, .board-card:hover, .board-card:active, .board-card[data-lifted] { transform: none !important; }
 }
 
+/* Red X in a board card's top right corner. The hit area is larger than the glyph. */
+.card-x { position: absolute; top: 0.25rem; right: 0.25rem; display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 9999px; color: var(--bad);
+  transition: transform 150ms var(--ease-out-strong), background-color 150ms ease; }
+.card-x:active { transform: scale(0.94); }
+.card-x:focus-visible { outline: 2px solid var(--bad); outline-offset: 1px; }
+@media (hover: hover) { .card-x:hover { background-color: color-mix(in oklab, var(--bad) 14%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .card-x, .card-x:active { transform: none; } }
+
 /* Cell popup: the free space under a cell's cards is the press target (the whole cell when it is empty); a small plus shows on hover or focus (always faintly on touch screens). */
 .cell-add { flex: 1 1 auto; min-height: 1.75rem; display: grid; place-items: end end; padding: 0.25rem; width: 100%; border-radius: 0.75rem; color: var(--muted); opacity: 0;
   transition: opacity 150ms ease, background-color 150ms ease; }

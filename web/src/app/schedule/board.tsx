@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useMemo, useOptimistic, useRef, useState } from "react";
-import { addChoreToCell, assignChore, dibChore, undibChore } from "../actions";
+import { addChoreToCell, assignChore, dibChore, removeChoreCard, undibChore } from "../actions";
 import { Avatar, Chip, Icon, ghost } from "../_components/ui";
 import { SubmitButton } from "../_components/submit-button";
 import { CellPopup, type CatalogDeed, type Item } from "./cell-popup";
@@ -34,8 +34,8 @@ function Hidden({ id }: { id: string }) {
 export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmin, catalog }: {
   weekStart: string; today: string; phase: string; housemates: Housemate[]; cards: Card[]; meId: string; isAdmin: boolean; catalog: CatalogDeed[];
 }) {
-  type Move = { id: string; to: string | null; weekday: number } | { add: Card };
-  const [view, move] = useOptimistic(cards, (cs, m: Move) => "add" in m ? [...cs, m.add] : cs.map((c) => (c.id === m.id ? { ...c, assignee: m.to, weekday: m.weekday, source: m.to === null ? null : "admin" } : c)));
+  type Move = { id: string; to: string | null; weekday: number } | { add: Card } | { remove: string };
+  const [view, move] = useOptimistic(cards, (cs, m: Move) => "add" in m ? [...cs, m.add] : "remove" in m ? cs.filter((c) => c.id !== m.remove) : cs.map((c) => (c.id === m.id ? { ...c, assignee: m.to, weekday: m.weekday, source: m.to === null ? null : "admin" } : c)));
   const [tab, setTab] = useState<string | null>(null); // the one add button in the tab order; arrow keys move between the others
   const [pop, setPop] = useState<{ col: number; member: string | null; name: string; rect: DOMRect; trigger: HTMLElement } | null>(null); // the open chore popup
   const [drag, setDrag] = useState<Card | null>(null);
@@ -50,6 +50,9 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
   const columns: { id: string | null; name: string }[] = [...housemates, { id: null, name: "Unassigned" }];
   const locked = (col: number) => rowDate(weekStart, col) < today;
   const movable = (c: Card) => isAdmin && !c.claimed && !locked(c.weekday % 7);
+  // The red X removes the chore for good, so it stops repeating: the admin on any card, a housemate on their own, until the day passes.
+  const removable = (c: Card) => !c.claimed && phase !== "past" && !c.id.startsWith("new-") && !locked(c.weekday % 7) && (isAdmin || c.assignee === meId);
+  const remove = (c: Card) => startTransition(async () => { move({ remove: c.id }); await removeChoreCard(c.id); });
   // A housemate's drag is the Dibs and Release buttons: take an unassigned card, or give back one they dibbed while Release is open.
   const mine = (c: Card) => !isAdmin && !c.claimed && phase !== "past" && !locked(c.weekday % 7) && (c.assignee === null || (c.assignee === meId && c.source === "dibs" && (phase === "early" || phase === "dibs")));
   // No optimistic move: a dib can be refused (cap, someone was first), so the card moves only when the server says yes.
@@ -125,8 +128,11 @@ export function Board({ weekStart, today, phase, housemates, cards, meId, isAdmi
                     {(byCell.get(`${weekdayOf(i)}|${c.id}`) ?? []).map((k) => (
                       <div key={k.id} draggable={movable(k) || mine(k)} onDragStart={() => setDrag(k)} onDragEnd={endDrag}
                         data-lifted={drag?.id === k.id || undefined} data-landed={landed === k.id || undefined}
-                        className="board-card rounded-2xl border border-line bg-surface p-2.5 text-sm">
-                        <p className="font-semibold leading-tight">{k.name}</p>
+                        className="board-card relative rounded-2xl border border-line bg-surface p-2.5 text-sm">
+                        {removable(k) && (
+                          <button type="button" aria-label={`Remove ${k.name}`} onClick={() => remove(k)} className="card-x"><Icon name="x" className="size-3.5" /></button>
+                        )}
+                        <p className={`font-semibold leading-tight ${removable(k) ? "pr-6" : ""}`}>{k.name}</p>
                         <p className="mt-1 flex items-center justify-between gap-2 text-xs text-muted">
                           <span className="truncate">{k.area ?? " "}</span>
                           <span className="flex gap-1">
