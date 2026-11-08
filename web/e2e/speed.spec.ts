@@ -26,18 +26,17 @@ async function household(browser: Parameters<typeof newUser>[0], tag: string) {
   return { admin, mate, mateName };
 }
 
-test("tapping a deed is answered before the server replies, and a refused claim takes it back", async ({ browser }) => {
+test("tapping a deed is answered before the server replies, and the same deed can be claimed again", async ({ browser }) => {
   const { mate } = await household(browser, "claim");
   await slowServer(mate.page, 3000);
 
   await mate.page.getByRole("button", { name: /Cooked dinner/ }).click();
   await expect(mate.page.getByText("Sent to your admin for approval.")).toBeVisible({ timeout: 1000 });
 
-  // A second tap on the same deed is refused (one is already waiting): the confirmation must not stay on screen.
+  // The same deed may be claimed again while one waits: the second tap is answered the same way.
   await expect(mate.page.getByRole("button", { name: /Cooked dinner/ })).toBeEnabled({ timeout: 15_000 });
   await mate.page.getByRole("button", { name: /Cooked dinner/ }).click();
-  await expect(mate.page.getByText(/already|waiting/i).first()).toBeVisible({ timeout: 15_000 });
-  await expect(mate.page.getByText("Sent to your admin for approval.")).toHaveCount(0);
+  await expect(mate.page.getByText("Sent to your admin for approval.")).toBeVisible({ timeout: 1000 });
 });
 
 test("Accept all clears the inbox before the server replies and accepts every claim", async ({ browser }) => {

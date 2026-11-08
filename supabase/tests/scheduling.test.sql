@@ -1,7 +1,7 @@
 -- pgTAP tests for scheduling. Run with `supabase test db`.
 -- Week starts (Sunday, Manila): 27 Sep, 4 Oct, 11 Oct, 18 Oct, 25 Oct 2026.
 begin;
-select plan(42);
+select plan(44);
 
 create function pg_temp.act(u uuid) returns void language sql as $$
   select set_config('request.jwt.claims', json_build_object('sub', u, 'role', 'authenticated')::text, true),
@@ -159,6 +159,10 @@ select throws_ok($$select public.complete_chore(pg_temp.i('cccccccc-0000-0000-00
 select public.complete_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000001', '2026-10-18'), null, '2026-10-20 12:00+08');
 select is((select c.status from public.chore_instance i join public.claim c on c.id = i.claim_id
            where i.chore_id = 'cccccccc-0000-0000-0000-000000000001' and i.week_start = '2026-10-18'), 'pending', 'completing files a pending claim');
+select lives_ok($$select public.complete_chore(pg_temp.i('cccccccc-0000-0000-0000-000000000001', '2026-10-18'), null, '2026-10-20 13:00+08')$$,
+  'a card can be claimed again while the first claim waits');
+select is((select count(*) from public.claim c join public.chore ch on ch.deed_id = c.deed_id
+           where ch.id = 'cccccccc-0000-0000-0000-000000000001' and c.member_id = '00000000-0000-0000-0000-000000000001' and c.status = 'pending'), 2::bigint, 'both claims wait');
 
 select pg_temp.act('00000000-0000-0000-0000-00000000000a');
 select public.decide_claim((select claim_id from public.chore_instance where chore_id = 'cccccccc-0000-0000-0000-000000000001' and week_start = '2026-10-18'), true);
