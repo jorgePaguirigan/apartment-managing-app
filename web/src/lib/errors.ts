@@ -26,7 +26,6 @@ const TEXT: Record<string, string> = {
   "this-chore-can-no-longer-move": "That chore can no longer be moved.",
   "chore-has-no-deed-to-claim": "That chore has no deed to claim yet. Ask the admin to link one.",
   "week-has-not-started": "That week has not started yet.",
-  "already-submitted": "You already submitted that chore.",
   "invalid-chore": "Pick a day for the chore.",
   "invalid-weekday": "Pick a day for the chore.",
   "already-on-the-schedule": "That chore is already on the schedule for that day.",

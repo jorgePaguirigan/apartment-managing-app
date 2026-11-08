@@ -17,8 +17,7 @@ set local request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
 select lives_ok($$select set_config('t.custom', public.submit_custom_claim('Fixed the shelf', 'with my drill')::text, true)$$,
   'a housemate submits a custom claim');
-select throws_ok($$select public.submit_custom_claim('  fixed the SHELF ')$$, '55000', 'already waiting for approval',
-  'the same custom claim cannot wait twice');
+select lives_ok($$select public.submit_custom_claim('  fixed the SHELF ')$$, 'the same custom claim may wait twice');
 select throws_ok($$select public.submit_custom_claim('   ')$$, '22023', 'invalid title', 'a blank title is rejected');
 select throws_ok($$insert into public.claim (household_id, member_id, title) values
   ('aaaaaaaa-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000001', 'sneaky')$$, '42501',

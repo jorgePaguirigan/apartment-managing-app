@@ -35,13 +35,12 @@ set local role authenticated;
 select throws_ok($$select public.join_household('stale', 'Cy')$$, 'P0002', 'invite not found', 'expired invite is rejected');
 select lives_ok($$select public.join_household('fresh', 'Cy')$$, 'unexpired invite works');
 
--- Duplicate pending claims are blocked; a new claim is fine after the first is decided.
+-- The same deed may be claimed again while one waits; a new claim is also fine after the first is decided.
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 select lives_ok($$select set_config('t.claim', public.submit_claim('dddddddd-0000-0000-0000-000000000001')::text, true)$$,
   'first claim works');
-select throws_ok($$select public.submit_claim('dddddddd-0000-0000-0000-000000000001')$$, '55000',
-  'already waiting for approval', 'a second pending claim is rejected');
+select lives_ok($$select public.submit_claim('dddddddd-0000-0000-0000-000000000001')$$, 'a second pending claim of the same deed is allowed');
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}';
 set local request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
 select public.decide_claim(current_setting('t.claim')::uuid, true);

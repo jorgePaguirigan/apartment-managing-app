@@ -1,6 +1,51 @@
 # Feature batch plan
 
-## Current batch: See more modal unreadable on the leader's card (started 2026-11-05)
+## Current batch: remove chore X, repeat claims (started 2026-11-08)
+
+Plan written 2026-11-08, waiting for approval. One branch per milestone, from an up-to-date main. No hosted `supabase db push` without your OK.
+
+Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
+
+| # | Milestone | Branch | Status | PR |
+|---|---|---|---|---|
+| R1 | Several claims of the same deed (and chore card) while one waits | `repeat-claims` | 🟡 in progress | |
+| R2 | Red X on schedule cards removes the chore | `card-remove-x` | ⚪ not started | |
+
+### Decisions (your answers)
+- X removes **the chore for good** (existing `remove_chore`: it stops repeating, this week's card goes too).
+- X is shown to the **admin and the card's assignee**.
+- Repeat claims apply to **catalog and custom claims**; the chore card's own claim (`complete_chore`) may also be claimed again. Each claim still needs admin approval.
+
+### Found in the code
+- R1: `claim_pending_unique` (one pending claim per member and deed) is the only limit; `submit_claim` and `submit_custom_claim` turn it into "already waiting for approval". `complete_chore` adds "already submitted" per card. There is no per-day limit.
+- R2: `remove_chore` exists (admin only, sets `chore.active = false`) and has a pgTAP test, but no UI calls it. PRD 5.2 says "the app has no remove control for now". Cards live in `schedule/board.tsx`.
+
+### R1 plan
+- **Spec/glossary first:** PRD 4.2 and GLOSSARY: drop the one-waiting-claim rule.
+- **Backend:** new migration drops `claim_pending_unique`; remove the `unique_violation` handlers in `submit_claim` and `submit_custom_claim`; `complete_chore` lets a card be claimed again (`chore_instance.claim_id` keeps the latest claim).
+- **UI:** claim form and card no longer show "already waiting" errors; check how the card chip reads with several claims.
+- **Test:** pgTAP: two pending claims of one deed (catalog and custom) succeed. Fails before (unique violation). Replace the old assertions in `hardening.test.sql`, `custom_claims.test.sql`.
+- **Files:** new migration, `supabase/tests/*`, PRD.md, GLOSSARY.md, `web/src/lib/errors.ts`.
+
+### R2 plan
+- **Spec/glossary first:** PRD 5.2: add the X; admin and assignee may remove a chore.
+- **Backend:** `remove_chore` today is admin only. Change it to also allow the assignee of that chore's card this week; reject on a locked day or a claimed card. Rule lives in SQL.
+- **UI:** a small red X button in the card's top right (`board.tsx`), hover tint and press `scale(0.97)`, 150 to 200 ms, hover gated by `@media (hover: hover)`, reduced motion respected, 40px hit area on phones. The card leaves with the existing optimistic update.
+- **Test:** pgTAP for the new permission (assignee can, another housemate cannot). Playwright: press X, the card is gone, a reload keeps it gone. Screenshots light and dark, phone width.
+- **Files:** new migration, `web/src/app/schedule/board.tsx`, `web/src/app/actions.ts`, PRD.md, `supabase/tests/chores_catalog.test.sql`, new `web/e2e` spec.
+
+### Skills
+- R1: domain-modeling (rule and glossary), tdd, blast-radius (who relies on the unique index and the error codes), code-review, pr.
+- R2: domain-modeling, tdd, emil-design-eng, apple-design, animate, mobile-native, ui-ux-pro-max, code-review, pr.
+
+### Order
+R1 (SQL only, no UI) then R2. R2 stops for your screenshot approval.
+
+### Risks and not checked
+- An assignee removing a chore deletes it for the whole household for good, including later weeks. There is no undo in the app (an admin would have to add it again from the cell popup). Say if you want the assignee's X to remove this week only instead.
+- Not checked yet: the mobile app (`ios/`) for the old "already waiting" error, hosted DB (needs migration push after your OK).
+
+## Previous batch: See more modal unreadable on the leader's card (started 2026-11-05)
 
 Plan approved 2026-11-05. Dark-mode screenshot approved.
 
@@ -19,7 +64,7 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 - **Done:** dialog portaled to `<body>` (guarded with `useSyncExternalStore` so it still server-renders). Test fails before and passes after; Esc still closes; 19 screen-fit specs, lint and tsc green. Skills used: diagnosing-bugs (reproduced first), tdd, pr.
 - **Not checked:** light-mode screenshot, focus return on close, scroll lock, the Catalog See more by hand.
 
-## Previous batch: calendar-style schedule (started 2026-11-02)
+## Earlier batch: calendar-style schedule (started 2026-11-02)
 
 Plan written 2026-11-02, waiting for approval. One branch per milestone, from an up-to-date main (PR 74 is merged). Each UI milestone stops for your approval of the screenshots. No hosted `supabase db push` without your OK.
 
