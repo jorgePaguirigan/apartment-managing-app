@@ -29,6 +29,8 @@ test("claim, approve, leaderboard and budget across admin and housemate", async 
   await expect(mate.page.getByText("Sent to your admin for approval.")).toBeVisible();
   await admin.page.reload();
   await expect(admin.page.getByText(`${mateName} Cooked dinner`)).toBeVisible();
+  // The card says when the claim was submitted, in the household time zone.
+  await expect(admin.page.getByText(/^Submitted \w{3}, \w{3} \d{1,2}, \d{1,2}:\d{2} [AP]M$/)).toBeVisible();
   await admin.page.getByRole("button", { name: "Accept", exact: true }).click();
   await expect(admin.page.getByText("All caught up")).toBeVisible();
   await mate.page.goto("/leaderboard");

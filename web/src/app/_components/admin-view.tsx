@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { getTimeZone } from "@/lib/me";
 import { award } from "../actions";
 import { InboxItem, InboxList } from "./inbox-item";
 import { AdminHistory, EmailSchedule, InviteLinks } from "./admin-sections";
@@ -9,7 +10,7 @@ import { SubmitButton } from "./submit-button";
 import { Shortcuts } from "./shortcuts";
 import { Avatar, Chip, Icon, Kbd, Section, Skeleton, button, ghost, input } from "./ui";
 
-type ClaimRow = { id: string; note: string | null; title: string | null; member: { display_name: string } | null; deed: { name: string; points: number } | null; contributors?: { member: { display_name: string } | null }[] };
+type ClaimRow = { id: string; created_at: string; note: string | null; title: string | null; member: { display_name: string } | null; deed: { name: string; points: number } | null; contributors?: { member: { display_name: string } | null }[] };
 
 type ReportRow = { id: string; title: string | null; anonymous: boolean; reporter: { display_name: string } | null; subject: { display_name: string } | null; deed: { name: string; points: number } | null };
 
@@ -17,9 +18,9 @@ const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
 
 export async function AdminView() {
   const supabase = await createClient();
-  const [{ data: claims }, { data: deeds }, { data: housemates }, { data: groups }, { data: reports }] = await Promise.all([
+  const [{ data: claims }, { data: deeds }, { data: housemates }, { data: groups }, { data: reports }, timeZone] = await Promise.all([
     supabase.from("claim")
-      .select("id, note, title, member:member!claim_member_id_fkey(display_name), deed:deed_id(name, points), contributors:claim_contributor(member:member!claim_contributor_member_id_fkey(display_name))")
+      .select("id, created_at, note, title, member:member!claim_member_id_fkey(display_name), deed:deed_id(name, points), contributors:claim_contributor(member:member!claim_contributor_member_id_fkey(display_name))")
       .eq("status", "pending").order("created_at"),
     supabase.from("deed").select("id, name, points, active, group_id").is("deleted_at", null).order("kind").order("name"),
     supabase.from("member").select("user_id, display_name, role").eq("scored", true).order("display_name"),
@@ -27,7 +28,9 @@ export async function AdminView() {
     supabase.from("report")
       .select("id, title, anonymous, reporter:member!report_reporter_id_fkey(display_name), subject:member!report_subject_id_fkey(display_name), deed:deed_id(name, points)")
       .eq("status", "pending").order("created_at"),
+    getTimeZone(),
   ]);
+  const when = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   const active = deeds?.filter((d) => d.active) ?? [];
   const pending = (claims ?? []) as unknown as ClaimRow[];
   const acceptable = pending.filter((c) => c.deed).length;
@@ -47,6 +50,7 @@ export async function AdminView() {
                       <p className="break-words"><span className="font-semibold">{c.member?.display_name}</span> <span className="font-semibold">{c.deed?.name ?? (c.title ?? "").replace(/^./, (ch: string) => ch.toLowerCase())}</span></p>
                       {!!c.contributors?.length && <p className="break-words text-sm text-muted">With {c.contributors.map((x) => x.member?.display_name).join(", ")}</p>}
                       {c.note && <p className="break-words text-sm text-muted">&ldquo;{c.note}&rdquo;</p>}
+                      <time dateTime={c.created_at} className="block text-xs text-muted">Submitted {when.format(new Date(c.created_at))}</time>
                     </div>
                     {c.deed ? <Chip tone="points">{signed(c.deed.points)}</Chip> : <Chip tone="muted">Custom</Chip>}
                   </div>
