@@ -8,8 +8,8 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| H1 | `activity()` SQL function + pgTAP, PRD/GLOSSARY | `activity-heatmap-sql` | 🟡 in progress (tests green, not committed) | |
-| H2 | Heatmap on Home (own activity), all views and both measures | `activity-heatmap-home` | ⚪ not started | |
+| H1 | `activity()` SQL function + pgTAP, PRD/GLOSSARY | `activity-heatmap-sql` | 🔵 PR open | [86](https://github.com/jorgePaguirigan/apartment-managing-app/pull/86) |
+| H2 | Heatmap on Home (own activity), all views and both measures | `activity-heatmap-home` (stacked on H1) | 🔵 PR open (UI approved 2026-11-20) | |
 | H3 | Heatmap in the leaderboard card (anyone's activity) | `activity-heatmap-leaderboard` | ⚪ not started | |
 
 ### Decisions (your answers)
