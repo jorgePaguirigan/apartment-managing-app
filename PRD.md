@@ -58,6 +58,7 @@ Nothing is ever reset. All views are queries over entries by date range (Q10).
 - Views: this week, this month, previous week, previous month.
 - Rank by total points. Ties share a rank.
 - Shows each housemate's points and their medals.
+- **Activity heatmap**: a grid of days colored in 4 steps of the accent, from none to the busiest day on show. A housemate sees their own on Home; pressing a leaderboard card shows that person's too. A dropdown picks the measure: **deeds** (score entries with positive points that day: accepted claims, custom claims, awards) or **points** (their sum). Penalties and deleted entries never count. Views, like a calendar: week, month, year, and last 12 months, with arrows back to the household's first entry and a Today button. Days, Sunday weeks and months follow the household time zone, worked out in SQL. Only scored members have one.
 
 ### 4.5 Medals
 - Awarded automatically by rules over score entries and the schedule. Fixed set in v1; admins cannot create custom ones (Q13).

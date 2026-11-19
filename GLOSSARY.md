@@ -17,6 +17,7 @@ Use these words exactly. They match the PRD and the database.
 - **Score entry**: one signed point change on a housemate's total. Points are copied from the deed when it is created. Never edited; only soft-deleted.
 - **Award**: an admin creating a score entry directly, without a claim.
 - **Leaderboard**: housemates ranked by points for a period. Ties share a rank. A housemate's card opens to their entries for that period only.
+- **Activity**: one scored member's days on a heatmap. A day shows either its **deeds** (how many score entries with positive points it has: accepted claims, custom claims and awards) or its **points** (their sum). Penalties and deleted entries never count. Days follow the household time zone. Admins who are not scored have none.
 - **Period**: this week, previous week, this month, previous month, in the household time zone. Weeks start Sunday.
 - **Schedule (board)**: days are columns, housemates (then Unassigned) are rows. The admin presses a cell to open the chore popup, a one-column checkbox list of the deed catalog; pressing a deed adds it as a chore on that day for that row's person. One chore per deed and day.
 - **Cell**: one day and one person on the board. It holds that person's cards for that day.
