@@ -2,7 +2,7 @@
 
 ## Current batch: activity heatmap (started 2026-11-20)
 
-Plan approved 2026-11-20, with phone and tablet layouts added. All three merged 2026-11-20. Hosted `supabase db push` still needed (with your OK). One branch per milestone, from an up-to-date main. New migration: hosted `supabase db push` only with your OK. Commits through the new global `/commit-per-file` skill.
+Plan approved 2026-11-20, with phone and tablet layouts added. All three merged 2026-11-20. Hosted `supabase db push` of `20261120000000_activity.sql` applied 2026-11-20 after a dry run, with your OK. One branch per milestone, from an up-to-date main. New migration: hosted `supabase db push` only with your OK. Commits through the new global `/commit-per-file` skill.
 
 Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
