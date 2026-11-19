@@ -2,22 +2,28 @@
 
 import { useState, useTransition, type ReactNode } from "react";
 import { PERIODS, type Period } from "@/lib/period";
-import { memberHistory } from "../actions";
+import { activity, memberHistory, type ActivityDay } from "../actions";
+import { Activity } from "../_components/activity";
 import { HistoryList, type HistoryRow } from "../_components/history-list";
 import { Icon } from "../_components/ui";
 
-// A leaderboard card. Pressing it folds open that housemate's history for the period on show, fetched on every open. A change of period closes it.
+// A leaderboard card. Pressing it folds open that housemate's heatmap and their history for the period on show, fetched on every open.
+// A change of period closes it.
 export function LeaderCard({ id, period, lead, delay, timeZone, children }: { id: string; period: Period; lead: boolean; delay: number; timeZone: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<HistoryRow[] | null>(null);
+  const [days, setDays] = useState<ActivityDay[] | null>(null);
   const [loading, start] = useTransition();
   const [shown, setShown] = useState(period);
   if (shown !== period) { // rows belong to one period: a new period folds the card shut and drops them
-    setShown(period); setOpen(false); setRows(null);
+    setShown(period); setOpen(false); setRows(null); setDays(null);
   }
   const toggle = () => {
     setOpen(!open);
-    if (!open) start(async () => setRows(await memberHistory(id, period)));
+    if (!open) start(async () => {
+      const [h, a] = await Promise.all([memberHistory(id, period), activity(id, "last_12_months", null)]);
+      setRows(h); setDays(a);
+    });
   };
   return (
     <li data-flip-id={id} style={{ animationDelay: `${delay}ms` }}
@@ -30,6 +36,7 @@ export function LeaderCard({ id, period, lead, delay, timeZone, children }: { id
       <div className="fold" data-open={open} inert={!open}>
         <div className="px-4 sm:px-5">
           <div className={`mb-4 border-t border-line pt-3`}>
+            {days && days.length > 0 && <div className="mb-4 border-b border-line pb-4"><Activity bare memberId={id} initial={days} timeZone={timeZone} /></div>}
             {rows ? (
               <div className={`transition-opacity duration-150 ${loading ? "opacity-50" : ""}`}>
                 <HistoryList rows={rows} timeZone={timeZone} empty={`No points ${PERIODS[period].toLowerCase()}.`} />
