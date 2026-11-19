@@ -1,6 +1,74 @@
 # Feature batch plan
 
-## Current batch: who approved, when submitted (started 2026-11-08)
+## Current batch: activity heatmap (started 2026-11-20)
+
+Plan approved 2026-11-20, with phone and tablet layouts added. One branch per milestone, from an up-to-date main. New migration: hosted `supabase db push` only with your OK. Commits through the new global `/commit-per-file` skill.
+
+Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
+
+| # | Milestone | Branch | Status | PR |
+|---|---|---|---|---|
+| H1 | `activity()` SQL function + pgTAP, PRD/GLOSSARY | `activity-heatmap-sql` | 🟡 in progress (tests green, not committed) | |
+| H2 | Heatmap on Home (own activity), all views and both measures | `activity-heatmap-home` | ⚪ not started | |
+| H3 | Heatmap in the leaderboard card (anyone's activity) | `activity-heatmap-leaderboard` | ⚪ not started | |
+
+### Decisions (your answers)
+- **Whose / where:** a housemate sees their own on Home; pressing any leaderboard card shows that person's too. Admins see it through the leaderboard. Admins are never scored or shown.
+- **Measure:** a dropdown, **Deeds** (count of accepted good-deed entries that day) or **Points** (sum of positive points that day). Penalties and deleted entries never light a cell. *(My reading: Points = earned, not net. Say if penalties should subtract.)*
+- **Range:** Google Calendar–style switch **Week · Month · Year · 12 months**, with ‹ Today › arrows. Year steps back to the household's first entry (covers "each year"). *(My reading of "a year, a month, a week, plus last 12 months + each year".)*
+- **Color:** the app's lime `--accent`, 4 steps from the empty cell color, light and dark.
+
+### Found in the code
+- `score_entry` has everything (`member_id`, `points`, `source`, `created_at`, `deleted_at`). `member_history()` already reads one member's entries in household-time-zone bounds, running as the caller so row-level security decides access. `period_start()` gives Sunday weeks.
+- Home: `housemate-view.tsx` sections (I did…, Report, Available chores, History). Leaderboard: `leaderboard/card.tsx` folds open `HistoryList` via `memberHistory()` in `actions.ts`.
+- Lime accent and tokens in `globals.css`; motion helpers `rise`, `fold`, `turn` already exist.
+
+### H1 plan: `activity()` in SQL
+- **Spec/glossary first:** PRD 4.4 gets an "Activity" bullet; GLOSSARY gets **Activity (heatmap)**.
+- **Backend:** `activity(p_member uuid, p_view text, p_anchor date default null)` → one row per day of the range: `day`, `deeds`, `points`, `future`, plus the range `starts`/`ends`, `first_day` (oldest entry in the household, for the back arrow). `p_view` in `week`, `month`, `year`, `last_12_months`; anchor defaults to today in the household time zone. Days, weeks (Sunday) and months computed in SQL, not the client. Security invoker, like `member_history`.
+- **Test (pgTAP, `supabase/tests/activity.test.sql`):** 23:59 Saturday and 00:00 Sunday Manila land on different days; week starts Sunday; penalties and deleted entries count 0; a 3-deed claim with 2 contributors counts once per person; an unknown view errors; a non-member is refused. Fails without the function.
+- **Files:** new migration, test, PRD.md, GLOSSARY.md.
+
+### H2 plan: heatmap on Home
+- **UI:** a card above History. Header: range switch, ‹ Today ›, measure dropdown, total ("42 deeds"), "less ▢▢▢▢ more" legend. Year / 12 months: 7×53 grid, weekday labels (Mon, Wed, Fri), month labels. Month: calendar grid with day numbers. Week: 7 large cells. Footnote: "Days follow the household time zone (Asia/Manila)." Today has a ring; future days are blank.
+- **Motion:** cells fade/scale in with a short stagger by column when the range changes (opacity + transform only, ≤250 ms total, off under reduced motion). Hover/tap tooltip "3 deeds · +9 pts · Tue, Nov 18". Buttons and switch: hover tint (`@media (hover: hover)`), press `scale(0.97)`, 150–200 ms ease-out. Phone: the year grid scrolls sideways inside the card, opened scrolled to today.
+- **Phone (< 640 px):** controls stack in two rows: the range switch full width on top, then ‹ Today › on the left and the measure dropdown on the right. Arrows and switch segments get 44 px hit areas. Year and 12 months scroll sideways inside the card (cells about 12 px), open scrolled so today is in view, with soft fade edges and no page-level sideways scroll (`no-sideways-scroll.spec.ts` still passes). Month and Week fill the width with no scroll. Tooltips open on tap and close on a second tap or a tap outside; there is no hover state on touch. The legend and total move under the grid.
+- **Tablet (640–1024 px):** one row of controls. Year and 12 months fit the card with no scroll (fluid cells, about 11–14 px, `minmax` grid columns); weekday and month labels stay visible. Month view uses larger square cells with day numbers; Week shows 7 large cells with the date and the count inside. Same tap behavior on touch tablets, hover on tablets with a pointer.
+- **Desktop:** like tablet, cells capped at about 14 px so the grid does not stretch.
+- **Test:** Playwright: seed accepted claims, Home heatmap shows the right count and today's cell level; switching views and measure changes the total. Run at phone (390), tablet (820) and desktop widths: no page sideways scroll, and Year fits without scroll on tablet. Screenshots light, dark, phone, tablet, each view.
+- **Files:** new `_components/activity.tsx`, `housemate-view.tsx`, `actions.ts` (`activity()` call), `globals.css` (cell levels), new `web/e2e/activity.spec.ts`.
+
+### H3 plan: leaderboard card
+- **UI:** the folded card shows the person's heatmap above their history entries, same component. The card's lead (lime) variant needs ink-colored cells on lime; check contrast.
+- **Phone and tablet:** the card's narrower inner width uses the same rules as H2 (sideways scroll on phone, fit on tablet); the fold animation stays smooth with the grid inside.
+- **Test:** Playwright: open another housemate's card, their heatmap total matches their entries. Screenshots light, dark, phone, tablet, lead card.
+- **Files:** `leaderboard/card.tsx`, `activity.tsx`, `web/e2e/activity.spec.ts`.
+
+### Skills, per step
+| Step | Skills | What for |
+|---|---|---|
+| H1 spec | mattpocock-skills:domain-modeling | the word "Activity" and its rules in PRD/GLOSSARY |
+| H1 risk | pstack:blast-radius | who can read whose entries through the new function (RLS) |
+| H1 build | mattpocock-skills:tdd | pgTAP first, then the function |
+| H2 design | ui-ux-pro-max, dataviz | heatmap layout, 4-step scale, legend, labels, accessibility |
+| H2 design | emil-design-eng, apple-design | polish, restraint, switch and arrow controls |
+| H2 motion | animate, animation-performance | range-change stagger and tooltip, keeping 371 cells cheap |
+| H2 phone/tablet | mobile-native | sideways scroll, tap tooltip, no sticky hover, touch tablets |
+| H2 phone/tablet | ui-ux-pro-max | breakpoints, control layout and hit areas per width |
+| H2 build | mattpocock-skills:tdd | Playwright first |
+| H2 stress | break-ui | zero activity, 50-deed days, first week of the household |
+| H2/H3 verify | run | screenshots in the real app, light/dark/phone |
+| H3 | emil-design-eng, break-ui | heatmap on the lime lead card, long names |
+| every PR | code-review, mattpocock-skills:pr, commit-per-file | review, PR body, small commits |
+
+### Order
+H1 (SQL only) → H2 → H3. A component screenshot before H2 is wired in, then H2 and H3 each stop for your UI approval.
+
+### Not checked yet
+- iOS app (thin client; not in this batch unless you want it).
+- Whether a whole year of 371 cells renders smoothly on a low-end phone; checked in H2.
+
+## Previous batch: who approved, when submitted (started 2026-11-08)
 
 Plan approved and both milestones merged 2026-11-08. No hosted `supabase db push` needed (no migration).
 
