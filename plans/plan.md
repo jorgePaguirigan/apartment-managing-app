@@ -8,9 +8,9 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| H1 | `activity()` SQL function + pgTAP, PRD/GLOSSARY | `activity-heatmap-sql` | 🟡 in progress (tests green, not committed) | |
-| H2 | Heatmap on Home (own activity), all views and both measures | `activity-heatmap-home` | ⚪ not started | |
-| H3 | Heatmap in the leaderboard card (anyone's activity) | `activity-heatmap-leaderboard` | ⚪ not started | |
+| H1 | `activity()` SQL function + pgTAP, PRD/GLOSSARY | `activity-heatmap-sql` | 🔵 PR open | [86](https://github.com/jorgePaguirigan/apartment-managing-app/pull/86) |
+| H2 | Heatmap on Home (own activity), all views and both measures | `activity-heatmap-home` (stacked on H1) | 🔵 PR open (UI approved 2026-11-20) | [87](https://github.com/jorgePaguirigan/apartment-managing-app/pull/87) |
+| H3 | Heatmap in the leaderboard card (anyone's activity) | `activity-heatmap-leaderboard` (stacked on H2) | 🔵 PR open (UI approved 2026-11-20) | [88](https://github.com/jorgePaguirigan/apartment-managing-app/pull/88) |
 
 ### Decisions (your answers)
 - **Whose / where:** a housemate sees their own on Home; pressing any leaderboard card shows that person's too. Admins see it through the leaderboard. Admins are never scored or shown.
@@ -67,6 +67,22 @@ H1 (SQL only) → H2 → H3. A component screenshot before H2 is wired in, then 
 ### Not checked yet
 - iOS app (thin client; not in this batch unless you want it).
 - Whether a whole year of 371 cells renders smoothly on a low-end phone; checked in H2.
+
+### Done
+- H1: `activity()` + 15 pgTAP checks (day bounds in Manila, penalties/deleted excluded, removed housemate and other household refused). Blast radius: safe because `score_entry_read` uses `current_household()`, which is null for removed members; proven in the test.
+- H2: Home heatmap. Playwright `activity.spec.ts` (counts, measures, every view, Previous/Today, phone 390 no page scroll, tablet 820 year fits). Screenshots light/dark × phone/tablet × every view, approved.
+- H3: leaderboard cards. Playwright `activity-leaderboard.spec.ts` with break-ui worst cases (50 deeds in a day, empty member, recent first entry). break-ui found and fixed: white/black label backing on the lime card, "150" wrapping in a phone week cell. Approved.
+- PRs stack: merge 86 → 87 → 88. Hosted `supabase db push` for `20261120000000_activity.sql` still needed (with your OK).
+
+### Skills used
+- H1: mattpocock-skills:domain-modeling, pstack:blast-radius, mattpocock-skills:tdd, code-review, mattpocock-skills:pr, commit-per-file.
+- H2: emil-design-eng, dataviz, mobile-native, animate, mattpocock-skills:pr, commit-per-file. Listed but not invoked: ui-ux-pro-max, apple-design, animation-performance (motion kept to CSS opacity/transform, judged from the animate rules).
+- H3: break-ui, mattpocock-skills:pr, commit-per-file.
+
+### Not checked
+- Real phone and tablet hardware (all via Playwright emulation), keyboard focus styling, full e2e suite, iOS app, the dataviz palette validator (ramp judged from screenshots).
+- `member_history.test.sql` test 7 fails locally only because leftover e2e rows sit in `score_entry`; unrelated.
+- `next build` stops every other run on a Next.js security notice recommending `next upgrade --agent=security`; not run.
 
 ## Previous batch: who approved, when submitted (started 2026-11-08)
 
