@@ -9,7 +9,8 @@ import { Shortcuts } from "./shortcuts";
 import { CountUp } from "./count-up";
 import { Chip, Section, Skeleton } from "./ui";
 import { SubmitButton } from "./submit-button";
-import { dibChore } from "../actions";
+import { activity, dibChore } from "../actions";
+import { Activity } from "./activity";
 
 type ClaimRow = { id: string; created_at: string; title: string | null; status: "pending" | "accepted" | "rejected"; note: string | null; deed: { name: string; points: number } | null };
 type BoardRow = { member_id: string; points: number; rank: number };
@@ -27,9 +28,15 @@ export function HousemateView({ me }: { me: Me }) {
       <Section title="I did…"><Suspense fallback={<Skeleton rows={4} />}><Claim me={me} /></Suspense></Section>
       <Suspense fallback={<Section title="Report a housemate"><Skeleton rows={2} /></Section>}><Report me={me} /></Suspense>
       <Suspense fallback={<Section title="Available chores"><Skeleton /></Section>}><Chores /></Suspense>
+      <Suspense fallback={<Section title="Activity"><Skeleton rows={4} /></Section>}><MyActivity me={me} /></Suspense>
       <Suspense fallback={<Section title="History"><Skeleton /></Section>}><History me={me} /></Suspense>
     </>
   );
+}
+
+async function MyActivity({ me }: { me: Me }) {
+  const [days, timeZone] = await Promise.all([activity(me.userId, "last_12_months", null), getTimeZone()]);
+  return <Activity memberId={me.userId} initial={days} timeZone={timeZone} />;
 }
 
 // No `count` yet means the board is still loading: bars stand in for the text, so nothing is on screen twice once it arrives.

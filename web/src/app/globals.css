@@ -87,6 +87,36 @@ body {
 /* ...but a button label is never cut mid-word; its row gives way instead. */
 button, summary, [role="button"] { overflow-wrap: normal; }
 
+/* Activity heatmap: one lime hue, 4 steps. Light runs pale to dark; dark mode flips so more is brighter. light-dark() follows
+   color-scheme, which every theme block above sets. Levels 3 and 4 carry light-on-dark (light) or ink-on-lime (dark) numbers. */
+.heat {
+  --heat-1: light-dark(oklch(0.9 0.12 125), oklch(0.38 0.07 125));
+  --heat-2: light-dark(oklch(0.84 0.19 127), oklch(0.55 0.12 125));
+  --heat-3: light-dark(oklch(0.68 0.17 130), oklch(0.74 0.17 125));
+  --heat-4: light-dark(oklch(0.47 0.12 131), oklch(0.93 0.19 122));
+}
+.heat-cell { background: var(--surface-2); color: var(--muted); border-radius: 3px; user-select: none; -webkit-user-select: none; }
+.heat-cell[data-level="1"] { background: var(--heat-1); color: var(--ink); }
+.heat-cell[data-level="2"] { background: var(--heat-2); color: #16171b; }
+.heat-cell[data-level="3"] { background: var(--heat-3); color: light-dark(#fbfaf5, #16171b); }
+.heat-cell[data-level="4"] { background: var(--heat-4); color: light-dark(#fbfaf5, #16171b); }
+.heat-cell[data-future] { background: transparent; box-shadow: inset 0 0 0 1px var(--line); }
+.heat-cell[data-today] { outline: 1.5px solid var(--ink); outline-offset: 1px; }
+.heat-cell[data-active] { outline: 2px solid var(--ink); outline-offset: 1px; }
+/* A new range fades in column by column (delay set per cell); off for reduced motion, where it just appears. */
+@media (prefers-reduced-motion: no-preference) {
+  .heat-in .heat-cell { animation: heat-in 200ms var(--ease-out-strong) both; }
+  @keyframes heat-in { from { opacity: 0; transform: scale(0.9); } }
+}
+/* Tooltip: grows from the cell below it. */
+.heat-tip { transform: translate(-50%, -100%); transition: opacity 125ms var(--ease-out-strong), transform 125ms var(--ease-out-strong); transform-origin: bottom center; }
+.heat-tip[data-hidden] { opacity: 0; transform: translate(-50%, -100%) scale(0.97); pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .heat-tip[data-hidden] { transform: translate(-50%, -100%); } }
+/* Phone: the year grid scrolls inside its card, and the scroll stops at the card's ends instead of moving the page. */
+.heat-scroll { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; --min: 11px; }
+.heat-scroll::-webkit-scrollbar { display: none; }
+@media (min-width: 640px) { .heat-scroll { --min: 9px; } }
+
 /* Background grid. Two fixed layers behind all content (z-index -1, never over cards): a faint grid that fades out toward the
    bottom, and a lime-tinted copy revealed only around the pointer (--mx/--my, set by GridGlow). Phones get a slow drift instead. */
 body::before, body::after {
