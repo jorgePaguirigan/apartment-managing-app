@@ -386,3 +386,13 @@ export async function memberHistory(memberId: string, period: Period): Promise<H
   return ((data ?? []) as { id: string; points: number; title: string | null; source: "claim" | "admin"; created_at: string; deleted_at: string | null; report_note: string | null }[])
     .map((e) => ({ id: e.id, title: e.title ?? "", at: e.created_at, note: e.report_note, status: e.source === "claim" ? "accepted" : "awarded", points: e.points, deleted: !!e.deleted_at }));
 }
+
+export type ActivityView = "week" | "month" | "year" | "last_12_months";
+export type ActivityDay = { day: string; weekday: number; deeds: number; points: number; future: boolean; today: string; first_day: string };
+
+// One scored member's days for the heatmap. activity() works out the range and the days in the household time zone.
+export async function activity(memberId: string, view: ActivityView, anchor: string | null): Promise<ActivityDay[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("activity", { p_member: memberId, p_view: view, p_anchor: anchor });
+  return (data ?? []) as ActivityDay[];
+}
