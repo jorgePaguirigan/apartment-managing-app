@@ -2,15 +2,15 @@
 
 ## Current batch: activity heatmap (started 2026-11-20)
 
-Plan approved 2026-11-20, with phone and tablet layouts added. One branch per milestone, from an up-to-date main. New migration: hosted `supabase db push` only with your OK. Commits through the new global `/commit-per-file` skill.
+Plan approved 2026-11-20, with phone and tablet layouts added. All three merged 2026-11-20. Hosted `supabase db push` still needed (with your OK). One branch per milestone, from an up-to-date main. New migration: hosted `supabase db push` only with your OK. Commits through the new global `/commit-per-file` skill.
 
 Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| H1 | `activity()` SQL function + pgTAP, PRD/GLOSSARY | `activity-heatmap-sql` | 🔵 PR open | [86](https://github.com/jorgePaguirigan/apartment-managing-app/pull/86) |
-| H2 | Heatmap on Home (own activity), all views and both measures | `activity-heatmap-home` (stacked on H1) | 🔵 PR open (UI approved 2026-11-20) | [87](https://github.com/jorgePaguirigan/apartment-managing-app/pull/87) |
-| H3 | Heatmap in the leaderboard card (anyone's activity) | `activity-heatmap-leaderboard` (stacked on H2) | 🔵 PR open (UI approved 2026-11-20) | [88](https://github.com/jorgePaguirigan/apartment-managing-app/pull/88) |
+| H1 | `activity()` SQL function + pgTAP, PRD/GLOSSARY | `activity-heatmap-sql` | ✅ merged | [86](https://github.com/jorgePaguirigan/apartment-managing-app/pull/86) |
+| H2 | Heatmap on Home (own activity), all views and both measures | `activity-heatmap-home` (stacked on H1) | ✅ merged | [87](https://github.com/jorgePaguirigan/apartment-managing-app/pull/87) |
+| H3 | Heatmap in the leaderboard card (anyone's activity) | `activity-heatmap-leaderboard` (stacked on H2) | ✅ merged | [88](https://github.com/jorgePaguirigan/apartment-managing-app/pull/88) |
 
 ### Decisions (your answers)
 - **Whose / where:** a housemate sees their own on Home; pressing any leaderboard card shows that person's too. Admins see it through the leaderboard. Admins are never scored or shown.
@@ -72,7 +72,7 @@ H1 (SQL only) → H2 → H3. A component screenshot before H2 is wired in, then 
 - H1: `activity()` + 15 pgTAP checks (day bounds in Manila, penalties/deleted excluded, removed housemate and other household refused). Blast radius: safe because `score_entry_read` uses `current_household()`, which is null for removed members; proven in the test.
 - H2: Home heatmap. Playwright `activity.spec.ts` (counts, measures, every view, Previous/Today, phone 390 no page scroll, tablet 820 year fits). Screenshots light/dark × phone/tablet × every view, approved.
 - H3: leaderboard cards. Playwright `activity-leaderboard.spec.ts` with break-ui worst cases (50 deeds in a day, empty member, recent first entry). break-ui found and fixed: white/black label backing on the lime card, "150" wrapping in a phone week cell. Approved.
-- PRs stack: merge 86 → 87 → 88. Hosted `supabase db push` for `20261120000000_activity.sql` still needed (with your OK).
+- Merged 86, 88 (into the H2 branch), then 87 into main. #87 closed when #86's branch was deleted; restored the branch, reopened it and retargeted it to main. Hosted `supabase db push` for `20261120000000_activity.sql` still needed (with your OK).
 
 ### Skills used
 - H1: mattpocock-skills:domain-modeling, pstack:blast-radius, mattpocock-skills:tdd, code-review, mattpocock-skills:pr, commit-per-file.
