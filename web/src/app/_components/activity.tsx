@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, useTransition, type KeyboardEvent, type PointerEvent } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, useTransition, type KeyboardEvent, type PointerEvent } from "react";
 import { activity, type ActivityDay, type ActivityView } from "../actions";
 import { Icon } from "./ui";
 
@@ -27,7 +27,9 @@ function rangeText(view: ActivityView, first: string, last: string) {
 }
 
 // A scored member's heatmap: deeds or points per day for a week, a month, a year or the last 12 months.
-export function Activity({ memberId, initial, timeZone }: { memberId: string; initial: ActivityDay[]; timeZone: string }) {
+// `bare` drops the section title and card, for use inside another card (the leaderboard).
+export function Activity({ memberId, initial, timeZone, bare = false }: { memberId: string; initial: ActivityDay[]; timeZone: string; bare?: boolean }) {
+  const titleId = useId();
   const [shown, setShown] = useState({ view: "last_12_months" as ActivityView, days: initial });
   const [view, setView] = useState<ActivityView>("last_12_months"); // the switch answers at once; the grid follows its data
   const [measure, setMeasure] = useState<Measure>("deeds");
@@ -107,10 +109,9 @@ export function Activity({ memberId, initial, timeZone }: { memberId: string; in
     style: animate ? { animationDelay: `${year ? Math.floor((lead + i) / 7) * 3 : i * 12}ms` } : undefined,
   });
 
-  return (
-    <section aria-labelledby="activity-title" className="rise space-y-3">
-      <h2 id="activity-title" className="eyebrow px-1">Activity</h2>
-      <div ref={box} className="heat relative space-y-4 rounded-[1.75rem] border border-line bg-surface/95 p-4 shadow-[var(--shadow)] sm:p-5">
+  const body = (
+      <div ref={box} role={bare ? "group" : undefined} aria-label={bare ? "Activity" : undefined}
+        className={`heat relative space-y-4 ${bare ? "" : "rounded-[1.75rem] border border-line bg-surface/95 p-4 shadow-[var(--shadow)] sm:p-5"}`}>
         <div className="flex flex-wrap items-center gap-2">
           <div role="group" aria-label="Range" className="relative grid w-full grid-cols-4 rounded-full bg-surface-2 p-0.5 sm:w-auto">
             <span aria-hidden className="absolute inset-y-0.5 left-0.5 w-[calc(25%-0.0625rem)] rounded-full bg-ink transition-transform duration-[220ms] ease-[var(--ease-out-strong)] motion-reduce:transition-none"
@@ -137,7 +138,7 @@ export function Activity({ memberId, initial, timeZone }: { memberId: string; in
           <label className="relative ml-auto">
             <span className="sr-only">Measure</span>
             <select value={measure} onChange={(e) => { setMeasure(e.target.value as Measure); setActive(null); }}
-              className="min-h-9 appearance-none rounded-full border border-line bg-surface py-1 pl-3.5 pr-8 font-semibold text-ink outline-none transition-[border-color,transform] duration-150 ease-out hover:border-muted active:scale-[0.97] focus-visible:border-ink">
+              className="min-h-9 appearance-none rounded-full border border-line bg-transparent py-1 pl-3.5 pr-8 font-semibold text-ink outline-none transition-[border-color,transform] duration-150 ease-out hover:border-muted active:scale-[0.97] focus-visible:border-ink">
               <option value="deeds">Deeds</option>
               <option value="points">Points</option>
             </select>
@@ -171,7 +172,7 @@ export function Activity({ memberId, initial, timeZone }: { memberId: string; in
                   return label && <span key={c} className="whitespace-nowrap leading-4" style={{ gridColumn: c + 2, gridRow: 1 }}>{monthShort.format(at(label.day))}</span>;
                 })}
                 {/* Weekday labels stay put while a phone scrolls the weeks under them. */}
-                <span aria-hidden className="sticky left-0 z-10 -ml-1 bg-surface" style={{ gridColumn: 1, gridRow: "1 / 9" }} />
+                <span aria-hidden className="sticky left-0 z-10 -ml-1 bg-[var(--heat-bg,var(--surface))]" style={{ gridColumn: 1, gridRow: "1 / 9" }} />
                 {[1, 3, 5].map((w) => <span key={w} className="sticky left-0 z-10 self-center leading-none" style={{ gridColumn: 1, gridRow: w + 2 }}>{WEEKDAYS[w]}</span>)}
                 {days.map((d, i) => {
                   const p = cellProps(d, i);
@@ -185,9 +186,11 @@ export function Activity({ memberId, initial, timeZone }: { memberId: string; in
               {shown.view === "month" && Array.from({ length: lead }, (_, i) => <span key={`lead${i}`} />)}
               {days.map((d, i) => (
                 <span key={d.day} {...cellProps(d, i)}
-                  className={`heat-cell flex flex-col rounded-lg! p-1.5 sm:p-2 ${shown.view === "week" ? "aspect-[3/4] justify-between" : "aspect-square"}`}>
+                  className={`heat-cell flex min-w-0 flex-col rounded-lg! p-1 sm:p-2 ${shown.view === "week" ? "aspect-[3/4] justify-between" : "aspect-square"}`}>
                   <span className="text-xs font-semibold tabular-nums sm:text-sm">{Number(d.day.slice(8))}</span>
-                  {shown.view === "week" && !d.future && <span className="display text-lg font-bold leading-none sm:text-2xl">{d[measure]}</span>}
+                  {shown.view === "week" && !d.future && (
+                    <span className={`display whitespace-nowrap font-bold leading-none ${String(d[measure]).length > 3 ? "text-xs sm:text-lg" : String(d[measure]).length > 2 ? "text-sm sm:text-2xl" : "text-lg sm:text-2xl"}`}>{d[measure]}</span>
+                  )}
                 </span>
               ))}
             </div>
@@ -209,6 +212,12 @@ export function Activity({ memberId, initial, timeZone }: { memberId: string; in
 
         <p className="text-xs text-muted">Days follow the household time zone ({timeZone}).</p>
       </div>
+  );
+  if (bare) return body;
+  return (
+    <section aria-labelledby={titleId} className="rise space-y-3">
+      <h2 id={titleId} className="eyebrow px-1">Activity</h2>
+      {body}
     </section>
   );
 }
