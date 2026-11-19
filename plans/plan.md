@@ -1,6 +1,69 @@
 # Feature batch plan
 
-## Current batch: activity heatmap (started 2026-11-20)
+## Current batch: heatmap placement and review fixes (started 2026-11-20)
+
+Plan written 2026-11-20, waiting for approval. One branch per milestone from an up-to-date main, merged in order (retarget the next PR to main before deleting a merged branch). A1 changes a SQL function: hosted `supabase db push` only with your OK, after a dry run.
+
+Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
+
+| # | Milestone | Branch | Status | PR |
+|---|---|---|---|---|
+| A1 | `activity()` steps ranges in SQL (`p_step`), pgTAP | `activity-step-sql` | 🔵 PR open | [#89](https://github.com/jorgePaguirigan/apartment-managing-app/pull/89) |
+| A2 | Home: heatmap under the points banner, tooltip wording, contrast, animation, race, keyboard fixes | `activity-home-polish` | ⚪ not started | |
+| A3 | Leaderboard: heatmaps below the cards with one shared bar; no heatmap in cards; no Admin/Housemate switch | `activity-leaderboard-section` | ⚪ not started | |
+
+### Your requests
+1. Housemate view: Activity sits between the points banner and "I did…".
+2. Tooltip without the dot.
+3. Leaderboard: no heatmap in each card's dropdown; heatmaps below the cards.
+4. Leaderboard tab: no Admin/Housemate switch.
+Plus: run the skipped skills as a review pass and fix what they find.
+
+### Decisions (your answers)
+- Leaderboard heatmaps: **one shared control bar** (range, ‹ Today ›, Deeds/Points), then one grid per housemate with their name and total.
+- Their range **follows the period pills** (This week → Week, Last week → the week before, This month → Month, Last month → the month before) and can still be changed with the bar.
+- Tooltip: **"1 deed, 1 point"** (my choice: reads as a phrase; no "+", only earned points count).
+- Review fixes: all four groups (contrast ramp, one-layer animation, switch/grid race, keyboard and screen reader).
+
+### Review pass (skills skipped last batch, run 2026-11-20)
+- **ui-ux-pro-max** (contrast measured, not eyeballed): light level 1 vs empty is 1.03:1 (indistinguishable); light level-3 day numbers 2.63:1; dark level-2 day numbers 3.82:1. A re-stepped ramp gives even steps and every day number ≥ 4.5:1 with the text color picked per level.
+- **apple-design**: three heatmaps each with their own switch, arrows and dropdown repeat the same controls three times; one shared bar (grouping and mapping).
+- **animation-performance**: a range change animates every cell (up to 371, ~1,100 with three heatmaps) as its own layer. Animate the grid container instead (one clip-path wipe + opacity). Verified from code; needs a phone recording.
+- **code-review** (high, PR 87): switch/grid desync on racing or empty loads; 12-month Next off by a day across leap years and stepped in the client (CLAUDE.md: ranges in SQL); arrow keys into a future day drop the keyboard position; tooltip live region announces every hover; card history waits on the activity fetch; range switch duplicates `ViewSwitch`; per-cell animation layers; weak focus ring on the Measure select.
+- **run**: used in the build steps below to check each milestone in the app.
+
+### Found in the code
+- Admin/Housemate switch: `AppShell` renders `ViewSwitch` on every tab for an admin who also lives there (`app-shell.tsx:51`).
+- Leaderboard: `leaderboard/page.tsx` renders `LeaderCard`s; each card fetches `activity()` on open (`card.tsx`).
+- `activity(member, view, anchor)` returns the range that contains the anchor; the client steps anchors with date maths (`addDays`).
+
+### A1 plan: stepping in SQL
+- **Spec first:** PRD 4.4 Activity bullet: the leaderboard shows every scored member's heatmap below the cards, with one shared bar, opening on the period on show.
+- **Backend:** `activity(member, view, anchor, now, p_step int default 0)`: the range containing the anchor, moved `p_step` weeks / months / years / 12 months. The 12-month view never ends after today. Drop and recreate (a new argument cannot be added with `create or replace`); callers are only `actions.ts`.
+- **Test (pgTAP):** step −1 from a week is the week before; −1 from a month crosses a year; a 12-month window ending 1 Mar 2028 steps back to end 1 Mar 2027 (leap day); +1 past today is clamped to today. Fails without `p_step`.
+- **Files:** new migration, `supabase/tests/activity.test.sql`, PRD.md.
+- **Skills:** mattpocock-skills:domain-modeling (PRD wording), pstack:blast-radius (signature change, every caller), mattpocock-skills:tdd, code-review, mattpocock-skills:pr, commit-per-file.
+
+### A2 plan: Home and polish
+- **UI:** the Activity section moves right under the points banner. Tooltip "1 deed, 1 point". The component splits into a control bar and per-member grids (so A3 can reuse them); Home shows one grid. Prev/Next send `p_step` instead of computing dates. Stale responses are ignored and an empty one rolls the switch back. Re-stepped colour ramp, with the day-number colour picked per level. The grid enters as one clip-path wipe plus fade (opacity only under reduced motion). Arrow keys skip future days. The tooltip is hidden from screen readers, and keyboard moves are announced in their own polite live region. The Measure select gets the normal focus ring.
+- **Test:** Playwright `activity.spec.ts` gains: position under the banner, tooltip text "3 deeds, 6 points", Previous/Next round trip lands on the same week, stale-click race (Week then 12 months quickly → grid matches switch), arrow key past today stays on today. A contrast script checks all ramp pairs ≥ the targets.
+- **Files:** `activity.tsx`, `housemate-view.tsx`, `globals.css`, `actions.ts`, `web/e2e/activity.spec.ts`.
+- **Skills:** emil-design-eng, apple-design, ui-ux-pro-max (contrast check), animate + animation-performance (the wipe), mobile-native, break-ui, mattpocock-skills:tdd, run (screenshots in the app), code-review, mattpocock-skills:pr, commit-per-file.
+
+### A3 plan: Leaderboard
+- **UI:** below the cards, an "Activity" section: one shared bar, then a grid per scored member in leaderboard order, each headed by avatar, name and total. It opens on the range of the period pill and changes with the bar. Cards fold open to history only again. The Admin/Housemate switch is hidden on the Leaderboard tab only (`active !== "leaderboard"`). Phone: each grid scrolls sideways on its own; tablet: all fit.
+- **Test:** Playwright: three scored members; the section shows three grids in leaderboard order; `?p=prev_week` opens on last week; changing the bar moves all three; opening a card shows no heatmap; an admin-housemate sees no Admin/Housemate switch on Leaderboard but still sees it on Home. Screenshots light, dark, phone, tablet.
+- **Files:** `leaderboard/page.tsx`, `leaderboard/card.tsx`, `activity.tsx`, `app-shell.tsx`, `actions.ts`, `web/e2e/activity-leaderboard.spec.ts`.
+- **Skills:** apple-design, emil-design-eng, mobile-native, break-ui, mattpocock-skills:tdd, run, code-review, mattpocock-skills:pr, commit-per-file.
+
+### Order
+A1 → A2 → A3, one PR each, merged in order. Stop after A2 and A3 for your screenshot approval.
+
+### Not checked yet
+- Real phone hardware, the full e2e suite, the iOS app.
+- Reusing `ViewSwitch` for the range switch (a code-review finding you did not pick); left as is.
+
+## Previous batch: activity heatmap (started 2026-11-20)
 
 Plan approved 2026-11-20, with phone and tablet layouts added. All three merged 2026-11-20. Hosted `supabase db push` of `20261120000000_activity.sql` applied 2026-11-20 after a dry run, with your OK. One branch per milestone, from an up-to-date main. New migration: hosted `supabase db push` only with your OK. Commits through the new global `/commit-per-file` skill.
 
