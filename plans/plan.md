@@ -10,7 +10,7 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 |---|---|---|---|---|
 | A1 | `activity()` steps ranges in SQL (`p_step`), pgTAP | `activity-step-sql` | ✅ merged, hosted DB pushed 2026-11-24 | [#89](https://github.com/jorgePaguirigan/apartment-managing-app/pull/89) |
 | A2 | Home: heatmap under the points banner, tooltip wording, contrast, animation, race, keyboard fixes | `activity-home-polish` | ✅ merged | [#90](https://github.com/jorgePaguirigan/apartment-managing-app/pull/90) |
-| A3 | Leaderboard: heatmaps below the cards with one shared bar; no heatmap in cards; no Admin/Housemate switch | `activity-leaderboard-section` | 🔵 PR open, waiting for screenshot approval | [#91](https://github.com/jorgePaguirigan/apartment-managing-app/pull/91) |
+| A3 | Leaderboard: heatmaps below the cards with one shared bar; no heatmap in cards; no Admin/Housemate switch | `activity-leaderboard-section` | ✅ merged | [#91](https://github.com/jorgePaguirigan/apartment-managing-app/pull/91) |
 
 ### Your requests
 1. Housemate view: Activity sits between the points banner and "I did…".
