@@ -48,7 +48,8 @@ export function AppShell({ me, active, children }: { me: Me; active: Tab; childr
       </header>
 
       <main className="mx-auto w-full max-w-4xl flex-1 xl:max-w-5xl space-y-6 px-4 pt-6 pb-32 sm:px-6 sm:pt-8 md:pb-10">
-        {me.alsoHousemate && <div className="rise"><ViewSwitch view={me.role} tall /></div>}
+        {/* The leaderboard is the same in both views, so it has no switch. */}
+        {me.alsoHousemate && active !== "leaderboard" && <div className="rise"><ViewSwitch view={me.role} tall /></div>}
         {children}
       </main>
 
