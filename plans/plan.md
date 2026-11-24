@@ -2,14 +2,14 @@
 
 ## Current batch: day streak on Home (started 2026-11-25)
 
-Plan approved 2026-11-25 (A1 with smoke and sparks). One branch per milestone from an up-to-date main. S1 adds a SQL function: hosted `supabase db push` only with your OK, after a dry run.
+Plan approved 2026-11-25 (A1 with smoke and sparks). Both merged 2026-11-25. One branch per milestone from an up-to-date main. S1 adds a SQL function: hosted `supabase db push` only with your OK, after a dry run.
 
 Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| S1 | `streak()` in SQL, pgTAP, PRD and glossary | `streak-sql` | 🔵 PR open, hosted DB not pushed | [#93](https://github.com/jorgePaguirigan/apartment-managing-app/pull/93) |
-| S2 | Home: streak pill with smoke and sparks, e2e | `streak-home` (on `streak-sql`) | 🔵 PR open, waiting for your screenshot approval | [#94](https://github.com/jorgePaguirigan/apartment-managing-app/pull/94) |
+| S1 | `streak()` in SQL, pgTAP, PRD and glossary | `streak-sql` | ✅ merged, hosted DB not pushed yet | [#93](https://github.com/jorgePaguirigan/apartment-managing-app/pull/93) |
+| S2 | Home: streak pill with smoke and sparks, e2e | `streak-home` | ✅ merged (UI approved 2026-11-25) | [#94](https://github.com/jorgePaguirigan/apartment-managing-app/pull/94) |
 
 ### Your request
 1. A streak on the Home tab in the housemate view. Mockups, screenshots or video before building.
