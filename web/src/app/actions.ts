@@ -397,3 +397,8 @@ export async function activity(memberId: string, view: ActivityView, step = 0): 
   const { data } = await supabase.rpc("activity", { p_member: memberId, p_view: view, p_step: step });
   return (data ?? []) as ActivityDay[];
 }
+
+// Several members' days for the same range in one round trip (the leaderboard); a member who cannot be read gets [].
+export async function activities(memberIds: string[], view: ActivityView, step = 0): Promise<ActivityDay[][]> {
+  return Promise.all(memberIds.map((id) => activity(id, view, step)));
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useLayoutEffect, useRef, useState, useTransition, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
-import { activity, type ActivityDay, type ActivityView } from "../actions";
+import { activities, activity, type ActivityDay, type ActivityView } from "../actions";
 import { Icon } from "./ui";
 
 export type Measure = "deeds" | "points";
@@ -31,8 +31,8 @@ function rangeText({ view, step }: Range, first: string, last: string) {
 
 // The range on show and the one the switch shows. The switch answers at once; the grid follows when its data arrives.
 // Only the latest request counts, and one that comes back empty or fails puts the switch back on what is shown.
-export function useRange<T>(initial: T, load: (r: Range) => Promise<T | null>) {
-  const [shown, setShown] = useState({ range: { view: "last_12_months", step: 0 } as Range, data: initial, n: 0 });
+export function useRange<T>(initial: T, load: (r: Range) => Promise<T | null>, start0: Range = { view: "last_12_months", step: 0 }) {
+  const [shown, setShown] = useState({ range: start0, data: initial, n: 0 });
   const [want, setWant] = useState<Range | null>(null);
   const [loading, start] = useTransition();
   const latest = useRef(0);
@@ -95,9 +95,10 @@ export function ActivityBar({ range, go, measure, setMeasure, first, firstDay }:
 }
 
 // One member's days for a range: the total, the grid, its tooltip and keyboard moves. `children` goes before the total
-// (the leaderboard puts a name there). `animate` wipes a new range in; the first one just appears.
-export function ActivityGrid({ days, range, measure, animate, loading, children }: {
-  days: ActivityDay[]; range: Range; measure: Measure; animate: boolean; loading: boolean; children?: ReactNode;
+// (the leaderboard puts a name there). `animate` wipes a new range in, `delay` ms late; the first one just appears.
+// Colours scale to the busiest day on show, or to `scale` when several grids are compared.
+export function ActivityGrid({ days, range, measure, animate, loading, legend = true, delay = 0, scale, children }: {
+  days: ActivityDay[]; range: Range; measure: Measure; animate: boolean; loading: boolean; legend?: boolean; delay?: number; scale?: number; children?: ReactNode;
 }) {
   const [active, setActive] = useState<number | null>(null);
   const [tip, setTip] = useState({ i: 0, left: 0, top: 0, keyboard: false }); // kept after closing, so it fades out where it was
@@ -125,7 +126,7 @@ export function ActivityGrid({ days, range, measure, animate, loading, children 
   }, [active]);
 
   if (!first || !last) return null;
-  const max = Math.max(0, ...days.map((d) => d[measure]));
+  const max = scale ?? busiest(days, measure);
   const level = (d: ActivityDay) => (d.future || d[measure] <= 0 ? 0 : Math.min(4, Math.ceil((d[measure] / max) * 4)));
   const total = days.reduce((s, d) => s + d[measure], 0);
   const today = first.today;
@@ -165,20 +166,19 @@ export function ActivityGrid({ days, range, measure, animate, loading, children 
     "data-today": d.day === today || undefined, "data-future": d.future || undefined, "data-active": active === i || undefined,
   });
   const wipe = animate ? "heat-in" : "";
+  const wipeStyle = animate && delay ? { animationDelay: `${delay}ms` } : undefined;
 
   return (
     <div ref={box} className="relative space-y-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">{/* the total drops below a long name instead of squeezing it */}
           {children}
           <p data-testid="activity-total" className="text-sm text-muted">
             <span className="display text-base font-bold text-ink">{plural(total, measure === "deeds" ? "deed" : "point")}</span>{" "}
-            {rangeText(range, first.day, last.day)}
+            <span className="whitespace-nowrap">{rangeText(range, first.day, last.day)}</span>
           </p>
         </div>
-        <div aria-hidden className="flex items-center gap-1 text-xs text-muted">
-          Less {[0, 1, 2, 3, 4].map((l) => <span key={l} data-level={l} className="heat-cell size-2.5" />)} More
-        </div>
+        {legend && <Legend />}
       </div>
 
       <div tabIndex={0} role="group" aria-label="Activity by day. Arrow keys move between days."
@@ -189,7 +189,7 @@ export function ActivityGrid({ days, range, measure, animate, loading, children 
         {year ? (
           <div ref={scroller} data-testid="activity-scroll" className="heat-scroll relative -mx-1 px-1 pb-1 pt-0.5" onScroll={() => active !== null && show(null)}>
             <div key={`${range.view}${first.day}`} className={`grid gap-[3px] text-[0.6875rem] text-muted ${wipe}`}
-              style={{ width: "100%", minWidth: "min-content", gridTemplateColumns: `1.75rem repeat(${cols}, minmax(var(--min), 14px))` }}>
+              style={{ ...wipeStyle, width: "100%", minWidth: "min-content", gridTemplateColumns: `1.75rem repeat(${cols}, minmax(var(--min), 14px))` }}>
               {Array.from({ length: cols }, (_, c) => {
                 const inCol = days.slice(Math.max(0, c * 7 - lead), (c + 1) * 7 - lead);
                 const firstOf = inCol.find((d) => d.day.endsWith("-01"));
@@ -197,7 +197,7 @@ export function ActivityGrid({ days, range, measure, animate, loading, children 
                 return label && <span key={c} className="whitespace-nowrap leading-4" style={{ gridColumn: c + 2, gridRow: 1 }}>{monthShort.format(at(label.day))}</span>;
               })}
               {/* Weekday labels stay put while a phone scrolls the weeks under them. */}
-              <span aria-hidden className="sticky left-0 z-10 -ml-1 bg-[var(--heat-bg,var(--surface))]" style={{ gridColumn: 1, gridRow: "1 / 9" }} />
+              <span aria-hidden className="sticky left-0 z-10 -ml-1 bg-surface" style={{ gridColumn: 1, gridRow: "1 / 9" }} />
               {[1, 3, 5].map((w) => <span key={w} className="sticky left-0 z-10 self-center leading-none" style={{ gridColumn: 1, gridRow: w + 2 }}>{WEEKDAYS[w]}</span>)}
               {days.map((d, i) => (
                 <span key={d.day} {...cellProps(d, i)} className="heat-cell aspect-square"
@@ -206,7 +206,7 @@ export function ActivityGrid({ days, range, measure, animate, loading, children 
             </div>
           </div>
         ) : (
-          <div key={`${range.view}${first.day}`} className={`mx-auto grid max-w-xl grid-cols-7 gap-1.5 sm:gap-2 ${wipe}`}>
+          <div key={`${range.view}${first.day}`} style={wipeStyle} className={`mx-auto grid max-w-xl grid-cols-7 gap-1.5 sm:gap-2 ${wipe}`}>
             {WEEKDAYS.map((w) => <span key={w} className="text-center text-xs font-medium text-muted">{w}</span>)}
             {range.view === "month" && Array.from({ length: lead }, (_, i) => <span key={`lead${i}`} />)}
             {days.map((d, i) => (
@@ -239,9 +239,25 @@ export function ActivityGrid({ days, range, measure, animate, loading, children 
   );
 }
 
-// One member's heatmap with its own bar: Home, and (until the leaderboard gets its shared section) a leaderboard card.
-// `bare` drops the section title and card.
-export function Activity({ memberId, initial, timeZone, bare = false }: { memberId: string; initial: ActivityDay[]; timeZone: string; bare?: boolean }) {
+const busiest = (days: ActivityDay[], measure: Measure) => Math.max(0, ...days.map((d) => d[measure]));
+
+const Legend = () => (
+  <div aria-hidden className="flex items-center gap-1 text-xs text-muted">
+    Less {[0, 1, 2, 3, 4].map((l) => <span key={l} data-level={l} className="heat-cell size-2.5" />)} More
+  </div>
+);
+
+function ActivityCard({ titleId, children }: { titleId: string; children: ReactNode }) {
+  return (
+    <section aria-labelledby={titleId} className="rise space-y-3">
+      <h2 id={titleId} className="eyebrow px-1">Activity</h2>
+      <div className="heat space-y-4 rounded-[1.75rem] border border-line bg-surface/95 p-4 shadow-[var(--shadow)] sm:p-5">{children}</div>
+    </section>
+  );
+}
+
+// Home: one housemate's heatmap with its own bar.
+export function Activity({ memberId, initial, timeZone }: { memberId: string; initial: ActivityDay[]; timeZone: string }) {
   const titleId = useId();
   const [measure, setMeasure] = useState<Measure>("deeds");
   const { shown, range, loading, go } = useRange(initial, async (r) => {
@@ -250,21 +266,44 @@ export function Activity({ memberId, initial, timeZone, bare = false }: { member
   });
   const days = shown.data, first = days[0];
   if (!first) return null;
-
-  const body = (
-    <div role={bare ? "group" : undefined} aria-label={bare ? "Activity" : undefined}
-      className={`heat space-y-4 ${bare ? "" : "rounded-[1.75rem] border border-line bg-surface/95 p-4 shadow-[var(--shadow)] sm:p-5"}`}>
+  return (
+    <ActivityCard titleId={titleId}>
       <ActivityBar range={range} go={go} measure={measure} setMeasure={setMeasure} first={first.day} firstDay={first.first_day} />
       <ActivityGrid days={days} range={shown.range} measure={measure} animate={shown.n > 0} loading={loading} />
       <p className="text-xs text-muted">Days follow the household time zone ({timeZone}).</p>
-    </div>
+    </ActivityCard>
   );
-  if (bare) return body;
+}
+
+// Leaderboard: every scored housemate's heatmap under one shared bar, in leaderboard order. It opens on `start`, the
+// range of the period pill, and the bar moves them all together.
+export function ActivityBoard({ members, initial, start, timeZone }: {
+  members: { id: string; name: string; avatar: ReactNode }[]; initial: ActivityDay[][]; start: Range; timeZone: string;
+}) {
+  const titleId = useId();
+  const [measure, setMeasure] = useState<Measure>("deeds");
+  const { shown, range, loading, go } = useRange(initial, async (r) => {
+    const all = await activities(members.map((m) => m.id), r.view, r.step);
+    return all.some((d) => d.length) ? all : null;
+  }, start);
+  const first = shown.data.find((d) => d.length)?.[0];
+  if (!first) return null;
+  const scale = Math.max(...shown.data.map((d) => busiest(d, measure))); // one scale, so the same colour means the same amount
   return (
-    <section aria-labelledby={titleId} className="rise space-y-3">
-      <h2 id={titleId} className="eyebrow px-1">Activity</h2>
-      {body}
-    </section>
+    <ActivityCard titleId={titleId}>
+      <ActivityBar range={range} go={go} measure={measure} setMeasure={setMeasure} first={first.day} firstDay={first.first_day} />
+      <div className="flex justify-end"><Legend /></div>
+      <ul className="divide-y divide-line">
+        {members.map((m, i) => (
+          <li key={m.id} className="py-4 first:pt-0 last:pb-0" aria-label={m.name}>
+            <ActivityGrid days={shown.data[i]} range={shown.range} measure={measure} animate={shown.n > 0} loading={loading} legend={false} delay={i * 40} scale={scale}>
+              <span className="flex min-w-0 items-center gap-2">{m.avatar}<span className="truncate font-semibold">{m.name}</span></span>
+            </ActivityGrid>
+          </li>
+        ))}
+      </ul>
+      <p className="text-xs text-muted">Days follow the household time zone ({timeZone}).</p>
+    </ActivityCard>
   );
 }
 

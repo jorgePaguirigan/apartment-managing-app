@@ -1,9 +1,12 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getHousemates, getMe } from "@/lib/me";
-import { PERIODS, isPeriod, periodTitle } from "@/lib/period";
+import { PERIODS, isPeriod, periodTitle, type Period } from "@/lib/period";
 import { AppShell } from "../_components/app-shell";
 import { Avatar, Chip, Icon } from "../_components/ui";
+import { activities } from "../actions";
+import { ActivityBoard, type Range } from "../_components/activity";
 import { FlipList } from "../_components/flip-list";
 import { PillNav } from "../_components/pill-nav";
 import { LeaderCard } from "./card";
@@ -81,6 +84,27 @@ export default async function Leaderboard({ searchParams }: PageProps<"/leaderbo
       </FlipList>
       {!rows.length && <p className="rounded-3xl border border-dashed border-line p-6 text-center text-muted">No housemates yet. Invite them from the Home tab.</p>}
       {empty && <p className="text-center text-sm text-muted">Nobody has points for this period yet.</p>}
+      {rows.length > 0 && (
+        <Suspense key={period} fallback={<div className="h-64 animate-pulse rounded-[1.75rem] bg-surface-2" />}>
+          <BoardActivity members={rows} period={period} timeZone={household?.timezone ?? "Asia/Manila"} />
+        </Suspense>
+      )}
     </AppShell>
+  );
+}
+
+// The heatmaps open on the range of the period pill on show.
+const START: Record<Period, Range> = {
+  this_week: { view: "week", step: 0 }, prev_week: { view: "week", step: -1 },
+  this_month: { view: "month", step: 0 }, prev_month: { view: "month", step: -1 },
+};
+
+// Every scored housemate's activity below the cards, in leaderboard order. It streams in after the cards.
+async function BoardActivity({ members, period, timeZone }: { members: { id: string; name: string }[]; period: Period; timeZone: string }) {
+  const start = START[period];
+  const initial = await activities(members.map((m) => m.id), start.view, start.step);
+  return (
+    <ActivityBoard key={period} start={start} initial={initial} timeZone={timeZone}
+      members={members.map((m) => ({ id: m.id, name: m.name, avatar: <Avatar name={m.name} className="size-7 shrink-0" /> }))} />
   );
 }
