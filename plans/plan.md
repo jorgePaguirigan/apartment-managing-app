@@ -1,6 +1,60 @@
 # Feature batch plan
 
-## Current batch: heatmap placement and review fixes (started 2026-11-20)
+## Current batch: day streak on Home (started 2026-11-25)
+
+Plan approved 2026-11-25 (A1 with smoke and sparks). One branch per milestone from an up-to-date main. S1 adds a SQL function: hosted `supabase db push` only with your OK, after a dry run.
+
+Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
+
+| # | Milestone | Branch | Status | PR |
+|---|---|---|---|---|
+| S1 | `streak()` in SQL, pgTAP, PRD and glossary | `streak-sql` | 🟡 in progress, pgTAP 11/11 green | |
+| S2 | Home: streak in the housemate view, motion, e2e | `streak-home` | ⚪ not started | |
+
+### Your request
+1. A streak on the Home tab in the housemate view. Mockups, screenshots or video before building.
+
+### Decisions (your answers)
+- Unit: **days**.
+- What counts: **any positive entry**, the same as the heatmap's deeds (accepted claims, custom claims, contributors' entries, awards). Penalties and deleted entries never count.
+- Today with nothing yet: the streak **stays alive** with a hint ("Do a deed today to make it 7"). It breaks only when a whole day ends with nothing.
+- Which day a claim counts for: **the day it was submitted**, once accepted. Awards count on the day given. So a slow admin cannot break a streak (streak days can differ from the heatmap's days, which use the accept time).
+- Show: **the current streak only**, as a pill in the banner's upper right (layout A). No medal goal, no best streak.
+- Name: **day streak**, so it is never confused with the weekly Streak medal (4.5), which stays as it is.
+
+### Found in the code
+- A weekly Streak medal already exists in `medals()` (accepted claims in 4+ Sunday weeks in a row). Nothing tracks days.
+- A score entry's `created_at` is the accept time (`decide_claim` inserts with `now()`); the submit time is on `claim.created_at`, reachable through `score_entry.claim_id`.
+- Home (`housemate-view.tsx`): points banner, then Activity, then "I did…". `activity()` shows the pattern: a SQL function in the household time zone, `p_now` for tests, scored members only.
+
+### Mockups
+Artifact: https://claude.ai/artifact/G2Ab6HmcndAs77Tuk8KR4e
+- Round 1 (2026-11-25): A pill in the banner, B own card, C row in the banner. **You picked A**: simple, no clutter, but in the banner's upper right.
+- Round 2 (2026-11-25): the pill in the upper right across from "Hi, <name>", rank stays bottom right. A1 words ("6-day streak"), A2 number (flame and "6"), A3 sticker over the corner. Flame outline = today open, half-filled = a claim from today is waiting, filled = today counts. Empty state "No streak". Checked at 320px with a long name (the first try split "Concepcion" mid-word; fixed by a shorter empty label and `overflow-wrap: break-word`).
+- Round 3 (2026-11-25): **you picked A1** ("6-day streak") and asked for smoke when today is not done and campfire sparks when it is. Mocked: 4 gray smoke puffs (2.8s, one every 0.7s, rise ~18px, widen and drift); 7 orange/red 3px sparks (0.9–1.5s, rise 14–24px, one flicker) with a slight flame flicker; on the switch the smoke stops and 12 sparks burst once. No streak keeps a faint smoke. Reduced motion: no particles, the flame fill alone shows the state. CSS keyframes on transform and opacity only, fixed per-particle values, no JS per frame.
+- Layout A has no room for best streak, the 7 days or the hint, so they are dropped. The today state is carried by the flame and the pill's accessible name.
+
+### S1 plan: `streak()` in SQL
+- **Spec first:** PRD 4.4 gains a Day streak bullet; GLOSSARY gains **Day streak**.
+- **Backend:** `streak(p_now timestamptz default now())` returns one row for the caller only: `days` (in a row), `today_done`, `today_waiting`. `security definer`, because a contributor cannot read the claim row their entry came from; it reads only the caller's rows. A day is done when the member has a non-deleted positive entry on it, dated by `claim.created_at` for claim entries and `score_entry.created_at` otherwise, in the household time zone. `current` counts back from today if today is done, else from yesterday. `waiting` marks today when a claim they made or are a contributor on, submitted today, is still pending Scored members only.
+- **Test (pgTAP, `supabase/tests/streak.test.sql`):** 5 days in a row ending yesterday → 5 with today open; a deed today → 6; a gap two days ago → current counts from after the gap; a claim submitted on day 1 and accepted on day 3 fills day 1; an award counts; a penalty and a deleted entry do not; 23:59 vs 00:00 in Asia/Manila; an admin who is not scored is refused.
+- **Files:** new migration, `supabase/tests/streak.test.sql`, PRD.md, GLOSSARY.md.
+- **Skills:** mattpocock-skills:domain-modeling, mattpocock-skills:tdd, code-review, mattpocock-skills:pr, commit-per-file.
+
+### S2 plan: Home UI
+- **UI:** the A1 pill ("6-day streak") in the upper right of the points banner, loaded with the banner, with the smoke and spark particles from round 3 (a client component; keyframes in `globals.css`). The smoke or sparks loop while Home is open; everything else plays once: on load the pill fades in from 6px right at scale 0.94 (300ms, strong ease-out, 120ms after the banner); when today flips to done on a live refresh, the smoke stops, 12 sparks burst once, the number rolls up and the flame fills and flares; then the spark loop runs. Reduced motion: no particles or flicker, opacity only. The pill is not a control, so no hover or press state. Checked at 320px with a long name and in dark mode.
+- **Test:** Playwright `streak.spec.ts`: seed 3 days of entries in a row ending yesterday → the pill reads "3-day streak, today not done yet"; accept a claim today → "4-day streak"; a housemate with nothing → "No streak"; the pill sits in the banner's top half, right of the greeting. Type-check and lint.
+- **Files:** `housemate-view.tsx`, new `streak.tsx`, `ui.tsx` (flame icon), `globals.css`, `actions.ts`, `web/e2e/streak.spec.ts`.
+- **Skills:** emil-design-eng, apple-design, animate, animation-performance (loop cost on a phone), mobile-native, break-ui (0, 1 "1-day", 365, long names), mattpocock-skills:tdd, run, code-review, mattpocock-skills:pr, commit-per-file.
+
+### Order
+S1 → S2, merged in order. Stop after S2 for your screenshot approval. Hosted DB push of S1 only with your OK.
+
+### Not checked yet
+- The iOS app (not in this request).
+- How the streak feels on a real phone.
+
+## Previous batch: heatmap placement and review fixes (started 2026-11-20)
 
 Plan approved 2026-11-20. One branch per milestone from an up-to-date main, merged in order (retarget the next PR to main before deleting a merged branch). A1 changes a SQL function: hosted `supabase db push` only with your OK, after a dry run.
 
