@@ -1,6 +1,7 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "web", "runtimeExecutable": "npm", "runtimeArgs": ["--prefix", "web", "run", "dev"], "port": 3000 }
+    { "name": "web", "runtimeExecutable": "npm", "runtimeArgs": ["--prefix", "web", "run", "dev"], "port": 3000 },
+    { "name": "web-local", "runtimeExecutable": "sh", "runtimeArgs": ["-c", "cd web && NEXT_DIST_DIR=.next-local NEXT_PUBLIC_SUPABASE_URL=$(supabase status -o env | sed -n 's/^API_URL=\"\\(.*\\)\"/\\1/p') NEXT_PUBLIC_SUPABASE_ANON_KEY=$(supabase status -o env | sed -n 's/^ANON_KEY=\"\\(.*\\)\"/\\1/p') npx next dev -p 3100"], "port": 3100 }
   ]
 }
