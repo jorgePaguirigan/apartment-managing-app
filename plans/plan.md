@@ -1,6 +1,62 @@
 # Feature batch plan
 
-## Current batch: day streak on Home (started 2026-11-25)
+## Current batch: streak on submit, heatmap by submit day (started 2026-11-25)
+
+Plan approved 2026-11-25. One branch per milestone from an up-to-date main. Both add a migration: hosted `supabase db push` only with your OK, after a dry run.
+
+Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
+
+| # | Milestone | Branch | Status | PR |
+|---|---|---|---|---|
+| D1 | Day streak counts waiting claims; no half-lit state | `streak-on-submit` | 🔵 PR open, UI approved 2026-11-25; waiting for hosted DB push | [#95](https://github.com/jorgePaguirigan/apartment-managing-app/pull/95) |
+| D2 | Heatmap dates claims by submit day | `activity-submit-day` | 🔵 PR open; waiting for hosted DB push | [#96](https://github.com/jorgePaguirigan/apartment-managing-app/pull/96) |
+
+### Your request
+1. Make the streak light up when submitting a claim.
+2. The heatmap should take claim submission into account, not when the claim is accepted.
+
+### Decisions (your answers)
+- Streak: **waiting claims count**, on the day they were submitted, today or earlier (claimer and contributors). A rejection takes the day back out. The half-lit "waiting" flame goes away.
+- Heatmap: **accepted only, dated by submit day**. Deeds stay score entries; a claim lands on the day it was submitted. A waiting claim shows once accepted.
+
+### Found in the code
+- `streak()` already dates a claim's entry by `claim.created_at`, but needs an accepted entry; a waiting claim from today only sets `today_waiting` (half-lit flame, `globals.css:409`). Submitting a claim already calls `revalidatePath("/")`, so the pill refetches, and `StreakPill` already bursts when today flips to done while mounted.
+- `activity()` dates by `score_entry.created_at` (the accept time) and runs as the caller. Under RLS a housemate cannot read other people's claims or a claim they are only a contributor on (`claim_read`), so reading the submit date needs `security definer`, as `streak()` does.
+- `first_day` (how far back the arrows go) also uses the accept time.
+- No iOS code uses either function. Callers: `housemate-view.tsx` (streak), `actions.ts` (activity).
+
+### D1 plan: streak counts waiting claims
+- **Spec first:** PRD 4.4 Day streak and GLOSSARY "Day streak": a claim counts from the moment it is submitted, while waiting or accepted; a rejected one never does. Drop "half lit".
+- **Backend:** new migration drops and recreates `streak(p_now)` returning `days, today_done` (no `today_waiting`). A day counts if it has a positive non-deleted entry (claim entries by submit day, others by entry day) or a pending claim the caller made or is a contributor on (by submit day).
+- **UI:** remove `today_waiting` from `StreakPill`, its label branch and the half-lit CSS. Submitting a claim now plays the existing burst (smoke stops, 12 sparks, number rolls up, flame fills). No new motion; the pill is not a control.
+- **Test (pgTAP `streak.test.sql`):** a pending claim today → today done, days +1; a pending claim yesterday keeps the run; a contributor on a pending claim counts; a rejected claim does not; existing cases kept. Playwright `streak.spec.ts`: submit a claim through "I did…" → the pill reads "N+1-day streak" and is lit (`data-fire=spark`) without the admin deciding. Type-check and lint.
+- **Files:** new migration, `supabase/tests/streak.test.sql`, `streak.tsx`, `globals.css`, `web/e2e/streak.spec.ts`, PRD.md, GLOSSARY.md.
+- **Skills:** mattpocock-skills:domain-modeling, pstack:blast-radius (return type change), mattpocock-skills:tdd, emil-design-eng (the burst on submit), run, code-review, mattpocock-skills:pr, commit-per-file.
+
+### D2 plan: heatmap by submit day
+- **Spec first:** PRD 4.4 Activity heatmap and GLOSSARY "Activity": a claim's entry counts on the day the claim was submitted; awards on the day given.
+- **Backend:** new migration recreates `activity()` (same arguments) as `security definer`, keeping its checks (caller's household, scored member). Day = `coalesce(claim.created_at, entry.created_at)` in the household time zone; the range filter and `first_day` use the same day.
+- **UI:** none.
+- **Test (pgTAP `activity.test.sql`):** a claim submitted Monday and accepted Wednesday shows on Monday, not Wednesday; a contributor's entry lands on the submit day; a claim submitted on Saturday 23:59 Manila and accepted Sunday stays in the earlier week; an award stays on its own day; existing cases kept. Existing Playwright `activity.spec.ts` and `activity-leaderboard.spec.ts` rerun.
+- **Files:** new migration, `supabase/tests/activity.test.sql`, PRD.md, GLOSSARY.md.
+- **Skills:** mattpocock-skills:domain-modeling, pstack:blast-radius (security definer: who can now read what), mattpocock-skills:tdd, code-review, mattpocock-skills:pr, commit-per-file.
+
+### Order
+D1 → D2, merged in order. Stop after D1 for your screenshot approval. Hosted DB push of both only with your OK.
+
+### Not checked yet
+- The iOS app (does not show either).
+- Live refresh through Supabase Realtime (not running locally): a claim accepted on another device; the Home heatmap still does not update on a live refresh (seen last batch).
+- With D2 a slow accept can change a past week's heatmap after the fact (the day was already shown empty). Medals and the leaderboard still use the accept time; not in this request.
+
+### Wrap-up (2026-11-25)
+- **D1 skills:** domain-modeling (PRD 4.4 and GLOSSARY "Day streak"), blast-radius (only the Home pill reads `streak()`; either deploy order is safe), tdd (pgTAP red 3/13 on pending claims, then green; Playwright submits through "I did…"), emil-design-eng (the existing burst now plays on submit, a rare celebratory moment; nothing new added), run (dev server on 3100 against local Supabase; screenshots before submit, mid-burst, settled), code-review (one nit: the live-refresh burst lost its own e2e step; left, same state flip), pr, commit-per-file.
+- **D2 skills:** domain-modeling (PRD 4.4 and GLOSSARY "Activity"), blast-radius (`security definer` exposes no new score entries: the only policy was `household_id = current_household()`, already filtered; the existing refusal tests pass), tdd (pgTAP red 7/23, then green; anon check added), code-review, pr, commit-per-file. No UI, so no screenshot; the existing heatmap Playwright specs pass.
+- **Found:** the streak Playwright test was flaky before this batch (`boundingBox()` null right after a reload, 3 of 4 runs); the layout check now retries. All local pgTAP failures seen at the start were leftover e2e rows; `supabase db reset` fixed them.
+- **Not verified:** hosted DB (both migrations not pushed yet), a real phone, live refresh when an admin rejects a waiting claim on another device.
+- **Decisions you may want to change:** a claim the admin later rejects lights the streak until the rejection; on the leaderboard a period's heatmap total can differ from the card's points (accept time); other housemates now see the day an accepted claim was submitted.
+
+## Previous batch: day streak on Home (started 2026-11-25)
 
 Plan approved 2026-11-25 (A1 with smoke and sparks). Both merged 2026-11-25. One branch per milestone from an up-to-date main. S1 adds a SQL function: hosted `supabase db push` only with your OK, after a dry run.
 

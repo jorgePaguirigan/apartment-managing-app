@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from "react";
 
-export type Streak = { days: number; today_done: boolean; today_waiting: boolean };
+export type Streak = { days: number; today_done: boolean };
 
 // Fixed particle paths, so every load looks the same and nothing is worked out per frame: [dx, dy, seconds, delay].
 const SMOKE = [[3, -18, 2.8, 0], [-4, -17, 2.8, 0.7], [5, -20, 2.8, 1.4], [-2, -16, 2.8, 2.1]];
@@ -17,8 +17,8 @@ const path = ([dx, dy, d, delay]: number[], extra?: CSSProperties) =>
   ({ "--dx": `${dx}px`, "--dy": `${dy}px`, "--d": `${d}s`, "--delay": `${delay}s`, ...extra }) as CSSProperties;
 
 // The day streak in the top right of the points banner. Smoke while today has no deed yet, sparks once it counts,
-// and one burst when it starts to count while the page is open (a live refresh).
-export function StreakPill({ days, today_done: done, today_waiting: waiting }: Streak) {
+// and one burst when it starts to count while the page is open (a claim submitted, or a live refresh).
+export function StreakPill({ days, today_done: done }: Streak) {
   const [seen, setSeen] = useState({ days, done });
   const [litFrom, setLitFrom] = useState<number | null>(null);
   if (seen.days !== days || seen.done !== done) {
@@ -26,10 +26,10 @@ export function StreakPill({ days, today_done: done, today_waiting: waiting }: S
     setSeen({ days, done });
   }
   const burst = litFrom !== null && done;
-  const label = !days ? "No streak" : `${days}-day streak${done ? "" : waiting ? ", today's claim is waiting" : ", today not done yet"}`;
+  const label = !days ? "No streak" : `${days}-day streak${done ? "" : ", today not done yet"}`;
 
   return (
-    <span data-testid="streak" role="img" aria-label={label} title={label} data-fire={done ? "spark" : "smoke"} data-waiting={waiting || undefined}
+    <span data-testid="streak" role="img" aria-label={label} title={label} data-fire={done ? "spark" : "smoke"}
       className={`streak relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full py-1.5 pl-2 pr-3 text-sm font-semibold leading-tight ${days ? "bg-[#16171b] text-[#f3f1ea]" : "streak-cold bg-[#16171b]/10 text-[#16171b]"}`}>
       <span className="streak-fx" aria-hidden>
         {done

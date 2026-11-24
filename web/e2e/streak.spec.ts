@@ -11,7 +11,7 @@ const award = (name: string, days: number[]) => psql(`insert into public.score_e
   unnest(array[${days.join(",")}]) v (ago)
   where m.display_name = '${name}'`);
 
-test("Home shows the day streak pill in the banner's top right: smoke before today's deed, sparks after", async ({ browser }) => {
+test("Home shows the day streak pill in the banner's top right: smoke before today's deed, sparks the moment a claim is submitted", async ({ browser }) => {
   const admin = await newUser(browser);
   const mate = await newUser(browser);
   const name = `streak-mate${stamp}`;
@@ -38,21 +38,24 @@ test("Home shows the day streak pill in the banner's top right: smoke before tod
   await expect(pill.locator(".streak-puff")).toHaveCount(4);
 
   // Top right of the banner: level with the greeting and to its right, above the points.
+  // Retried: right after a reload the streamed banner can be hidden for a moment, and boundingBox() does not wait.
   const box = async (text: string) => (await page.getByText(text, { exact: true }).first().boundingBox())!;
-  const [p, hi, pts] = [(await pill.boundingBox())!, await box(`Hi, ${name}`), await box("points this week")];
-  expect(p.x).toBeGreaterThan(hi.x + hi.width);
-  expect(p.y).toBeLessThan(pts.y);
+  await expect(async () => {
+    const [p, hi, pts] = [(await pill.boundingBox())!, await box(`Hi, ${name}`), await box("points this week")];
+    expect(p.x).toBeGreaterThan(hi.x + hi.width);
+    expect(p.y).toBeLessThan(pts.y);
+  }).toPass();
   await page.screenshot({ path: shot("streak-smoke") });
 
-  // Today's deed lands and the page refreshes in place (as LiveRefresh does): sparks, with one burst.
-  award(name, [0]);
-  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+  // Submitting a claim lights today at once, before the admin decides: sparks, with one burst.
+  await page.getByRole("button", { name: /Cooked dinner/ }).click();
+  await expect(page.getByText("Sent to your admin for approval.")).toBeVisible();
   await expect(pill).toHaveText("4-day streak");
   await expect(pill).toHaveAttribute("aria-label", "4-day streak");
   await expect(pill).toHaveAttribute("data-fire", "spark");
   await expect(pill.locator(".streak-burst")).toHaveCount(12);
   await expect(pill.locator(".streak-spark:not(.streak-burst)")).toHaveCount(7);
-  await page.screenshot({ path: shot("streak-spark") });
+  await pill.locator("xpath=ancestor::section").screenshot({ path: shot("streak-spark") }); // the tap scrolled the banner away
 
   // A fresh load shows sparks without the burst.
   await page.reload();
