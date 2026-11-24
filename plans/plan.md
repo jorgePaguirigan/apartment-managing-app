@@ -2,14 +2,14 @@
 
 ## Current batch: streak on submit, heatmap by submit day (started 2026-11-25)
 
-Plan approved 2026-11-25. One branch per milestone from an up-to-date main. Both add a migration: hosted `supabase db push` only with your OK, after a dry run.
+Plan approved 2026-11-25. Both merged 2026-11-25; both migrations pushed to the hosted database 2026-11-25 after dry runs, with your OK. One branch per milestone from an up-to-date main. Both add a migration: hosted `supabase db push` only with your OK, after a dry run.
 
 Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| D1 | Day streak counts waiting claims; no half-lit state | `streak-on-submit` | 🔵 PR open, UI approved 2026-11-25; waiting for hosted DB push | [#95](https://github.com/jorgePaguirigan/apartment-managing-app/pull/95) |
-| D2 | Heatmap dates claims by submit day | `activity-submit-day` | 🔵 PR open; waiting for hosted DB push | [#96](https://github.com/jorgePaguirigan/apartment-managing-app/pull/96) |
+| D1 | Day streak counts waiting claims; no half-lit state | `streak-on-submit` | ✅ merged (UI approved 2026-11-25), hosted DB pushed | [#95](https://github.com/jorgePaguirigan/apartment-managing-app/pull/95) |
+| D2 | Heatmap dates claims by submit day | `activity-submit-day` | ✅ merged, hosted DB pushed | [#96](https://github.com/jorgePaguirigan/apartment-managing-app/pull/96) |
 
 ### Your request
 1. Make the streak light up when submitting a claim.
@@ -53,7 +53,8 @@ D1 → D2, merged in order. Stop after D1 for your screenshot approval. Hosted D
 - **D1 skills:** domain-modeling (PRD 4.4 and GLOSSARY "Day streak"), blast-radius (only the Home pill reads `streak()`; either deploy order is safe), tdd (pgTAP red 3/13 on pending claims, then green; Playwright submits through "I did…"), emil-design-eng (the existing burst now plays on submit, a rare celebratory moment; nothing new added), run (dev server on 3100 against local Supabase; screenshots before submit, mid-burst, settled), code-review (one nit: the live-refresh burst lost its own e2e step; left, same state flip), pr, commit-per-file.
 - **D2 skills:** domain-modeling (PRD 4.4 and GLOSSARY "Activity"), blast-radius (`security definer` exposes no new score entries: the only policy was `household_id = current_household()`, already filtered; the existing refusal tests pass), tdd (pgTAP red 7/23, then green; anon check added), code-review, pr, commit-per-file. No UI, so no screenshot; the existing heatmap Playwright specs pass.
 - **Found:** the streak Playwright test was flaky before this batch (`boundingBox()` null right after a reload, 3 of 4 runs); the layout check now retries. All local pgTAP failures seen at the start were leftover e2e rows; `supabase db reset` fixed them.
-- **Not verified:** hosted DB (both migrations not pushed yet), a real phone, live refresh when an admin rejects a waiting claim on another device.
+- **Merge:** D2 conflicted with D1 on neighbouring PRD and GLOSSARY lines; kept both (D2's Activity line, D1's Day streak line), then all pgTAP (470), type-check and the heatmap and streak Playwright specs passed again before the push.
+- **Not verified:** the deployed web app after the hosted push, a real phone, live refresh when an admin rejects a waiting claim on another device.
 - **Decisions you may want to change:** a claim the admin later rejects lights the streak until the rejection; on the leaderboard a period's heatmap total can differ from the card's points (accept time); other housemates now see the day an accepted claim was submitted.
 
 ## Previous batch: day streak on Home (started 2026-11-25)
