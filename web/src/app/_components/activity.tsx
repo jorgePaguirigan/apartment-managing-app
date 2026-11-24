@@ -64,7 +64,7 @@ export function ActivityBar({ range, go, measure, setMeasure, first, firstDay }:
           style={{ transform: `translateX(${VIEWS.findIndex(([v]) => v === range.view) * 100}%)` }} />
         {VIEWS.map(([v, label]) => (
           <button key={v} type="button" aria-pressed={range.view === v} onClick={() => v !== range.view && go({ view: v, step: 0 })}
-            className={`relative z-10 min-h-9 whitespace-nowrap rounded-full px-1 text-[0.8125rem] font-semibold sm:px-3 sm:text-sm transition-[color,transform] duration-150 ease-out select-none active:scale-[0.96] ${range.view === v ? "text-bg" : "text-muted [@media(hover:hover)]:hover:text-ink"}`}>
+            className={`relative z-10 min-h-9 whitespace-nowrap rounded-full px-1 text-[0.8125rem] font-semibold max-[359px]:px-0 max-[359px]:text-xs max-[359px]:tracking-tight sm:px-3 sm:text-sm transition-[color,transform] duration-150 ease-out select-none active:scale-[0.96] ${range.view === v ? "text-bg" : "text-muted [@media(hover:hover)]:hover:text-ink"}`}>
             {label}
           </button>
         ))}
