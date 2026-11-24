@@ -8,7 +8,7 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| S1 | `streak()` in SQL, pgTAP, PRD and glossary | `streak-sql` | ✅ merged, hosted DB not pushed yet | [#93](https://github.com/jorgePaguirigan/apartment-managing-app/pull/93) |
+| S1 | `streak()` in SQL, pgTAP, PRD and glossary | `streak-sql` | ✅ merged, hosted DB pushed 2026-11-25 | [#93](https://github.com/jorgePaguirigan/apartment-managing-app/pull/93) |
 | S2 | Home: streak pill with smoke and sparks, e2e | `streak-home` | ✅ merged (UI approved 2026-11-25) | [#94](https://github.com/jorgePaguirigan/apartment-managing-app/pull/94) |
 
 ### Your request
