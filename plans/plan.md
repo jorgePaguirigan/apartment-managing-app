@@ -8,8 +8,8 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| D1 | Day streak counts waiting claims; no half-lit state | `streak-on-submit` | 🔵 PR open, waiting for UI approval | [#95](https://github.com/jorgePaguirigan/apartment-managing-app/pull/95) |
-| D2 | Heatmap dates claims by submit day | `activity-submit-day` | ⚪ not started | |
+| D1 | Day streak counts waiting claims; no half-lit state | `streak-on-submit` | 🔵 PR open, UI approved 2026-11-25; waiting for hosted DB push | [#95](https://github.com/jorgePaguirigan/apartment-managing-app/pull/95) |
+| D2 | Heatmap dates claims by submit day | `activity-submit-day` | 🔵 PR open; waiting for hosted DB push | [#96](https://github.com/jorgePaguirigan/apartment-managing-app/pull/96) |
 
 ### Your request
 1. Make the streak light up when submitting a claim.
@@ -48,6 +48,13 @@ D1 → D2, merged in order. Stop after D1 for your screenshot approval. Hosted D
 - The iOS app (does not show either).
 - Live refresh through Supabase Realtime (not running locally): a claim accepted on another device; the Home heatmap still does not update on a live refresh (seen last batch).
 - With D2 a slow accept can change a past week's heatmap after the fact (the day was already shown empty). Medals and the leaderboard still use the accept time; not in this request.
+
+### Wrap-up (2026-11-25)
+- **D1 skills:** domain-modeling (PRD 4.4 and GLOSSARY "Day streak"), blast-radius (only the Home pill reads `streak()`; either deploy order is safe), tdd (pgTAP red 3/13 on pending claims, then green; Playwright submits through "I did…"), emil-design-eng (the existing burst now plays on submit, a rare celebratory moment; nothing new added), run (dev server on 3100 against local Supabase; screenshots before submit, mid-burst, settled), code-review (one nit: the live-refresh burst lost its own e2e step; left, same state flip), pr, commit-per-file.
+- **D2 skills:** domain-modeling (PRD 4.4 and GLOSSARY "Activity"), blast-radius (`security definer` exposes no new score entries: the only policy was `household_id = current_household()`, already filtered; the existing refusal tests pass), tdd (pgTAP red 7/23, then green; anon check added), code-review, pr, commit-per-file. No UI, so no screenshot; the existing heatmap Playwright specs pass.
+- **Found:** the streak Playwright test was flaky before this batch (`boundingBox()` null right after a reload, 3 of 4 runs); the layout check now retries. All local pgTAP failures seen at the start were leftover e2e rows; `supabase db reset` fixed them.
+- **Not verified:** hosted DB (both migrations not pushed yet), a real phone, live refresh when an admin rejects a waiting claim on another device.
+- **Decisions you may want to change:** a claim the admin later rejects lights the streak until the rejection; on the leaderboard a period's heatmap total can differ from the card's points (accept time); other housemates now see the day an accepted claim was submitted.
 
 ## Previous batch: day streak on Home (started 2026-11-25)
 
