@@ -401,12 +401,11 @@ input:checked + .cell-box path { stroke-dashoffset: 0; }
   .cell-box path { transition: none; }
 }
 
-/* Day streak pill (Home banner). The flame is an outline before today's deed, half lit while today's claim waits, filled once it counts.
+/* Day streak pill (Home banner). The flame is an outline before today's deed, filled once it counts.
    Particles sit in a zero-size box at the flame's tip; each sets its own --dx/--dy/--d/--delay, so no parent variable changes per frame. */
 .streak-flame { transform-origin: 50% 90%; }
 .streak-flame path { fill: #ffb23f; stroke: #ffb23f; stroke-width: 1.6; stroke-linejoin: round; transition: fill-opacity 300ms ease; }
 .streak[data-fire="smoke"] .streak-flame path { fill-opacity: 0; }
-.streak[data-waiting] .streak-flame path { fill-opacity: 0.35; }
 .streak-cold .streak-flame path { fill: none; stroke: currentColor; opacity: 0.5; }
 .streak-fx { position: absolute; left: 16px; top: 7px; width: 0; height: 0; pointer-events: none; }
 .streak-fx i { position: absolute; left: 0; top: 0; opacity: 0; }
