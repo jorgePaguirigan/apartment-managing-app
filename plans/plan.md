@@ -9,7 +9,7 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
 | S1 | `streak()` in SQL, pgTAP, PRD and glossary | `streak-sql` | 🔵 PR open, hosted DB not pushed | [#93](https://github.com/jorgePaguirigan/apartment-managing-app/pull/93) |
-| S2 | Home: streak pill with smoke and sparks, e2e | `streak-home` (on `streak-sql`) | 🔵 PR open, waiting for your screenshot approval | (see below) |
+| S2 | Home: streak pill with smoke and sparks, e2e | `streak-home` (on `streak-sql`) | 🔵 PR open, waiting for your screenshot approval | [#94](https://github.com/jorgePaguirigan/apartment-managing-app/pull/94) |
 
 ### Your request
 1. A streak on the Home tab in the housemate view. Mockups, screenshots or video before building.
