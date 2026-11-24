@@ -1,6 +1,6 @@
 -- pgTAP tests for activity(): one scored member's deeds and points per day, in the household time zone, for the heatmap.
 begin;
-select plan(15);
+select plan(21);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-00000000000a'), ('00000000-0000-0000-0000-000000000001'), ('00000000-0000-0000-0000-000000000002'),
@@ -65,6 +65,25 @@ select is((select (count(*), min(day), max(day), sum(points), sum(deeds))::text
 select is((select distinct (today, first_day)::text
            from public.activity('00000000-0000-0000-0000-000000000001', 'week', null, '2026-10-21 12:00+08')),
   '(2026-10-21,2025-12-31)', 'today and the household''s first day, for the arrows');
+
+-- p_step moves the range back or forward by whole weeks, months or years, worked out here and not in the client.
+select is((select (min(day), max(day), sum(points))::text
+           from public.activity('00000000-0000-0000-0000-000000000001', 'week', null, '2026-10-21 12:00+08', -1)),
+  '(2026-10-11,2026-10-17,5)', 'step -1 week: Sunday 11 to Saturday 17 Oct');
+select is((select (count(*), min(day), sum(points))::text
+           from public.activity('00000000-0000-0000-0000-000000000001', 'month', null, '2026-10-21 12:00+08', -10)),
+  '(31,2025-12-01,1)', 'step -10 months crosses into last year: December 2025');
+select is((select (count(*), min(day))::text
+           from public.activity('00000000-0000-0000-0000-000000000001', 'year', null, '2026-10-21 12:00+08', -1)),
+  '(365,2025-01-01)', 'step -1 year: 2025');
+select is((select (count(*), min(day), max(day))::text
+           from public.activity('00000000-0000-0000-0000-000000000001', 'last_12_months', '2025-10-21', '2026-10-21 12:00+08', -1)),
+  '(366,2023-10-22,2024-10-21)', 'step -1 of 12 months lands on the same date a year back, leap day included');
+select is((select (count(*), min(day), max(day))::text
+           from public.activity('00000000-0000-0000-0000-000000000001', 'last_12_months', '2025-10-21', '2026-10-21 12:00+08', 2)),
+  '(365,2025-10-22,2026-10-21)', 'stepping 12 months forward never ends after today');
+select is((select count(*)::int from public.activity(p_member => '00000000-0000-0000-0000-000000000001', p_view => 'week', p_anchor => null)),
+  7, 'callers that pass no step still get the current range');
 
 select throws_ok($$select * from public.activity('00000000-0000-0000-0000-000000000001', 'forever')$$,
   '22023', 'unknown view', 'an unknown view is refused');
