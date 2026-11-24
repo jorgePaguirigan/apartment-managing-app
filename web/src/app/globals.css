@@ -88,28 +88,32 @@ body {
 button, summary, [role="button"] { overflow-wrap: normal; }
 
 /* Activity heatmap: one lime hue, 4 steps. Light runs pale to dark; dark mode flips so more is brighter. light-dark() follows
-   color-scheme, which every theme block above sets. Levels 3 and 4 carry light-on-dark (light) or ink-on-lime (dark) numbers. */
+   color-scheme, which every theme block above sets. Steps are spaced so each is told apart from the next, and each picks
+   the day-number colour (ink or paper) that clears 4.5:1 on it. */
 .heat {
-  --heat-1: light-dark(oklch(0.9 0.12 125), oklch(0.38 0.07 125));
-  --heat-2: light-dark(oklch(0.84 0.19 127), oklch(0.55 0.12 125));
-  --heat-3: light-dark(oklch(0.68 0.17 130), oklch(0.74 0.17 125));
-  --heat-4: light-dark(oklch(0.47 0.12 131), oklch(0.93 0.19 122));
+  --heat-1: light-dark(oklch(0.87 0.14 125), oklch(0.42 0.09 125));
+  --heat-2: light-dark(oklch(0.77 0.18 128), oklch(0.6 0.14 125));
+  --heat-3: light-dark(oklch(0.62 0.16 130), oklch(0.76 0.17 125));
+  --heat-4: light-dark(oklch(0.45 0.12 131), oklch(0.93 0.19 122));
 }
 .heat-cell { background: var(--surface-2); color: var(--muted); border-radius: 3px; user-select: none; -webkit-user-select: none; }
-.heat-cell[data-level="1"] { background: var(--heat-1); color: var(--ink); }
+.heat-cell[data-level="1"] { background: var(--heat-1); color: light-dark(#16171b, #fbfaf5); }
 .heat-cell[data-level="2"] { background: var(--heat-2); color: #16171b; }
-.heat-cell[data-level="3"] { background: var(--heat-3); color: light-dark(#fbfaf5, #16171b); }
+.heat-cell[data-level="3"] { background: var(--heat-3); color: #16171b; }
 .heat-cell[data-level="4"] { background: var(--heat-4); color: light-dark(#fbfaf5, #16171b); }
 .heat-cell[data-future] { background: transparent; box-shadow: inset 0 0 0 1px var(--line); }
 .heat-cell[data-today] { outline: 1.5px solid var(--ink); outline-offset: 1px; }
 .heat-cell[data-active] { outline: 2px solid var(--ink); outline-offset: 1px; }
-/* A new range fades in column by column (delay set per cell); off for reduced motion, where it just appears. */
-@media (prefers-reduced-motion: no-preference) {
-  .heat-in .heat-cell { animation: heat-in 200ms var(--ease-out-strong) both; }
-  @keyframes heat-in { from { opacity: 0; transform: scale(0.9); } }
+/* A new range wipes in left to right as one layer, instead of animating every cell; reduced motion keeps only the fade. */
+.heat-in { animation: heat-in 240ms var(--ease-out-strong) backwards; }
+@keyframes heat-in { from { opacity: 0.4; clip-path: inset(0 100% 0 0); } to { opacity: 1; clip-path: inset(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .heat-in { animation-name: heat-fade; }
+  @keyframes heat-fade { from { opacity: 0.4; } }
 }
 /* Tooltip: grows from the cell below it. */
 .heat-tip { transform: translate(-50%, -100%); transition: opacity 125ms var(--ease-out-strong), transform 125ms var(--ease-out-strong); transform-origin: bottom center; }
+.heat-tip[data-instant] { transition: none; }
 .heat-tip[data-hidden] { opacity: 0; transform: translate(-50%, -100%) scale(0.97); pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .heat-tip[data-hidden] { transform: translate(-50%, -100%); } }
 /* On the lime lead card: ink steps instead of lime, light text on the ink controls in both themes. */
@@ -118,7 +122,7 @@ button, summary, [role="button"] { overflow-wrap: normal; }
   color-scheme: light; --bg: #f3f1ea;
   --heat-1: rgb(22 23 27 / 0.22); --heat-2: rgb(22 23 27 / 0.42); --heat-3: rgb(22 23 27 / 0.68); --heat-4: #16171b;
 }
-.on-accent .heat-cell[data-level="2"] { color: #16171b; }
+.on-accent .heat-cell:is([data-level="3"], [data-level="4"]) { color: #fbfaf5; }
 /* Phone: the year grid scrolls inside its card, and the scroll stops at the card's ends instead of moving the page. */
 .heat-scroll { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; --min: 11px; }
 .heat-scroll::-webkit-scrollbar { display: none; }

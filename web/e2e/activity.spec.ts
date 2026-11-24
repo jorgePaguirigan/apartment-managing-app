@@ -33,6 +33,33 @@ test("Home heatmap counts deeds and points per day, by view, at phone and tablet
   await expect(card.locator("[data-today]")).toHaveAttribute("data-level", "4");
   await expect(card.getByRole("button", { name: "Next" })).toBeDisabled();
 
+  // It sits right under the points banner, before "I did…".
+  const y = (text: string) => page.getByText(text, { exact: true }).first().evaluate((el) => el.getBoundingClientRect().top);
+  const [banner, heat, did] = [await y("points this week"), await y("Activity"), await y("I did…")];
+  expect(banner < heat && heat < did).toBe(true);
+
+  // The tooltip reads "3 deeds, 6 points"; screen readers hear keyboard moves instead, and arrows stop at today.
+  await card.locator("[data-today]").hover();
+  await expect(card.locator(".heat-tip")).toContainText("3 deeds, 6 points");
+  await page.mouse.move(0, 0);
+  await card.getByRole("group", { name: /Activity by day/ }).focus();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await expect(card.locator("[data-today]")).toHaveAttribute("data-active", "true");
+  await expect(card.locator("p[aria-live]")).toContainText("3 deeds, 6 points");
+  await page.keyboard.press("Escape");
+
+  // The first entry is inside the last 12 months, so there is nothing to step back to.
+  await expect(card.getByRole("button", { name: "Previous" })).toBeDisabled();
+
+  // Two quick switches: the grid ends on the range the switch shows, never on the earlier one.
+  await card.getByRole("button", { name: "Week" }).click();
+  await card.getByRole("button", { name: "12 months" }).click();
+  await expect.poll(() => card.locator("[data-day]").count()).toBeGreaterThanOrEqual(365);
+  await page.waitForTimeout(800);
+  await expect(card.getByRole("button", { name: "12 months" })).toHaveAttribute("aria-pressed", "true");
+  expect(await card.locator("[data-day]").count()).toBeGreaterThanOrEqual(365);
+
   await card.getByLabel("Measure").selectOption("points");
   await expect(total).toHaveText("11 points in the last 12 months");
 
@@ -41,6 +68,10 @@ test("Home heatmap counts deeds and points per day, by view, at phone and tablet
   await expect(total).toContainText("6 points");
   await card.getByRole("button", { name: "Previous" }).click();
   await expect(total).toContainText("0 points");
+  await card.getByRole("button", { name: "Next" }).click(); // › after ‹ lands back on this week
+  await expect(total).toContainText("6 points");
+  await expect(card.getByRole("button", { name: "Next" })).toBeDisabled();
+  await card.getByRole("button", { name: "Previous" }).click();
   await card.getByRole("button", { name: "Today" }).click();
   await expect(total).toContainText("6 points");
 
@@ -67,7 +98,7 @@ test("Home heatmap counts deeds and points per day, by view, at phone and tablet
   if (process.env.SHOT_DIR) {
     await page.emulateMedia({ colorScheme: "dark" });
     await card.locator("[data-today]").hover();
-    await expect(card.getByRole("status")).toContainText("3 deeds");
+    await expect(card.locator(".heat-tip")).toContainText("3 deeds");
     await card.screenshot({ path: shot("activity-tablet-dark-tooltip") });
     for (const [w, h, tag] of [[820, 1180, "tablet"], [390, 844, "phone"]] as const) {
       await page.setViewportSize({ width: w, height: h });

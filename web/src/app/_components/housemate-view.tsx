@@ -19,23 +19,23 @@ type OpenChore = { instance_id: string; day: string; name: string; area: string 
 // "2026-10-28" as "Wed, Oct 28". A plain date, so UTC keeps it from shifting.
 const dayText = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 
-// The points and the deed buttons come first; the sections below fetch for themselves and fill in as they arrive.
+// The points, then the activity heatmap, then the deed buttons; the sections below fetch for themselves and fill in as they arrive.
 export function HousemateView({ me }: { me: Me }) {
   return (
     <>
       <Shortcuts keys={{ "+": "custom-deed" }} />
       <Suspense fallback={<PointsBanner me={me} />}><Points me={me} /></Suspense>
+      <Suspense fallback={<Section title="Activity"><Skeleton rows={4} /></Section>}><MyActivity me={me} /></Suspense>
       <Section title="I did…"><Suspense fallback={<Skeleton rows={4} />}><Claim me={me} /></Suspense></Section>
       <Suspense fallback={<Section title="Report a housemate"><Skeleton rows={2} /></Section>}><Report me={me} /></Suspense>
       <Suspense fallback={<Section title="Available chores"><Skeleton /></Section>}><Chores /></Suspense>
-      <Suspense fallback={<Section title="Activity"><Skeleton rows={4} /></Section>}><MyActivity me={me} /></Suspense>
       <Suspense fallback={<Section title="History"><Skeleton /></Section>}><History me={me} /></Suspense>
     </>
   );
 }
 
 async function MyActivity({ me }: { me: Me }) {
-  const [days, timeZone] = await Promise.all([activity(me.userId, "last_12_months", null), getTimeZone()]);
+  const [days, timeZone] = await Promise.all([activity(me.userId, "last_12_months"), getTimeZone()]);
   return <Activity memberId={me.userId} initial={days} timeZone={timeZone} />;
 }
 

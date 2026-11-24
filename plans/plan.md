@@ -2,14 +2,14 @@
 
 ## Current batch: heatmap placement and review fixes (started 2026-11-20)
 
-Plan written 2026-11-20, waiting for approval. One branch per milestone from an up-to-date main, merged in order (retarget the next PR to main before deleting a merged branch). A1 changes a SQL function: hosted `supabase db push` only with your OK, after a dry run.
+Plan approved 2026-11-20. One branch per milestone from an up-to-date main, merged in order (retarget the next PR to main before deleting a merged branch). A1 changes a SQL function: hosted `supabase db push` only with your OK, after a dry run.
 
 Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| A1 | `activity()` steps ranges in SQL (`p_step`), pgTAP | `activity-step-sql` | 🔵 PR open | [#89](https://github.com/jorgePaguirigan/apartment-managing-app/pull/89) |
-| A2 | Home: heatmap under the points banner, tooltip wording, contrast, animation, race, keyboard fixes | `activity-home-polish` | ⚪ not started | |
+| A1 | `activity()` steps ranges in SQL (`p_step`), pgTAP | `activity-step-sql` | ✅ merged, hosted DB pushed 2026-11-24 | [#89](https://github.com/jorgePaguirigan/apartment-managing-app/pull/89) |
+| A2 | Home: heatmap under the points banner, tooltip wording, contrast, animation, race, keyboard fixes | `activity-home-polish` | 🔵 PR open, waiting for screenshot approval | [#90](https://github.com/jorgePaguirigan/apartment-managing-app/pull/90) |
 | A3 | Leaderboard: heatmaps below the cards with one shared bar; no heatmap in cards; no Admin/Housemate switch | `activity-leaderboard-section` | ⚪ not started | |
 
 ### Your requests
