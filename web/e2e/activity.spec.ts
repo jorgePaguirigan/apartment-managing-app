@@ -80,6 +80,11 @@ test("Home heatmap counts deeds and points per day, by view, at phone and tablet
   await card.getByRole("button", { name: "Year", exact: true }).click();
   await expect.poll(() => card.locator("[data-day]").count()).toBeGreaterThanOrEqual(365);
 
+  // Smallest phone (320px): every range label fits inside its pill.
+  await page.setViewportSize({ width: 320, height: 700 });
+  const labels = card.getByRole("group", { name: "Range" }).getByRole("button");
+  await expect.poll(() => labels.evaluateAll((els) => els.every((el) => el.scrollWidth <= el.clientWidth))).toBe(true);
+
   // Phone: the year grid scrolls inside the card, the page never scrolls sideways.
   await card.getByRole("button", { name: "12 months" }).click();
   await page.setViewportSize({ width: 390, height: 844 });
