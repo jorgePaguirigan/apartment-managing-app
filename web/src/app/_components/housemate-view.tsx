@@ -11,6 +11,7 @@ import { Chip, Section, Skeleton } from "./ui";
 import { SubmitButton } from "./submit-button";
 import { activity, dibChore } from "../actions";
 import { Activity } from "./activity";
+import { StreakPill, type Streak } from "./streak";
 
 type ClaimRow = { id: string; created_at: string; title: string | null; status: "pending" | "accepted" | "rejected"; note: string | null; deed: { name: string; points: number } | null };
 type BoardRow = { member_id: string; points: number; rank: number };
@@ -40,30 +41,39 @@ async function MyActivity({ me }: { me: Me }) {
 }
 
 // No `count` yet means the board is still loading: bars stand in for the text, so nothing is on screen twice once it arrives.
-function PointsBanner({ me, mine, count }: { me: Me; mine?: BoardRow; count?: number }) {
+// The greeting and the day streak share the top row; the points and rank sit below.
+function PointsBanner({ me, mine, count, streak }: { me: Me; mine?: BoardRow; count?: number; streak?: Streak }) {
   return (
-    <section className="rise flex items-end justify-between gap-4 rounded-[2rem] bg-accent p-6 text-[#16171b] shadow-[0_18px_40px_-18px_color-mix(in_oklab,var(--accent)_65%,transparent)] sm:p-8">
-      <div className="min-w-0">
-        <p className="text-[1.3125rem] font-semibold leading-tight opacity-70">{count === undefined ? <span className="inline-block h-5 w-40 animate-pulse rounded bg-[#16171b]/10 align-middle" /> : `Hi, ${me.name}`}</p>
-        <p className="display mt-1 text-7xl font-extrabold leading-none sm:text-8xl">{count === undefined ? <span className="inline-block h-[1em] w-[1.5em] animate-pulse rounded-2xl bg-[#16171b]/10 align-bottom" /> : <CountUp value={mine ? Number(mine.points) : 0} />}</p>
-        {count !== undefined && <p className="mt-2 font-semibold">points this week</p>}
+    <section className="rise rounded-[2rem] bg-accent p-6 text-[#16171b] shadow-[0_18px_40px_-18px_color-mix(in_oklab,var(--accent)_65%,transparent)] sm:p-8">
+      <div className="flex items-start justify-between gap-3">
+        <p className="min-w-0 break-words text-[1.3125rem] font-semibold leading-tight opacity-70">{count === undefined ? <span className="inline-block h-5 w-40 animate-pulse rounded bg-[#16171b]/10 align-middle" /> : `Hi, ${me.name}`}</p>
+        {streak && <StreakPill {...streak} />}
       </div>
-      {mine && (
-        <p className="display shrink-0 rounded-2xl bg-[#16171b] px-4 py-2 text-center text-[#f3f1ea]">
-          <span className="block text-3xl font-bold leading-none">#{Number(mine.rank)}</span>
-          <span className="text-xs font-medium opacity-70">of {count}</span>
-        </p>
-      )}
+      <div className="flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="display mt-1 text-7xl font-extrabold leading-none sm:text-8xl">{count === undefined ? <span className="inline-block h-[1em] w-[1.5em] animate-pulse rounded-2xl bg-[#16171b]/10 align-bottom" /> : <CountUp value={mine ? Number(mine.points) : 0} />}</p>
+          {count !== undefined && <p className="mt-2 font-semibold">points this week</p>}
+        </div>
+        {mine && (
+          <p className="display shrink-0 rounded-2xl bg-[#16171b] px-4 py-2 text-center text-[#f3f1ea]">
+            <span className="block text-3xl font-bold leading-none">#{Number(mine.rank)}</span>
+            <span className="text-xs font-medium opacity-70">of {count}</span>
+          </p>
+        )}
+      </div>
     </section>
   );
 }
 
 async function Points({ me }: { me: Me }) {
   const supabase = await createClient();
-  const { data: board } = await supabase.rpc("leaderboard", { p_period: "this_week" });
+  const [{ data: board }, { data: streak }] = await Promise.all([
+    supabase.rpc("leaderboard", { p_period: "this_week" }),
+    supabase.rpc("streak").single<Streak>(),
+  ]);
   const rows = (board ?? []) as BoardRow[];
   const mine = rows.find((r) => r.member_id === me.userId);
-  return <PointsBanner me={me} mine={mine} count={rows.length} />;
+  return <PointsBanner me={me} mine={mine} count={rows.length} streak={streak ?? undefined} />;
 }
 
 async function Claim({ me }: { me: Me }) {
