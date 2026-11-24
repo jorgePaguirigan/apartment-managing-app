@@ -8,7 +8,7 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| D1 | Day streak counts waiting claims; no half-lit state | `streak-on-submit` | 🟡 tests green, PR being opened | |
+| D1 | Day streak counts waiting claims; no half-lit state | `streak-on-submit` | 🔵 PR open, waiting for UI approval | [#95](https://github.com/jorgePaguirigan/apartment-managing-app/pull/95) |
 | D2 | Heatmap dates claims by submit day | `activity-submit-day` | ⚪ not started | |
 
 ### Your request
