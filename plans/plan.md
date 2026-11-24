@@ -8,8 +8,8 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
-| S1 | `streak()` in SQL, pgTAP, PRD and glossary | `streak-sql` | 🟡 in progress, pgTAP 11/11 green | |
-| S2 | Home: streak in the housemate view, motion, e2e | `streak-home` | ⚪ not started | |
+| S1 | `streak()` in SQL, pgTAP, PRD and glossary | `streak-sql` | 🔵 PR open, hosted DB not pushed | [#93](https://github.com/jorgePaguirigan/apartment-managing-app/pull/93) |
+| S2 | Home: streak pill with smoke and sparks, e2e | `streak-home` (on `streak-sql`) | 🔵 PR open, waiting for your screenshot approval | [#94](https://github.com/jorgePaguirigan/apartment-managing-app/pull/94) |
 
 ### Your request
 1. A streak on the Home tab in the housemate view. Mockups, screenshots or video before building.
@@ -42,7 +42,7 @@ Artifact: https://claude.ai/artifact/G2Ab6HmcndAs77Tuk8KR4e
 - **Skills:** mattpocock-skills:domain-modeling, mattpocock-skills:tdd, code-review, mattpocock-skills:pr, commit-per-file.
 
 ### S2 plan: Home UI
-- **UI:** the A1 pill ("6-day streak") in the upper right of the points banner, loaded with the banner, with the smoke and spark particles from round 3 (a client component; keyframes in `globals.css`). The smoke or sparks loop while Home is open; everything else plays once: on load the pill fades in from 6px right at scale 0.94 (300ms, strong ease-out, 120ms after the banner); when today flips to done on a live refresh, the smoke stops, 12 sparks burst once, the number rolls up and the flame fills and flares; then the spark loop runs. Reduced motion: no particles or flicker, opacity only. The pill is not a control, so no hover or press state. Checked at 320px with a long name and in dark mode.
+- **UI:** the A1 pill ("6-day streak") in the upper right of the points banner, loaded with the banner, with the smoke and spark particles from round 3 (a client component; keyframes in `globals.css`). The smoke or sparks loop while Home is open; everything else plays once (the pill arrives with the banner's existing rise; no entrance of its own): when today flips to done on a live refresh, the smoke stops, 12 sparks burst once, the number rolls up and the flame fills and flares; then the spark loop runs. Reduced motion: no particles or flicker, opacity only. The pill is not a control, so no hover or press state. Checked at 320px with a long name and in dark mode.
 - **Test:** Playwright `streak.spec.ts`: seed 3 days of entries in a row ending yesterday → the pill reads "3-day streak, today not done yet"; accept a claim today → "4-day streak"; a housemate with nothing → "No streak"; the pill sits in the banner's top half, right of the greeting. Type-check and lint.
 - **Files:** `housemate-view.tsx`, new `streak.tsx`, `ui.tsx` (flame icon), `globals.css`, `actions.ts`, `web/e2e/streak.spec.ts`.
 - **Skills:** emil-design-eng, apple-design, animate, animation-performance (loop cost on a phone), mobile-native, break-ui (0, 1 "1-day", 365, long names), mattpocock-skills:tdd, run, code-review, mattpocock-skills:pr, commit-per-file.
@@ -52,7 +52,15 @@ S1 → S2, merged in order. Stop after S2 for your screenshot approval. Hosted D
 
 ### Not checked yet
 - The iOS app (not in this request).
-- How the streak feels on a real phone.
+- How the streak feels on a real phone; the loops were not slowed down frame by frame.
+- Live refresh through Supabase Realtime: realtime is not running locally, so the e2e fires the same refresh by hand.
+
+### Wrap-up (2026-11-25)
+- **S1 skills:** domain-modeling (PRD 4.4 and GLOSSARY "Day streak"), tdd (red: no function; green 11/11; one wrong expectation in my test fixed, not the code), code-review (yesterday's pending claim shows the streak as broken until decided: left as a product question), pr, commit-per-file.
+- **S2 skills:** emil-design-eng, apple-design, animate (mockup rounds and the build), tdd (Playwright red on missing pill, then green), break-ui by hand (320px, long unbroken name: pill now aligns to the greeting's first line), run (dev server on 3100 against local Supabase, screenshots light, dark, 320px), code-review, pr, commit-per-file. animation-performance and mobile-native were not invoked; the loop is 4–7 tiny transform/opacity layers.
+- **Found:** `next build` now stops with a Next.js security advisory (16.4.2), so the e2e web server cannot build; tests ran against `next dev` (new `web-local` launch config). Upgrading Next is a separate task.
+- **Pre-existing, seen here:** the Home heatmap does not update on a live refresh (the pill and points do).
+- **Decisions you may want to change:** a claim from yesterday still waiting does not keep the streak alive on screen until it is accepted.
 
 ## Previous batch: heatmap placement and review fixes (started 2026-11-20)
 
