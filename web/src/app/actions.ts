@@ -390,9 +390,10 @@ export async function memberHistory(memberId: string, period: Period): Promise<H
 export type ActivityView = "week" | "month" | "year" | "last_12_months";
 export type ActivityDay = { day: string; weekday: number; deeds: number; points: number; future: boolean; today: string; first_day: string };
 
-// One scored member's days for the heatmap. activity() works out the range and the days in the household time zone.
-export async function activity(memberId: string, view: ActivityView, anchor: string | null): Promise<ActivityDay[]> {
+// One scored member's days for the heatmap: the current range moved `step` weeks, months, years or 12 months.
+// activity() works out the range and the days in the household time zone.
+export async function activity(memberId: string, view: ActivityView, step = 0): Promise<ActivityDay[]> {
   const supabase = await createClient();
-  const { data } = await supabase.rpc("activity", { p_member: memberId, p_view: view, p_anchor: anchor });
+  const { data } = await supabase.rpc("activity", { p_member: memberId, p_view: view, p_step: step });
   return (data ?? []) as ActivityDay[];
 }

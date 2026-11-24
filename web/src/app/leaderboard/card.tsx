@@ -21,7 +21,7 @@ export function LeaderCard({ id, period, lead, delay, timeZone, children }: { id
   const toggle = () => {
     setOpen(!open);
     if (!open) start(async () => {
-      const [h, a] = await Promise.all([memberHistory(id, period), activity(id, "last_12_months", null)]);
+      const [h, a] = await Promise.all([memberHistory(id, period), activity(id, "last_12_months")]);
       setRows(h); setDays(a);
     });
   };
