@@ -9,8 +9,8 @@ Status key: ✅ merged · 🔵 PR open · 🟡 in progress · ⚪ not started
 | # | Milestone | Branch | Status | PR |
 |---|---|---|---|---|
 | A1 | `activity()` steps ranges in SQL (`p_step`), pgTAP | `activity-step-sql` | ✅ merged, hosted DB pushed 2026-11-24 | [#89](https://github.com/jorgePaguirigan/apartment-managing-app/pull/89) |
-| A2 | Home: heatmap under the points banner, tooltip wording, contrast, animation, race, keyboard fixes | `activity-home-polish` | 🔵 PR open, waiting for screenshot approval | [#90](https://github.com/jorgePaguirigan/apartment-managing-app/pull/90) |
-| A3 | Leaderboard: heatmaps below the cards with one shared bar; no heatmap in cards; no Admin/Housemate switch | `activity-leaderboard-section` | ⚪ not started | |
+| A2 | Home: heatmap under the points banner, tooltip wording, contrast, animation, race, keyboard fixes | `activity-home-polish` | ✅ merged | [#90](https://github.com/jorgePaguirigan/apartment-managing-app/pull/90) |
+| A3 | Leaderboard: heatmaps below the cards with one shared bar; no heatmap in cards; no Admin/Housemate switch | `activity-leaderboard-section` | 🔵 PR open, waiting for screenshot approval | [#91](https://github.com/jorgePaguirigan/apartment-managing-app/pull/91) |
 
 ### Your requests
 1. Housemate view: Activity sits between the points banner and "I did…".
@@ -62,6 +62,13 @@ A1 → A2 → A3, one PR each, merged in order. Stop after A2 and A3 for your sc
 ### Not checked yet
 - Real phone hardware, the full e2e suite, the iOS app.
 - Reusing `ViewSwitch` for the range switch (a code-review finding you did not pick); left as is.
+
+### Wrap-up (2026-11-24)
+- **A1 skills:** domain-modeling, blast-radius, tdd (red then green, 21/21 pgTAP), code-review, pr. Hosted DB pushed after a dry run.
+- **A2 skills:** emil-design-eng, animate, tdd (tests written after the code, honest note), ui-ux-pro-max (contrast script), mobile-native, break-ui (320px worst cases), run (screenshots), code-review (stuck-switch-on-failed-load fixed), pr. The e2e caught a hidden tooltip pushing the page sideways after a resize; fixed with a percentage position.
+- **A3 skills:** apple-design (one card, one legend), emil-design-eng (40ms stagger), tdd (red on the A2 build, then green), mobile-native, break-ui (7 housemates, long and two-letter names at 320px: totals now wrap under the name), code-review (one round trip per range change; one failing member no longer blocks the bar), pr.
+- **Decisions you may want to change:** the leaderboard grids share one colour scale (one deed next to 50 is the faintest step); "12 months" on Home and the leaderboard still overflows its pill at 320px (was already the case before this batch).
+- **Not verified:** real phone touch feel; reduced-motion fade by eye; the full e2e suite (only the two activity specs ran); three local pgTAP files fail from leftover e2e rows (unrelated, already failing before this batch).
 
 ## Previous batch: activity heatmap (started 2026-11-20)
 
